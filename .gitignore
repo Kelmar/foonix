@@ -1,2 +1,4 @@
 
-tars/**/*.tar.*
+build/*
+tools/*
+tars/*

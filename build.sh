@@ -1,11 +1,11 @@
 #!/bin/sh
 
-BUVER=2.18
-GCCVER=3.4.6
-MAKEVER=3.81
+BUVER=2.36
+GCCVER=11.1.0
+MAKEVER=4.3
 GRUBVER=
 
-TARGET=i586-elf
+TARGET=i686-elf
 
 cwd=`pwd`
 
@@ -16,22 +16,18 @@ MAKE=make
 FETCH=
 
 find_gmake() {
-    if [ "$MAKE" != "" ] ; then
-	return 0
-    fi
-
-    MAKE=`whereis gmake`
-    if [ "$MAKE" != "" ] ; then
-	return 0
+    if exists "gmake" ; then
+        MAKE=gmake
+        return 0
     fi
 
     # This will cause BSD make to print usage, which should give us
     # an indication if we need to tell the user to install gmake
     # or not....
-    mver=`make --version 2>&1 | awk '/GNU/ {print $$1}'`
+    mver=`make --version 2>&1 | awk '/^GNU/ {print $1}'`
     if [ "$mver" = "GNU" ] ; then
 	# The system already uses GNU make as its default make.
-        MAKE=`whereis make`
+        MAKE=make
 	return 0
     fi
 
@@ -45,18 +41,17 @@ find_gmake() {
     return 1
 }
 
+exists() {
+    type "$1" > /dev/null 2> /dev/null
+}
+
 find_fetch() {
-    if [ "$FETCH" != "" ] ; then
-	return
-    fi
-
-    FETCH=`whereis fetch`
-    if [ "$FETCH" = "" ] ; then
-	FETCH=`whereis wget`
-
-	if [ "$FETCH" = "" ] ; then
-	    FETCH=`whereis ftp`
-	fi
+    if exists "fetch" ; then
+        FETCH=fetch
+    elif exists "wget" ; then
+        FETCH=wget
+    elif exists "ftp" ; then
+        FETCH=ftp
     fi
 
     if [ "$FETCH" = "" ] ; then
@@ -80,17 +75,14 @@ fetch_missing()
 	    # Get a copy from GNU's FTP site.
 	    $FETCH ftp://ftp.gnu.org/gnu/make/make-$MAKEVER.tar.gz
 	fi
-
-	tar -zxvf make-$MAKEVER.tar.gz
-	mv make-$MAKEVER ..
     fi
 
-    if [ ! -f tars/gcc-core-$GCCVER.tar.gz ] ; then
-	$FETCH ftp://ftp.gnu.org/gnu/gcc/gcc-$GCCVER/gcc-core-$GCCVER.tar.gz
+    if [ ! -f binutils-$BUVER.tar.gz ] ; then
+        $FETCH ftp://ftp.gnu.org/gnu/binutils/binutils-$BUVER.tar.gz
     fi
 
-    if [ ! -f tars/gcc-g++-$GCCVER.tar.gz ] ; then
-	$FETCH ftp://ftp.gnu.org/gnu/gcc/gcc-$GCCVER/gcc-g++-$GCCVER.tar.gz
+    if [ ! -f gcc-$GCCVER.tar.gz ] ; then
+	$FETCH ftp://ftp.gnu.org/gnu/gcc/gcc-$GCCVER/gcc-$GCCVER.tar.gz
     fi
 
     cd ..
@@ -116,20 +108,23 @@ exit_cleanup() {
 build_make() {
     if [ -d make-$MAKEVER ] ; then
 	# Make can be built by us!
-	MAKE=`whereis make`
-	if [ "$MAKE" = "" ] ; then
-	    # We can't find ANY SORT OF MAKE!!!!
-	    echo "I need some form of make!"
-	    exit 1
-	fi
+        if [ ! -d tars/make-$MAKEVER ] ; then
+            cd tars
+            tar -zxf make-$MAKEVER.tar.gz
+            cd ..
+        fi
 
 	if [ ! -d build/make ] ; then
 	    mkdir -p build/make
 	fi
 
 	cd build/make
-	../../make-$MAKEVER/configure --prefix=$PREFIX
-	$MAKE
+
+        if [ ! -f Makefile ] ; then
+	    ../../tars/make-$MAKEVER/configure --prefix=$PREFIX
+        fi
+
+        $MAKE
 	$MAKE install
 
 	cd ../..
@@ -148,7 +143,19 @@ tools() {
 	    echo "You will need to download GNU make."
 	    echo "Try: $0 fetch"
 	    exit 1
-	fi	
+	fi
+    fi
+
+    if [ ! -d tars/binutils-$BUVER ] ; then
+        cd tars
+        tar -zxf binutils-$BUVER.tar.gz
+        cd ..
+    fi
+
+    if [ ! -d tars/gcc-$GCCVER ] ; then
+        cd tars
+        tar -zxf gcc-$GCCVER.tar.gz
+        cd ..
     fi
 
     if [ ! -d tools ] ; then
@@ -162,8 +169,8 @@ tools() {
     cd build/bu
 
     if [ ! -f Makefile ] ; then
-	../../binutils-$BUVER/configure \
-		--prefix=$cwd/tools --target=$TARGET \
+	../../tars/binutils-$BUVER/configure \
+		--prefix=$PREFIX --target=$TARGET \
 		--disable-nls
     fi
 
@@ -178,8 +185,8 @@ tools() {
     cd build/gcc
 
     if [ ! -f Makefile ] ; then
-	../../gcc-$GCCVER/configure \
-		--prefix=$cwd/tools --target=$TARGET \
+	../../tars/gcc-$GCCVER/configure \
+		--prefix=$PREFIX --target=$TARGET \
 		--disable-nls --enable-languages=c,c++ --without-headers
     fi
 
@@ -194,7 +201,7 @@ kernel() {
 	    echo "You will need to download GNU make."
 	    echo "Try: $0 fetch"
 	    exit 1
-	fi	
+	fi
     fi
 
     $MAKE
