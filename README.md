@@ -11,7 +11,7 @@ These tools still must be built by hand; good luck.
 * Interrupts are handled.
 * Code for handling delays using the PIT is working.
 
-= Some TODOs =
+# Some TODOs
 * Makefiles need some serious work.
 * Architecture specific code needs to be seperated out.
 * Some functions need to be moved into a common library.
@@ -23,8 +23,11 @@ These tools still must be built by hand; good luck.
 * Everything else that isn't done yet.
 * C++ support?  Maybe?
 
-= Building =
+# Building
 Everything is controlled through the build.sh script for now.
+
 You can fetch the tool chain with "build.sh fetch"
+
 And then build the tools with "build.sh tools"
+
 Finally the kernel itself can be built with "build.sh kernel"
