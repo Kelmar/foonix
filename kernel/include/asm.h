@@ -43,14 +43,14 @@
 # endif
 #endif
 
-#define _ENTRY(X)			\
-    .text; _ALIGN_TEXT;			\
-    .globl __PREFIX(X);			\
-    .type __PREFIX(X),@function;	\
+#define _ENTRY(X)                \
+    .text; _ALIGN_TEXT;          \
+    .globl __PREFIX(X);          \
+    .type __PREFIX(X),@function; \
     __PREFIX(X):
 
-#define _LABEL(X)	\
-    .globl __PREFIX(X);	\
+#define _LABEL(X)       \
+    .globl __PREFIX(X); \
     __PREFIX(X):
 
 #define NENTRY(Y)	_ENTRY(_C_LABEL(Y))

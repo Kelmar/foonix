@@ -33,8 +33,8 @@ find_gmake() {
 
     # Check our tool's directory
     if [ -f $PREFIX/bin/make ] ; then
-	MAKE=$PREFIX/bin/make
-	return 0
+	    MAKE=$PREFIX/bin/make
+	    return 0
     fi
 
     # GNU make was not found.
@@ -55,8 +55,8 @@ find_fetch() {
     fi
 
     if [ "$FETCH" = "" ] ; then
-	echo "Unable to find \"fetch\", \"wget\", or \"ftp\" please install one."
-	exit 1
+        echo "Unable to find \"fetch\", \"wget\", or \"ftp\" please install one."
+        exit 1
     fi
 }
 
@@ -65,16 +65,16 @@ fetch_missing()
     find_fetch
 
     if [ ! -d tars ] ; then
-	mkdir tars
+	    mkdir tars
     fi
 
     cd tars
 
     if ! find_gmake ; then
-	if [ ! -f make-$MAKEVER.tar.gz ] ; then
-	    # Get a copy from GNU's FTP site.
-	    $FETCH ftp://ftp.gnu.org/gnu/make/make-$MAKEVER.tar.gz
-	fi
+        if [ ! -f make-$MAKEVER.tar.gz ] ; then
+            # Get a copy from GNU's FTP site.
+            $FETCH ftp://ftp.gnu.org/gnu/make/make-$MAKEVER.tar.gz
+        fi
     fi
 
     if [ ! -f binutils-$BUVER.tar.gz ] ; then
@@ -82,7 +82,7 @@ fetch_missing()
     fi
 
     if [ ! -f gcc-$GCCVER.tar.gz ] ; then
-	$FETCH ftp://ftp.gnu.org/gnu/gcc/gcc-$GCCVER/gcc-$GCCVER.tar.gz
+        $FETCH ftp://ftp.gnu.org/gnu/gcc/gcc-$GCCVER/gcc-$GCCVER.tar.gz
     fi
 
     cd ..
@@ -93,9 +93,9 @@ check() {
     echo "FETCH: $FETCH"
 
     if ! find_gmake ; then
-	echo "You will need to download GNU make."
+	    echo "You will need to download GNU make."
     else
-	echo "MAKE: $MAKE"
+	    echo "MAKE: $MAKE"
     fi
 
     echo "Build environment seems OK"
@@ -107,43 +107,43 @@ exit_cleanup() {
 
 build_make() {
     if [ -d make-$MAKEVER ] ; then
-	# Make can be built by us!
+	    # Make can be built by us!
         if [ ! -d tars/make-$MAKEVER ] ; then
             cd tars
             tar -zxf make-$MAKEVER.tar.gz
             cd ..
         fi
 
-	if [ ! -d build/make ] ; then
-	    mkdir -p build/make
-	fi
-
-	cd build/make
-
-        if [ ! -f Makefile ] ; then
-	    ../../tars/make-$MAKEVER/configure --prefix=$PREFIX
+        if [ ! -d build/make ] ; then
+            mkdir -p build/make
         fi
 
-        $MAKE
-	$MAKE install
+        cd build/make
 
-	cd ../..
+            if [ ! -f Makefile ] ; then
+                ../../tars/make-$MAKEVER/configure --prefix=$PREFIX
+            fi
 
-	MAKE="$PREFIX/bin/make"
+            $MAKE
+        $MAKE install
 
-	return 0
+        cd ../..
+
+        MAKE="$PREFIX/bin/make"
+
+        return 0
     else
-	return 1
+	    return 1
     fi
 }
 
 tools() {
     if ! find_gmake ; then
-	if ! build_make ; then
-	    echo "You will need to download GNU make."
-	    echo "Try: $0 fetch"
-	    exit 1
-	fi
+        if ! build_make ; then
+            echo "You will need to download GNU make."
+            echo "Try: $0 fetch"
+            exit 1
+        fi
     fi
 
     if [ ! -d tars/binutils-$BUVER ] ; then
@@ -159,19 +159,19 @@ tools() {
     fi
 
     if [ ! -d tools ] ; then
-	mkdir tools
+	    mkdir tools
     fi
 
     if [ ! -d build/bu ] ; then
-	mkdir -p build/bu
+	    mkdir -p build/bu
     fi
 
     cd build/bu
 
     if [ ! -f Makefile ] ; then
-	../../tars/binutils-$BUVER/configure \
-		--prefix=$PREFIX --target=$TARGET \
-		--disable-nls
+        ../../tars/binutils-$BUVER/configure \
+            --prefix=$PREFIX --target=$TARGET \
+            --disable-nls
     fi
 
     $MAKE all
@@ -179,15 +179,15 @@ tools() {
     cd ../..
 
     if [ ! -d build/gcc ] ; then
-	mkdir -p build/gcc
+	    mkdir -p build/gcc
     fi
 
     cd build/gcc
 
     if [ ! -f Makefile ] ; then
-	../../tars/gcc-$GCCVER/configure \
-		--prefix=$PREFIX --target=$TARGET \
-		--disable-nls --enable-languages=c,c++ --without-headers
+	    ../../tars/gcc-$GCCVER/configure \
+		    --prefix=$PREFIX --target=$TARGET \
+		    --disable-nls --enable-languages=c,c++ --without-headers
     fi
 
     $MAKE all-gcc
@@ -197,11 +197,11 @@ tools() {
 
 kernel() {
     if ! find_gmake ; then
-	if ! build_make ; then
-	    echo "You will need to download GNU make."
-	    echo "Try: $0 fetch"
-	    exit 1
-	fi
+        if ! build_make ; then
+            echo "You will need to download GNU make."
+            echo "Try: $0 fetch"
+            exit 1
+        fi
     fi
 
     $MAKE
@@ -224,19 +224,19 @@ export PATH=$PATH:$PREFIX/bin
 trap "{ exit_cleanup; exit 0; }" EXIT
 
 case "$1" in
-    check)
+check)
 	check
 	;;
-    fetch)
+fetch)
 	fetch_missing
 	;;
-    tools)
+tools)
 	tools
 	;;
-    kernel)
+kernel)
 	kernel
 	;;
-    *)
+*)
 	help
 	;;
 esac

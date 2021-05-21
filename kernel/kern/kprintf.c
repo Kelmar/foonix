@@ -65,19 +65,19 @@ char *base_to_ascii(uint32_t val, int base, bool_t upper,
 
     for (;;)
     {
-	d = val % base;
-	val /= base;
+        d = val % base;
+        val /= base;
 
-	if (d >= 10)
-	   c = (d - 10) + (upper ? 'A' : 'a');
-	else
-	   c = d + '0';
+        if (d >= 10)
+        c = (d - 10) + (upper ? 'A' : 'a');
+        else
+        c = d + '0';
 
-	cont = (i > 0);
-	buf[i--] = c;
+        cont = (i > 0);
+        buf[i--] = c;
 
-	if (!cont || (val == 0))
-	    break;
+        if (!cont || (val == 0))
+            break;
     };
 
     return !cont ? buf : (buf + i + 1);
@@ -119,151 +119,149 @@ int vsnkprintf(char *sbuf, size_t slen, const char *fmt, va_list args)
 
     for (;;)
     {
-	while ((*fp != '%') && (*fp != '\0'))
-	{
-	    if (s < slen)
-		sbuf[s++] = *fp++;
-	    else
-		goto exit;
-	}
+        while ((*fp != '%') && (*fp != '\0'))
+        {
+            if (s < slen)
+            sbuf[s++] = *fp++;
+            else
+            goto exit;
+        }
 
-	if (*fp == '\0')
-	    break;
+        if (*fp == '\0')
+            break;
 
-	sign = '\0';
-	flags = 0;
-	width = 0;
-	pad = ' ';
+        sign = '\0';
+        flags = 0;
+        width = 0;
+        pad = ' ';
 
 reswitch:
-	++fp; /* Skip */
+        ++fp; /* Skip */
 
-	switch (*fp)
-	{
-	default:
-	case '\0':
-	case '%':
-	    sbuf[s++] = *fp;
+        switch (*fp)
+        {
+        default:
+        case '\0':
+        case '%':
+            sbuf[s++] = *fp;
 
-	    if (*fp == '\0')
-		goto exit;
+            if (*fp == '\0')
+            goto exit;
 
-	    continue;
+            continue;
 
-	case '0':
-	    if (width > 0)
-		width *= 10;
-	    else
-		pad = '0';
+        case '0':
+            if (width > 0)
+                width *= 10;
+            else
+                pad = '0';
 
-	    goto reswitch;
+            goto reswitch;
 
-	case '1': case '2': case '3': case '4':
-	case '5': case '6': case '7': case '8': case '9':
-	    width = width * 10 + (*fp - '0');
-	    goto reswitch;
+        case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9':
+            width = width * 10 + (*fp - '0');
+            goto reswitch;
 
-	case '+':
-	    sign = '+';
-	    goto reswitch;
+        case '+':
+            sign = '+';
+            goto reswitch;
 
-	case 'c':
-	    sbuf[s++] = (char)va_arg(args, int);
-	    break;
+        case 'c':
+            sbuf[s++] = (char)va_arg(args, int);
+            break;
 
-	case 'o':
-	    flags |= FLAGS_NOSIGN;
-	    base = 8;
-	    goto number;
+        case 'o':
+            flags |= FLAGS_NOSIGN;
+            base = 8;
+            goto number;
 
-	case 'u':
-	    flags |= FLAGS_NOSIGN;
-	    /* Fall through */
+        case 'u':
+            flags |= FLAGS_NOSIGN;
+            /* Fall through */
 
-	case 'd':
-	case 'i':
-	    base = 10;
-	    goto number;
+        case 'd':
+        case 'i':
+            base = 10;
+            goto number;
 
-	case 'x':
-	    flags &= ~FLAGS_UPPER;
-	    goto hex;
+        case 'x':
+            flags &= ~FLAGS_UPPER;
+            goto hex;
 
-	case 'p': /* formated pointer */
-	    sbuf[s] = '\0';
-	    p = strkcat(sbuf + s, (slen - s), "0x", 3);
-	    if (p == NULL)
-		kstop("vsnkprintf(): unable to concatinate string.");
+        case 'p': /* formated pointer */
+            sbuf[s] = '\0';
+            p = strkcat(sbuf + s, (slen - s), "0x", 3);
+            if (p == NULL)
+                kstop("vsnkprintf(): unable to concatinate string.");
 
-	    s += 2;
-	    pad = '0';
+            s += 2;
+            pad = '0';
 
 #if defined(_FOO64)
-	    width = 16;
+            width = 16;
 #else
-	    width = 8;
+            width = 8;
 #endif
 
-	    /* FALL THROUGH */
+            /* FALL THROUGH */
 
-	case 'X':
-	    flags |= FLAGS_UPPER;
+        case 'X':
+            flags |= FLAGS_UPPER;
 hex:
-	    flags |= FLAGS_NOSIGN;
-	    base = 16;
+            flags |= FLAGS_NOSIGN;
+            base = 16;
 
 number:
-	    val = va_arg(args, int);
+            val = va_arg(args, int);
 
-	    if (flags & FLAGS_NOSIGN)
-		sign = '\0';
-	    else
-	    {
-		if (val < 0)
-		{
-		    sign = '-';
-		    val = -val;
-		}
-	    }
+            if (flags & FLAGS_NOSIGN)
+                sign = '\0';
+            else
+            {
+                if (val < 0)
+                {
+                    sign = '-';
+                    val = -val;
+                }
+            }
 
-	    p = base_to_ascii((uint32_t)val, base,
-		(flags & FLAGS_UPPER) != 0, 
-		nbuf, sizeof(nbuf));
+            p = base_to_ascii((uint32_t)val, base, (flags & FLAGS_UPPER) != 0, nbuf, sizeof(nbuf));
 
-	    n = sizeof(nbuf) - (p - nbuf + 1);
+            n = sizeof(nbuf) - (p - nbuf + 1);
 
-	    if (sign != '\0')
-		sbuf[s++] = sign;
+            if (sign != '\0')
+                sbuf[s++] = sign;
 
-	    goto string;
+            goto string;
 
-	case 's':
-	    p = va_arg(args, char *);
-	    n = strlen(p);
-	    pad = ' ';
+        case 's':
+            p = va_arg(args, char *);
+            n = strlen(p);
+            pad = ' ';
 
 string:
-	    if (width > (slen - s - 1))
-		width = slen - s - 1;
+            if (width > (slen - s - 1))
+                width = slen - s - 1;
 
-	    if (width > n)
-	    {
-		// We need to add padding....
-		memset(sbuf + s, pad, (width - n));
-		s += (width - n);
-	    }
+            if (width > n)
+            {
+                // We need to add padding....
+                memset(sbuf + s, pad, (width - n));
+                s += (width - n);
+            }
 
-	    sbuf[s] = '\0';
-	    p = strkcat(sbuf + s, (slen - s), p, n);
-	    if (p == NULL)
-		kstop("vsnkprintf(): unable to concatinate string.");
+            sbuf[s] = '\0';
+            p = strkcat(sbuf + s, (slen - s), p, n);
+            if (p == NULL)
+            kstop("vsnkprintf(): unable to concatinate string.");
 
-	    s += n;
+            s += n;
 
-	    break;
-	}
+            break;
+        }
 
-	++fp;
+        ++fp;
     }
 
 exit:
@@ -322,16 +320,16 @@ void kprint_bitinfo(bitinfo_t *info, uint32_t bits)
 
     while (info[i].bit != 0)
     {
-	if ((u & info[i].bit) == info[i].bit)
-	{
-	    putstr(info[i].name);
+        if ((u & info[i].bit) == info[i].bit)
+        {
+            putstr(info[i].name);
 
-	    u &= ~info[i].bit;
-	    if (u)
-		putstr(" ");
-	}
+            u &= ~info[i].bit;
+            if (u)
+                putstr(" ");
+        }
 
-	++i;
+        ++i;
     }
 }
 

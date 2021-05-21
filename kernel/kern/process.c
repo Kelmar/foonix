@@ -82,14 +82,14 @@ void process_stub(void)
      * list.
      */
     if (proc->m_prev != 0)
-	proc->m_prev->m_next = proc->m_next;
+        proc->m_prev->m_next = proc->m_next;
     else
-	s_firstProc = proc->m_next;
+        s_firstProc = proc->m_next;
 
     if (proc->m_next != 0)
-	proc->m_next->m_prev = proc->m_prev;
+        proc->m_next->m_prev = proc->m_prev;
     else
-	s_lastProc = proc->m_prev;
+        s_lastProc = proc->m_prev;
 
     /* 
      * Use the previous process so we don't accidentally steal cylces
@@ -105,7 +105,7 @@ void process_stub(void)
      */
     sti(); /* Re-enable interrupts so the next task switch will occur */
     for (;;) /* Loop forever! */
-	;
+        ;
 }
 
 /*************************************************************************/
@@ -138,15 +138,15 @@ void start_process(process_t *proc)
     /* Primitive mutex, add to process list */
     cli();
     {
-	proc->m_prev = 0;
-	proc->m_next = s_firstProc;
+        proc->m_prev = 0;
+        proc->m_next = s_firstProc;
 
-	if (s_firstProc)
-	    s_firstProc->m_prev = proc;
-	else
-	    s_lastProc = proc;
+        if (s_firstProc)
+            s_firstProc->m_prev = proc;
+        else
+            s_lastProc = proc;
 
-	s_firstProc = proc;
+        s_firstProc = proc;
     }
     sti();
 }
@@ -177,39 +177,39 @@ void run_scheduler(struct regs *r)
 
     /* Clean up any finished processes here. */
     for (i = s_finished; i && (n = i->m_next, true); i = n)
-	kfree(i);
+	    kfree(i);
 
     s_finished = NULL;
 
     /* Move to the next process in our list. */
     if (s_current != NULL)
     {
-	if (s_current->m_slicesLeft > 0)
-	{
-	    --s_current->m_slicesLeft;
-	    return;
-	}
-	
-	/* Save the current processe's state. */
-	memcpy(&s_current->m_regs, r, sizeof(struct regs));
+        if (s_current->m_slicesLeft > 0)
+        {
+            --s_current->m_slicesLeft;
+            return;
+        }
+        
+        /* Save the current processe's state. */
+        memcpy(&s_current->m_regs, r, sizeof(struct regs));
 
-	if (s_current->m_next)
-	    s_current = s_current->m_next;
-	else
-	    s_current = s_firstProc;
+        if (s_current->m_next)
+            s_current = s_current->m_next;
+        else
+            s_current = s_firstProc;
     }
     else
-	s_current = s_firstProc;
+        s_current = s_firstProc;
 
     if (s_current)
     {
-	s_current->m_slicesLeft = 10;
+        s_current->m_slicesLeft = 10;
 
-	/* Our own stack pointer needs to remain the same. */
-	s_current->m_regs.esp = r->esp;
+        /* Our own stack pointer needs to remain the same. */
+        s_current->m_regs.esp = r->esp;
 
-	/* Load in the information to do context switch */
-	memcpy(r, &s_current->m_regs, sizeof(struct regs));
+        /* Load in the information to do context switch */
+        memcpy(r, &s_current->m_regs, sizeof(struct regs));
     }
 }
 

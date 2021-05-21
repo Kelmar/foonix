@@ -45,7 +45,7 @@ void cmemset(void *dst, unsigned char val, size_t sz)
     size_t i;
 
     for (i = 0; i < sz; ++i)
-	((char *)dst)[i] = val;
+        ((char *)dst)[i] = val;
 }
 
 void test1(void)
@@ -58,12 +58,12 @@ void test1(void)
     /* Validate that it worked.... */
     for (size_t i = 0; i < sizeof(buf); ++i)
     {
-	if (buf[i] != 0)
-	{
-	    printf("Test failed at byte: %d!\r\n", i);
-	    printf("BYTE: 0x%02X\r\n", buf[i]);
-	    exit(-1);
-	}
+        if (buf[i] != 0)
+        {
+            printf("Test failed at byte: %d!\r\n", i);
+            printf("BYTE: 0x%02X\r\n", buf[i]);
+            exit(-1);
+        }
     }
 #endif
 }

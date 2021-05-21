@@ -15,16 +15,16 @@
 
 /*************************************************************************/
 
-#define ATAREG_DATA	    /* base_port1 */ 0
-#define ATAREG_ERROR	    /* base_port1 */ 1
-#define ATAREG_FEATURES	    /* base_port1 */ 1
+#define ATAREG_DATA         /* base_port1 */ 0
+#define ATAREG_ERROR        /* base_port1 */ 1
+#define ATAREG_FEATURES     /* base_port1 */ 1
 #define ATAREG_SECTOR_CNT   /* base_port1 */ 2
-#define ATAREG_LBA_LOW	    /* base_port1 */ 3
-#define ATAREG_LBA_MID	    /* base_port1 */ 4
-#define ATAREG_LBA_HIGH	    /* base_port1 */ 5
-#define ATAREG_HEAD	    /* base_port1 */ 6
-#define ATAREG_STATUS	    /* base_port1 */ 7
-#define ATAREG_COMMAND	    /* base_port1 */ 7
+#define ATAREG_LBA_LOW      /* base_port1 */ 3
+#define ATAREG_LBA_MID      /* base_port1 */ 4
+#define ATAREG_LBA_HIGH     /* base_port1 */ 5
+#define ATAREG_HEAD         /* base_port1 */ 6
+#define ATAREG_STATUS       /* base_port1 */ 7
+#define ATAREG_COMMAND      /* base_port1 */ 7
 #define ATAREG_ALT_STATUS   /* base_port2 */ 0
 #define ATAREG_DEV_CONTROL  /* base_port2 */ 0
 
@@ -52,10 +52,10 @@ uint8_t read_status(ata_bus_t *bus, bool_t delay)
 {
     if (delay)
     {
-	int i;
+        int i;
 
-	for (i = 0; i < 4; ++i)
-	    bus_read_1(bus->base_port1, ATAREG_STATUS);
+        for (i = 0; i < 4; ++i)
+            bus_read_1(bus->base_port1, ATAREG_STATUS);
     }
 
     return bus_read_1(bus->base_port1, ATAREG_STATUS);
@@ -79,19 +79,19 @@ static bool_t ata_wait(ata_bus_t *bus, int mask, int bits, uint32_t timeout)
     uint8_t status;
 
     if (timeout == 0)
-	return false;
+        return false;
 
     init_ktimer(&timer, timeout);
 
     for (;;)
     {
-	status = bus_read_1(bus->base_port1, ATAREG_STATUS);
+        status = bus_read_1(bus->base_port1, ATAREG_STATUS);
 
-	if ((status & (ATA_STATUS_BSY | mask)) == bits)
-	    break;
+        if ((status & (ATA_STATUS_BSY | mask)) == bits)
+            break;
 
-	if (!check_ktimer(&timer))
-	    return false;
+        if (!check_ktimer(&timer))
+            return false;
     }
 
     return true;
@@ -107,33 +107,32 @@ static int wait_read(ata_bus_t *bus, ata_command_t *cmd)
     ktimer_t timer;
 
     if (cmd->timeout > 0)
-	init_ktimer(&timer, cmd->timeout);
+        init_ktimer(&timer, cmd->timeout);
 
     for (;;)
     {
-	if (cmd->status & ATA_STATUS_ERR)
-	{
-	    cmd->error = bus_read_1(bus->base_port1, ATAREG_ERROR);
+        if (cmd->status & ATA_STATUS_ERR)
+        {
+            cmd->error = bus_read_1(bus->base_port1, ATAREG_ERROR);
 
-	    if (cmd->error != 0)
-		return ATA_ERR_ABRTCMD;
-	}
+            if (cmd->error != 0)
+                return ATA_ERR_ABRTCMD;
+        }
 
-	if (cmd->status & ATA_STATUS_DRQ)
-	{
-	    bus_read_s2(bus->base_port1, ATAREG_DATA, cmd->data, 
-		cmd->data_sz);
-	    break;
-	}
+        if (cmd->status & ATA_STATUS_DRQ)
+        {
+            bus_read_s2(bus->base_port1, ATAREG_DATA, cmd->data, cmd->data_sz);
+            break;
+        }
 
-	kwait(100);
-	cmd->status = bus_read_1(bus->base_port1, ATAREG_STATUS);
+        kwait(100);
+        cmd->status = bus_read_1(bus->base_port1, ATAREG_STATUS);
 
-	if (cmd->timeout > 0)
-	{
-	    if (!check_ktimer(&timer))
-		return ATA_ERR_TIMEOUT;
-	}
+        if (cmd->timeout > 0)
+        {
+            if (!check_ktimer(&timer))
+                return ATA_ERR_TIMEOUT;
+        }
     }
 
     return ATA_ERR_NOERR;
@@ -153,29 +152,28 @@ static int wait_write(ata_bus_t *bus, ata_command_t *cmd)
 
     for (;;)
     {
-	if (cmd->status & ATA_STATUS_ERR)
-	{
-	    cmd->error = bus_read_1(bus->base_port1, ATAREG_ERROR);
+        if (cmd->status & ATA_STATUS_ERR)
+        {
+            cmd->error = bus_read_1(bus->base_port1, ATAREG_ERROR);
 
-	    if (cmd->error != 0)
-		return ATA_ERR_ABRTCMD;
-	}
+            if (cmd->error != 0)
+                return ATA_ERR_ABRTCMD;
+        }
 
-	if (cmd->status & ATA_STATUS_DRQ)
-	{
-	    bus_write_s2(bus->base_port1, ATAREG_DATA, cmd->data,
-		cmd->data_sz);
-	    break;
-	}
+        if (cmd->status & ATA_STATUS_DRQ)
+        {
+            bus_write_s2(bus->base_port1, ATAREG_DATA, cmd->data, cmd->data_sz);
+            break;
+        }
 
-	kwait(100);
-	cmd->status = bus_read_1(bus->base_port2, ATAREG_ALT_STATUS);
+        kwait(100);
+        cmd->status = bus_read_1(bus->base_port2, ATAREG_ALT_STATUS);
 
-	if (cmd->timeout > 0)
-	{
-	    if (!check_ktimer(&timer))
-		return ATA_ERR_TIMEOUT;
-	}
+        if (cmd->timeout > 0)
+        {
+            if (!check_ktimer(&timer))
+                return ATA_ERR_TIMEOUT;
+        }
     }
 
     return ATA_ERR_NOERR;
@@ -215,10 +213,10 @@ static int exec_command(ata_bus_t *bus, ata_command_t *cmd)
 
     if (cmd->flags & ATA_FLAG_DATA)
     {
-	if (cmd->flags & ATA_FLAG_READ)
-	    rval = wait_read(bus, cmd);
-	else
-	    rval = wait_write(bus, cmd);
+        if (cmd->flags & ATA_FLAG_READ)
+            rval = wait_read(bus, cmd);
+        else
+            rval = wait_write(bus, cmd);
     }
 
     return rval;
@@ -257,11 +255,11 @@ int do_ata_command(ata_bus_t *bus, ata_command_t *cmd)
 
     /* Sanity check... */
     if (((cmd->flags & ATA_FLAG_DATA) != 0) && (!cmd->data || !cmd->data_sz))
-	return ATA_ERR_BADPARAM;
+        return ATA_ERR_BADPARAM;
 
     /* Select drive and wait for it to finish with whatever it's doing. */
     if (!select_device(bus, cmd->head, cmd->timeout))
-	return ATA_ERR_TIMEOUT;
+        return ATA_ERR_TIMEOUT;
 
     block_interrupts();
 
@@ -295,11 +293,11 @@ bool_t reset_bus(ata_bus_t *bus)
 
     if (status & (ATA_STATUS_BSY | ATA_STATUS_DRQ))
     {
-	if (!ata_wait(bus, ATA_STATUS_RDY, ATA_STATUS_RDY, 1000))
-	{
-	    kprintf("ATA bus %d timed out waiting for reset.\n", bus->id);
-	    return false;
-	}
+        if (!ata_wait(bus, ATA_STATUS_RDY, ATA_STATUS_RDY, 1000))
+        {
+            kprintf("ATA bus %d timed out waiting for reset.\n", bus->id);
+            return false;
+        }
     }
 
     return true;
@@ -333,7 +331,7 @@ int get_ata_params(ata_bus_t *bus, int drive, ata_params_t *prms)
 
     /* Check for magic bytes to see if this is an ATA or ATAPI device. */
     if (!select_device(bus, cmd.head, 1000))
-	return ATA_ERR_TIMEOUT;
+        return ATA_ERR_TIMEOUT;
 
     bus_read_1(bus->base_port1, ATAREG_SECTOR_CNT);
     bus_read_1(bus->base_port1, ATAREG_LBA_LOW);
@@ -341,9 +339,9 @@ int get_ata_params(ata_bus_t *bus, int drive, ata_params_t *prms)
     lba_hi = bus_read_1(bus->base_port1, ATAREG_LBA_HIGH);
 
     if ((lba_lo == 0x14) && (lba_hi == 0xEB))
-	cmd.command = ATAPI_IDENTIFY_DEVICE;
+        cmd.command = ATAPI_IDENTIFY_DEVICE;
     else
-	cmd.command = WDCC_IDENTIFY;
+        cmd.command = WDCC_IDENTIFY;
 
     cmd.flags = ATA_FLAG_READ;
     cmd.timeout = 1000;
@@ -354,14 +352,13 @@ int get_ata_params(ata_bus_t *bus, int drive, ata_params_t *prms)
 
     if ((err == ATA_ERR_NOERR) && ((cmd.status & ATA_STATUS_ERR) == 0))
     {
-	fix_atap_str(prms->atap_model, ATA_SZ_MODEL);
-	fix_atap_str(prms->atap_revision, ATA_SZ_REVISION);
-	fix_atap_str(prms->atap_serial, ATA_SZ_SERIAL);
+        fix_atap_str(prms->atap_model, ATA_SZ_MODEL);
+        fix_atap_str(prms->atap_revision, ATA_SZ_REVISION);
+        fix_atap_str(prms->atap_serial, ATA_SZ_SERIAL);
     }
     else
     {
-	kprintf("ATA bus %d DEVICE %d returned error on ID: %d 0x%02X\n",
-	    bus->id, drive, err, cmd.error);
+        kprintf("ATA bus %d DEVICE %d returned error on ID: %d 0x%02X\n", bus->id, drive, err, cmd.error);
     }
 
     return err;   
@@ -381,69 +378,59 @@ void init_bus(ata_bus_t *bus)
 
     if (status != 0xFF)
     {
-	ata_params_t prms;
-	ata_device_t *dev;
-	int err, i;
+        ata_params_t prms;
+        ata_device_t *dev;
+        int err, i;
 
-	for (i = 0; i < 2; ++i)
-	{
-	    err = get_ata_params(bus, i, &prms);
+        for (i = 0; i < 2; ++i)
+        {
+            err = get_ata_params(bus, i, &prms);
 
-	    if (err == ATA_ERR_NOERR)
-	    {
-		dev = (ata_device_t *)kmalloc(sizeof(ata_device_t));
-		memset(dev, 0, sizeof(ata_device_t));
+            if (err == ATA_ERR_NOERR)
+            {
+                dev = (ata_device_t *)kmalloc(sizeof(ata_device_t));
+                memset(dev, 0, sizeof(ata_device_t));
 
-		dev->id = (i == 1) ? 0x10 : 0;
+                dev->id = (i == 1) ? 0x10 : 0;
 
-		strkcpy(
-		    dev->model, ATA_SZ_MODEL,
-		    prms.atap_model, ATA_SZ_MODEL);
+                strkcpy(dev->model, ATA_SZ_MODEL, prms.atap_model, ATA_SZ_MODEL);
 
-		strkcpy(
-		    dev->revision, ATA_SZ_REVISION,
-		    prms.atap_revision, ATA_SZ_REVISION);
+                strkcpy(dev->revision, ATA_SZ_REVISION, prms.atap_revision, ATA_SZ_REVISION);
 
-		strkcpy(
-		    dev->serial, ATA_SZ_SERIAL,
-		    prms.atap_serial, ATA_SZ_SERIAL);
+                strkcpy(dev->serial, ATA_SZ_SERIAL, prms.atap_serial, ATA_SZ_SERIAL);
 
-		if (prms.atap_sec_st & WDC_SEC_ESE_SUPP)
-		    dev->sec_flags |= ATADEV_SEC_SUPPORTED;
+                if (prms.atap_sec_st & WDC_SEC_ESE_SUPP)
+                    dev->sec_flags |= ATADEV_SEC_SUPPORTED;
 
-		if (prms.atap_sec_st & WDC_SEC_FROZEN)
-		    dev->sec_flags |= ATADEV_SEC_FROZEN;
+                if (prms.atap_sec_st & WDC_SEC_FROZEN)
+                    dev->sec_flags |= ATADEV_SEC_FROZEN;
 
-		if (prms.atap_sec_st & WDC_SEC_LOCKED)
-		{
-		    dev->sec_flags |= 
-			ATADEV_SEC_LOCKED |
-			ATADEV_SEC_SUPPORTED;
-		}
+                if (prms.atap_sec_st & WDC_SEC_LOCKED)
+                {
+                    dev->sec_flags |= ATADEV_SEC_LOCKED | ATADEV_SEC_SUPPORTED;
+                }
 
-		if (prms.atap_sec_st & WDC_SEC_EN)
-		{
-		    dev->sec_flags |= 
-			ATADEV_SEC_ENABLED | 
-			ATADEV_SEC_SUPPORTED;
-		}
+                if (prms.atap_sec_st & WDC_SEC_EN)
+                {
+                    dev->sec_flags |= ATADEV_SEC_ENABLED | ATADEV_SEC_SUPPORTED;
+                }
 
-		if (prms.atap_sec_st & WDC_SEC_EXP)
-		    dev->sec_flags |= ATADEV_SEC_COUNT_EXP;
+                if (prms.atap_sec_st & WDC_SEC_EXP)
+                    dev->sec_flags |= ATADEV_SEC_COUNT_EXP;
 
-		if (prms.atap_sec_st & WDC_SEC_ESE_SUPP)
-		    dev->sec_flags |= ATADEV_SEC_SUPP_ENHANCED;
+                if (prms.atap_sec_st & WDC_SEC_ESE_SUPP)
+                    dev->sec_flags |= ATADEV_SEC_SUPP_ENHANCED;
 
-		/* Add to list now */
-		bus->devices[i] = dev;
-		bus->dev_count++;
-	    }
-	    else
-		bus->devices[i] = NULL;
-	}
+                /* Add to list now */
+                bus->devices[i] = dev;
+                bus->dev_count++;
+            }
+            else
+                bus->devices[i] = NULL;
+        }
     }
     else
-	kprintf("ATA bus %d is floating, assuming no devices.\n", bus->id);
+        kprintf("ATA bus %d is floating, assuming no devices.\n", bus->id);
 }
 
 /*************************************************************************/
@@ -476,17 +463,14 @@ void init_ata(void)
 ata_bus_t *get_ata_bus(unsigned int id)
 {
     if ((id == 0) || (id > s_num_buses))
-	return NULL;
+        return NULL;
 
     return &s_buses[id - 1];
 }
 
 /*************************************************************************/
 
-void fill_security_cmd(ata_device_t *dev,
-		       ata_command_t *cmd,
-		       atasecbuffer_t *params, 
-		       const char *passwd, size_t psz)
+void fill_security_cmd(ata_device_t *dev, ata_command_t *cmd, atasecbuffer_t *params, const char *passwd, size_t psz)
 {
     memset(cmd, 0, sizeof(ata_command_t));
 
@@ -495,29 +479,23 @@ void fill_security_cmd(ata_device_t *dev,
 
     if (params != NULL)
     {
-	cmd->flags = ATA_FLAG_WRITE;
+        cmd->flags = ATA_FLAG_WRITE;
 
-	cmd->data = params;
-	cmd->data_sz = sizeof(atasecbuffer_t);
+        cmd->data = params;
+        cmd->data_sz = sizeof(atasecbuffer_t);
 
-	params->data.flags = 
-	    SEC_FLAG_USER |
-	    SEC_FLAG_NORMAL_ERASE |
-	    SEC_FLAG_LEVEL_HIGH;
+        params->data.flags = SEC_FLAG_USER | SEC_FLAG_NORMAL_ERASE | SEC_FLAG_LEVEL_HIGH;
 
-	if (passwd != NULL)
-	{
-	    strkcpy(
-		(char *)params->data.password, ATA_SEC_PASSWORD_SIZE,
-		passwd, psz);
-	}
+        if (passwd != NULL)
+        {
+            strkcpy((char *)params->data.password, ATA_SEC_PASSWORD_SIZE,passwd, psz);
+        }
     }   
 }
 
 /*************************************************************************/
 
-int set_device_password(ata_bus_t *bus, ata_device_t *dev, 
-			const char *passwd, size_t psz)
+int set_device_password(ata_bus_t *bus, ata_device_t *dev, const char *passwd, size_t psz)
 {
     int drive = dev->id ? 1 : 0;
     atasecbuffer_t params;
@@ -533,8 +511,7 @@ int set_device_password(ata_bus_t *bus, ata_device_t *dev,
 
 /*************************************************************************/
 
-int erase_device(ata_bus_t *bus, ata_device_t *dev,
-		 const char *passwd, size_t psz)
+int erase_device(ata_bus_t *bus, ata_device_t *dev, const char *passwd, size_t psz)
 {
     int drive = dev->id ? 1 : 0;
     atasecbuffer_t params;
@@ -550,24 +527,22 @@ int erase_device(ata_bus_t *bus, ata_device_t *dev,
 
     if (err == ATA_ERR_NOERR)
     {
-	fill_security_cmd(dev, &cmd, &params, passwd, psz);
-	cmd.command = WDCC_SECURITY_ERASE_UNIT;
+        fill_security_cmd(dev, &cmd, &params, passwd, psz);
+        cmd.command = WDCC_SECURITY_ERASE_UNIT;
 
-	kprintf("ATA bus %d DEVICE %d: Sending erase command\n", 
-	    bus->id, drive);
+        kprintf("ATA bus %d DEVICE %d: Sending erase command\n", bus->id, drive);
 
-	err = do_ata_command(bus, &cmd);
+        err = do_ata_command(bus, &cmd);
 
-	if (err != ATA_ERR_NOERR)
-	{
-	    kprintf("ATA bus %d DEVICE %d: Error sending erase command: %d\n",
-		bus->id, drive, err);
-	}
+        if (err != ATA_ERR_NOERR)
+        {
+            kprintf("ATA bus %d DEVICE %d: Error sending erase command: %d\n",
+            bus->id, drive, err);
+        }
     }
     else
     {
-	kprintf("ATA bus %d DEVICE %d: Unable to prepair for erase: %d\n",
-	    bus->id, dev->id, err);
+        kprintf("ATA bus %d DEVICE %d: Unable to prepair for erase: %d\n", bus->id, dev->id, err);
     }
 
     return err;
@@ -575,56 +550,49 @@ int erase_device(ata_bus_t *bus, ata_device_t *dev,
 
 /*************************************************************************/
 
-void wipe_drive(ata_bus_t *bus, int drive, 
-		const char *passwd, size_t psz)
+void wipe_drive(ata_bus_t *bus, int drive, const char *passwd, size_t psz)
 {
     ata_device_t *dev = bus->devices[drive];
     int err;
 
     if (dev == NULL)
     {
-	kprintf("wipe_drive(): ATA bus %d DEVICE %d not attached.\n", 
-	    bus->id, drive);
-	return;
+        kprintf("wipe_drive(): ATA bus %d DEVICE %d not attached.\n", bus->id, drive);
+        return;
     }
 
     if ((dev->sec_flags & ATADEV_SEC_SUPPORTED) == 0)
     {
-	kprintf("wipe_drive(): ATA bus %d DEVICE %d does not "
-	    "support secure erase.\n", bus->id, drive);
-	return;
+        kprintf("wipe_drive(): ATA bus %d DEVICE %d does not support secure erase.\n", bus->id, drive);
+        return;
     }
 
     if (dev->sec_flags & ATADEV_SEC_FROZEN)
     {
-	kprintf("wipe_drive(): ATA bus %d DEVICE %d is frozen.\n",
-	    bus->id, drive);
-	return;
+        kprintf("wipe_drive(): ATA bus %d DEVICE %d is frozen.\n", bus->id, drive);
+        return;
     }
 
     if ((dev->sec_flags & ATADEV_SEC_LOCKED) == 0)
     {
-	err = set_device_password(bus, dev, passwd, psz);
+        err = set_device_password(bus, dev, passwd, psz);
 
-	if (err != ATA_ERR_NOERR)
-	{
-	    kprintf("wipe_drive(): ATA bus %d DEVICE %d returned error: %d\n",
-		bus->id, drive, err);
-	    return;
-	}
+        if (err != ATA_ERR_NOERR)
+        {
+            kprintf("wipe_drive(): ATA bus %d DEVICE %d returned error: %d\n", bus->id, drive, err);
+            return;
+        }
     }
 
     err = erase_device(bus, dev, passwd, psz);
 
     if (err != ATA_ERR_NOERR)
     {
-	kprintf("wipe_drive(): ATA bus %d DEVICE %d returned error: %d\n",
-	    bus->id, drive, err);
-	return;
+        kprintf("wipe_drive(): ATA bus %d DEVICE %d returned error: %d\n", bus->id, drive, err);
+        return;
     }
 
-    kprintf("wipe_drive(): ATA bus %d DEVICE %d drive is wiping....\n",
-	bus->id, drive);
+    kprintf("wipe_drive(): ATA bus %d DEVICE %d drive is wiping....\n", bus->id, drive);
 }
 
 /*************************************************************************/

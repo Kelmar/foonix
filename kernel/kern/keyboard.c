@@ -237,17 +237,17 @@ static void keyboard_handler(struct regs *r)
     case SC_L_SHIFT:
     case SC_R_SHIFT:
         shift_adj = SS_SHIFT;
-	break;
+        break;
 
     case SC_L_CTRL:
 /*    case SC_R_CTRL: */
-	shift_adj = SS_CTRL;
-	break;
+        shift_adj = SS_CTRL;
+        break;
 
     case SC_L_ALT:
 /*    case SC_R_ALT: */
-	shift_adj = ~SS_ALT;
-	break;
+        shift_adj = ~SS_ALT;
+        break;
 
     case SC_CAPS_LOCK:
         lock_bit = SS_CAPS;
@@ -262,8 +262,8 @@ static void keyboard_handler(struct regs *r)
         break;
 
     default:
-	do_callback = true;
-	break;
+        do_callback = true;
+        break;
     }
 
     if (lock_bit && (last_states[scancode] == 1))
@@ -278,9 +278,9 @@ static void keyboard_handler(struct regs *r)
 
     if (do_callback && (s_callback != NULL))
     {
-	char charcode = ascii_keymap[scancode];
+        char charcode = ascii_keymap[scancode];
 
-	s_callback(scancode, charcode);
+        s_callback(scancode, charcode);
     }
 }
 

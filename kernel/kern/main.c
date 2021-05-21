@@ -167,7 +167,7 @@ void stack_trace(uintptr_t stack)
         eip = ebp[1];
 
         if (eip == 0)
-	{
+        {
             kprintf("END OF STACK TRACE: EIP == 0\n");
             break;
         }

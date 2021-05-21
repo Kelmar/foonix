@@ -70,7 +70,7 @@ struct gdt_entry2_TYPE
     uint8_t  limit_mid   : 4; /* Limit 19:16 */
     uint8_t  available   : 1; /* Available flag */
     uint8_t  l_flag      : 1; /* 64-bit code segment */
-    uint8_t  op_size     : 1; /* Default operation size (0 = 16 bit; 1 = 32 */
+    uint8_t  op_size     : 1; /* Default operation size (0 = 16 bit; 1 = 32) */
     uint8_t  granularity : 1; /* Granularity flag */
 
     uint8_t  base_high;       /* Base 31:24 */
@@ -84,8 +84,8 @@ typedef struct gdt_entry2_TYPE gdt_entry2_t;
  */
 struct gdt_ptr_TYPE
 {
-    uint16_t	limit;	    /* Number of entries */
-    gdt_entry_t	*base;	    /* Pointer to table itself. */
+    uint16_t    limit;      /* Number of entries */
+    gdt_entry_t *base;      /* Pointer to table itself. */
 } __attribute__((packed));
 
 typedef struct gdt_ptr_TYPE gdt_ptr_t;
@@ -95,11 +95,11 @@ typedef struct gdt_ptr_TYPE gdt_ptr_t;
  */
 struct idt_entry_TYPE
 {
-    uint16_t base_low;	    /* Base address low */
-    uint16_t selector;	    /* Kernel segment selector */
-    uint8_t  reserved;	    /* Reserved, always zero */
-    uint8_t  flags;	    /* Flags */
-    uint16_t base_hi;	    /* Base address high */
+    uint16_t base_low;      /* Base address low */
+    uint16_t selector;      /* Kernel segment selector */
+    uint8_t  reserved;      /* Reserved, always zero */
+    uint8_t  flags;         /* Flags */
+    uint16_t base_hi;       /* Base address high */
 } __attribute__((packed));
 
 typedef struct idt_entry_TYPE idt_entry_t;
@@ -109,8 +109,8 @@ typedef struct idt_entry_TYPE idt_entry_t;
  */
 struct idt_ptr_TYPE
 {
-    uint16_t	limit;
-    idt_entry_t	*base;
+    uint16_t    limit;
+    idt_entry_t *base;
 } __attribute__((packed));
 
 typedef struct idt_ptr_TYPE idt_ptr_t;
@@ -269,9 +269,7 @@ void init_descriptor_tables(void)
 /*
  * Setup a descriptor in the GDT.
  */
-static void gdt_set_gate(int num,
-                         void *base, uint32_t limit,
-                         uint8_t access, uint8_t gran)
+static void gdt_set_gate(int num, void *base, uint32_t limit, uint8_t access, uint8_t gran)
 {
     uintptr_t b = (uintptr_t)base;
 
@@ -431,18 +429,12 @@ static void init_interrupts(void)
 void dump_regs(const struct regs *r)
 {
     putstr("CPU DUMP:\n");
-    kprintf("EAX: %p  EBX: %p  ECX: %p  EDX: %p\n",
-	r->eax, r->ebx, r->ecx, r->edx);
-    kprintf("EDI: %p  ESI: %p  EBP: %p  ESP: %p\n",
-	r->edi, r->esi, r->ebp, r->esp);
-    kprintf(" GS: %p   FS: %p   ES: %p   DS: %p\n",
-	r->gs, r->fs, r->es, r->ds);
-    kprintf(" CS: %p  EIP: %p   SS: %p  ESP: %p\n",
-	r->cs, r->eip, r->ss, r->useresp);
-    kprintf("CR0: %p  CR2: %p  CR3: %p  CR4: %p\n",
-	read_cr0(), read_cr2(), read_cr3(), read_cr4());
-    kprintf("FLG: %p\n",
-	r->eflags);
+    kprintf("EAX: %p  EBX: %p  ECX: %p  EDX: %p\n", r->eax, r->ebx, r->ecx, r->edx);
+    kprintf("EDI: %p  ESI: %p  EBP: %p  ESP: %p\n", r->edi, r->esi, r->ebp, r->esp);
+    kprintf(" GS: %p   FS: %p   ES: %p   DS: %p\n", r->gs, r->fs, r->es, r->ds);
+    kprintf(" CS: %p  EIP: %p   SS: %p  ESP: %p\n", r->cs, r->eip, r->ss, r->useresp);
+    kprintf("CR0: %p  CR2: %p  CR3: %p  CR4: %p\n", read_cr0(), read_cr2(), read_cr3(), read_cr4());
+    kprintf("FLG: %p\n", r->eflags);
 }
 
 /*************************************************************************/
@@ -454,7 +446,7 @@ static void panic_handler(struct regs *r)
     char *msg = "Unknown Exception";
 
     if (r->int_no < 32)
-	msg = exception_messages[r->int_no];
+        msg = exception_messages[r->int_no];
 
     /*
      * Display our own little BSOD and halt the system.
@@ -496,48 +488,46 @@ void handle_isr(struct regs *r)
 
     if (++s_exception_depth > 1)
     {
-	kstop("Caught nested exceptions.");
+        kstop("Caught nested exceptions.");
     }
 
     isr_handler_t cb = s_isr_callbacks[r->int_no];
 
     if (cb == NULL)
     {
-	if (!is_irq && (r->int_no < 32))
-	    panic_handler(r);
-	else
-	    default_handler(r);
+        if (!is_irq && (r->int_no < 32))
+            panic_handler(r);
+        else
+            default_handler(r);
     }
     else
     {
-	/* Call the callback */
-	cb(r);
+        /* Call the callback */
+        cb(r);
     }
 
     if (r->int_no != 32)
     {
-	i = snkprintf(
-	    buf, sizeof(buf),
-	    "INT: %02X", r->int_no);
+        i = snkprintf(buf, sizeof(buf), "INT: %02X", r->int_no);
     }
     else
-	i = 0;
+        i = 0;
 
     if (i != 0)
-	set_debug_section_info(s_debsect, buf, i);
+        set_debug_section_info(s_debsect, buf, i);
 
     if (is_irq)
     {
-	/*
-	 * If IRQ 8-15, we need to send an EOI to the slave controller.
-	 */
-	if (irq_no >= 8)
-	    bus_write_1((unsigned char *)0xA0, 0, 0x20);
+        /*
+         * If IRQ 8-15, we need to send an EOI to the slave controller.
+         */
+        if (irq_no >= 8)
+            bus_write_1((unsigned char *)0xA0, 0, 0x20);
 
-	/*
-	 * In all cases we need to send an EOI to the master controller.
-	 */
-	bus_write_1((unsigned char *)0x20, 0, 0x20);
+        /*
+         * In all cases we need to send an EOI to the master controller.
+         */
+        bus_write_1((unsigned char *)0x20, 0, 0x20);
     }
 
     --s_exception_depth;

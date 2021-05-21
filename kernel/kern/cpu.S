@@ -303,7 +303,7 @@ _LABEL(read_rtc_second)
 /*
  * Reads the current time of day from the RTC.
  *
- * Value returned is the number of seconds sense midnight.
+ * Value returned is the number of seconds since midnight.
  */
 _LABEL(read_rtc_time)
 	xorl %eax, %eax

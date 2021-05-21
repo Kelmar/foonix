@@ -24,36 +24,33 @@ void HexDump(void *block, size_t sz)
     putstr(" Values                  -                         : Characters\n");
     putstr("======================================================================\n");
 
-
     for (i = 0; i < sz; i += chunk)
     {
-	if ((i + 16) > sz)
-	    chunk = sz - i;
-	else
-	    chunk = 16;
+        if ((i + 16) > sz)
+            chunk = sz - i;
+        else
+            chunk = 16;
 
-	obuf[0] = '\0';
-	putstr(" ");
-	for (j = 0; j < chunk; ++j)
-	{
-	    c = data[i + j] & 0xFF;
+        putstr(" ");
+        for (j = 0; j < chunk; ++j)
+        {
+            c = data[i + j] & 0xFF;
+            obuf[j] = (c >= 32) ? (char)c : '.';
 
-	    if (c >= 32)
-		obuf[j] = (char)c;
-	    else
-		obuf[j] = '.';
+            kprintf("%02X ", c);
 
-	    kprintf("%02X ", c);
+            if (j == 7)
+                putstr("- ");
+        }
 
-	    if (j == 7)
-		putstr("- ");
-	}
+        for (; j < 16; ++j)
+        {
+            putstr("   ");
+            obuf[j] = ' ';
+        }
 
-	for (;j < 16; ++j)
-	    putstr("   ");
-
-	obuf[16] = '\0';
-	kprintf(": %s\n", obuf);
+        obuf[16] = '\0';
+        kprintf(": %s\n", obuf);
     }
 }
 

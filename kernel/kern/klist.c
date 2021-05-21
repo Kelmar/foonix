@@ -88,7 +88,7 @@ klist_t *klist_create(size_t max_count,
 
     if (alloc == NULL)
     {
-	// Use default allocation method.
+        // Use default allocation method.
         ptr = kmalloc(list_sz);
     }
     else
@@ -104,7 +104,7 @@ klist_t *klist_create(size_t max_count,
 void klist_free(klist_t *list)
 {
     if (!list || (!list->free))
-	return; // Can't free
+        return; // Can't free
 
     list->free(list->array);
     list->free(list);
@@ -123,21 +123,21 @@ void klist_insert(klist_t *list, void *item)
     ASSERT(list->count < list->max_count, "List overflow");
 
     if (!list)
-	return;
+        return;
 
     while ((i < list->count) && (list->cmp_func(list->array[i], item) < 0))
-	++i;
+        ++i;
 
     if (i < list->count)
     {
         // Create a gap for our new item.
-	register size_t j = list->count;
+        register size_t j = list->count;
 
-	while (j >= i)
-	{
-	    list->array[j] = list->array[j - 1];
-	    --j;
-	}
+        while (j >= i)
+        {
+            list->array[j] = list->array[j - 1];
+            --j;
+        }
     }
 
     list->array[i] = item;
@@ -155,12 +155,9 @@ void klist_remove(klist_t *list, size_t index)
 
     if (index < (list->count - 1))
     {
-	size_t cnt = list->count - index;
+        size_t cnt = list->count - index;
 
-	memcpy(
-	    list->array[index],
-	    list->array[index + 1],
-	    sizeof(void *) * cnt);
+        memcpy(list->array[index], list->array[index + 1], sizeof(void *) * cnt);
     }
 
     list->array[--list->count] = NULL;

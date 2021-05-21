@@ -21,9 +21,9 @@ boot.img: kern
 	@ls -la kernel/kern/kernel.bin | awk '{print "GRUB Command: kernel 200+" (int($$5 / 512) + 1) }'
 
 kern:
-	@for _dir in ${SUBDIRS}; do	\
-	    cd $$_dir;			\
-	    $(MAKE);			\
+	@for _dir in ${SUBDIRS}; do \
+	    cd $$_dir;              \
+	    $(MAKE);                \
 	done
 
 fetch:
@@ -31,14 +31,14 @@ fetch:
 
 tools: fetch
 	@if [ ! -d tools ] ; then \
-	    mkdir tools; \
+	    mkdir tools;          \
 	fi
 	cd tars; $(MAKE) PREFIX=$(TOOLSDIR)
 
 clean:
-	@for _dir in ${SUBDIRS}; do	\
-	    cd $$_dir;			\
-	    $(MAKE) clean;		\
+	@for _dir in ${SUBDIRS}; do \
+	    cd $$_dir;              \
+	    $(MAKE) clean;          \
 	done
 	cd tars; $(MAKE) clean
 	rm -f *.core core pad *.img

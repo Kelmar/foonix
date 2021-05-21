@@ -34,8 +34,8 @@
 
 /*************************************************************************/
 
-#define TOF_INIT	0x01 /* Initialized flag */
-#define TOF_ISMONO	0x02 /* Monocrome flag */
+#define TOF_INIT    0x01 /* Initialized flag */
+#define TOF_ISMONO  0x02 /* Monocrome flag */
 
 /*************************************************************************/
 
@@ -64,14 +64,14 @@ int get_debug_section()
 
     for (rval = 0; rval < NUM_DEB_SECTIONS; ++rval)
     {
-	if (s_debug_sect[rval] == NULL)
-	    break;
+        if (s_debug_sect[rval] == NULL)
+            break;
     }
 
     if (rval < NUM_DEB_SECTIONS)
-	s_debug_sect[rval] = s_debug_info + (rval * SECT_LEN);
+        s_debug_sect[rval] = s_debug_info + (rval * SECT_LEN);
     else
-	rval = -1;
+        rval = -1;
 
     return rval;
 }
@@ -81,7 +81,7 @@ int get_debug_section()
 void release_debug_section(int sect)
 {
     if ((sect < 0) || (sect >= NUM_DEB_SECTIONS))
-	return;
+        return;
 
     s_debug_sect[sect] = NULL;
 }
@@ -96,32 +96,32 @@ void update_debug_sections(void)
 
     for (;;)
     {
-	for (i = 0; i < MAX_COLS; ++i)
-	{
-	    screen[i * 2 + 0] = s_debug_info[i];
-	    screen[i * 2 + 1] = 0x7F; /* Bright white on grey */
-	}
+        for (i = 0; i < MAX_COLS; ++i)
+        {
+            screen[i * 2 + 0] = s_debug_info[i];
+            screen[i * 2 + 1] = 0x7F; /* Bright white on grey */
+        }
 
-	i = get_shift_state();
-	if (i & SS_SCROLL)
-	    screen[158] = 23; /* goffy arrow */
-	else
-	    screen[158] = ' ';
+        i = get_shift_state();
+        if (i & SS_SCROLL)
+            screen[158] = 23; /* goofy arrow */
+        else
+            screen[158] = ' ';
 
-	if (i & SS_NUM)
-	    screen[156] = '#';
-	else
-	    screen[156] = ' ';
+        if (i & SS_NUM)
+            screen[156] = '#';
+        else
+            screen[156] = ' ';
 
-	if (i & SS_CAPS)
-	    screen[154] = 'A';
-	else
-	    screen[154] = ' ';
+        if (i & SS_CAPS)
+            screen[154] = 'A';
+        else
+            screen[154] = ' ';
 
-	/* Bright green on grey */
-	screen[155] = 0x7A;
-	screen[157] = 0x7A;
-	screen[159] = 0x7A;
+        /* Bright green on grey */
+        screen[155] = 0x7A;
+        screen[157] = 0x7A;
+        screen[159] = 0x7A;
     }
 }
 
@@ -130,7 +130,7 @@ void update_debug_sections(void)
 void set_debug_section_info(int sect, const char *info, size_t ilen)
 {
     if ((sect < 0) || (sect >= NUM_DEB_SECTIONS))
-	return;
+        return;
 
     memset(s_debug_sect[sect], 0, SECT_LEN);
     strkcat(s_debug_sect[sect], SECT_LEN, info, ilen);
@@ -149,7 +149,7 @@ static void init_mono(void)
      * allow for two video cards (one mono, and one vga) in older systems.
      *
      * It is doubtful this is even really a problem any longer as I don't
-     * even think that monochrome display cards are even made any longer.
+     * even think that monochrome display cards are even still made.
      */
     crtr_addr = (unsigned char *)0x03B4;
     crtr_data = (unsigned char *)0x03B5;
@@ -169,7 +169,7 @@ static void init_vga(void)
     ioreg = bus_read_1(MISC_IO_READ, 0);
 
     if (ioreg & IO_ADDR_SEL)
-	crt_base += 0x0020;
+        crt_base += 0x0020;
 
     crtr_addr = (unsigned char *)crt_base;
     crtr_data = (unsigned char *)(crt_base + 1);
@@ -182,12 +182,12 @@ static void init_vga(void)
 void init_display(void)
 {
     if (textout_flags & TOF_INIT)
-	return; /* Already initialized. */
+        return; /* Already initialized. */
 
     if ((VIDDET_LOCATION & VIDDET_MONO_FLAG) == VIDDET_MONO_FLAG)
-	init_mono();
+        init_mono();
     else
-	init_vga();
+        init_vga();
 
     textout_flags |= TOF_INIT;
 
@@ -270,57 +270,57 @@ void putstr(const char *str)
 
     for (i = 0; str[i] != '\0'; ++i)
     {
-	if (str[i] < ' ')
-	{
-	    /* Process a special character. */
+        if (str[i] < ' ')
+        {
+            /* Process a special character. */
 
-	    switch (str[i])
-	    {
-	    case '\007': /* Bell */
-		break;
+            switch (str[i])
+            {
+            case '\007': /* Bell */
+                break;
 
-	    case '\t':   /* Tab */
-		o = col & 7;
-		col += (o == 0) ? 8 : o;
-		break;
+            case '\t':   /* Tab */
+                o = col & 7;
+                col += (o == 0) ? 8 : o;
+                break;
 
-	    case '\r': /* CR */
-	    case '\n': /* LF */
-		/* Move to begining of next line. */
-		col = 0;
-		++line;
+            case '\r': /* CR */
+            case '\n': /* LF */
+                /* Move to begining of next line. */
+                col = 0;
+                ++line;
 
-		/* TODO: Check for \r\n pair? */
-		break;
+                /* TODO: Check for \r\n pair? */
+                break;
 
-	    default:
-		/* Ignore non-printable characters. */
-		break;
-	    }
-	}
-	else
-	{
-	    o = (line * MAX_COLS + col) * 2;
-	    screen[o + 0] = str[i];
-	    screen[o + 1] = 0x07; /* white */
+            default:
+                /* Ignore non-printable characters. */
+                break;
+            }
+        }
+        else
+        {
+            o = (line * MAX_COLS + col) * 2;
+            screen[o + 0] = str[i];
+            screen[o + 1] = 0x07; /* white */
 
-	    ++col;
-	}
+            ++col;
+        }
 
-	/*
-	 * Get the cursor location into a correct "state".
-	 */
-	while (col >= MAX_COLS)
-	{
-	    col -= MAX_COLS;
-	    ++line;
-	}
+        /*
+         * Get the cursor location into a correct "state".
+         */
+        while (col >= MAX_COLS)
+        {
+            col -= MAX_COLS;
+            ++line;
+        }
 
-	while (line >= MAX_LINES)
-	{
-	    --line;
-	    scroll_up();
-	}
+        while (line >= MAX_LINES)
+        {
+            --line;
+            scroll_up();
+        }
     }
 
     set_cursor_loc(col, line);
