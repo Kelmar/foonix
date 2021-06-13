@@ -34,7 +34,7 @@ IND_FREEOBJS=stdio/vsnprintf.o stdio/snprintf.o stdio/vprintf.o stdio/printf.o \
 stdio/putchar.o stdio/puts.o \
 stdlib/abort.o stdlib/malloc.o stdlib/free.o \
 string/memcmp.o string/memcpy.o string/memmove.o string/memset.o string/memchr.o \
-string/_s_strncat.o \
+string/_s_strncat.o string/_s_strncpy.o \
 string/strlen.o string/strnlen.o string/strncat.o string/strncpy.o
 
 IND_HOSTEDOBJS=

@@ -1,9 +1,0 @@
-memcpy _foo_memcpy
-memset _foo_memset
-_memsetw _foo__memsetw
-memchr _foo_memchr
-strnlen _foo_strnlen
-strkcat _foo_strkcat
-strkcpy _foo_strkcpy
-strbswp _foo_strbswp
-strtrim _foo_strtrim

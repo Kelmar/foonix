@@ -23,6 +23,7 @@ char* strncpy(char*, const char*, size_t);
 char* strncat(char*, const char*, size_t);
 
 char* _s_strncat(char*, size_t, const char*, size_t);
+char* _s_strncpy(char*, size_t, const char*, size_t);
 
 __END_EXTERN_C
 
