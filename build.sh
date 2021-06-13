@@ -171,7 +171,7 @@ tools() {
     if [ ! -f Makefile ] ; then
         ../../tars/binutils-$BUVER/configure \
             --prefix=$PREFIX --target=$TARGET \
-            --disable-nls
+            --with-sysroot --disable-nls --disable-werror
     fi
 
     $MAKE all
@@ -191,18 +191,15 @@ tools() {
     fi
 
     $MAKE all-gcc
+    $MAKE all-target-libgcc
     $MAKE install-gcc
+    $MAKE install-target-libgcc
     cd ../..
 }
 
 kernel() {
-    if ! find_gmake ; then
-        if ! build_make ; then
-            echo "You will need to download GNU make."
-            echo "Try: $0 fetch"
-            exit 1
-        fi
-    fi
+    set -e
+    . ./headers.sh
 
     $MAKE
 }
