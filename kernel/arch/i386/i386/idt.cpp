@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include <kernel/flow.h>
+#include <kernel/tty.h>
 
 #include "cpu.h"
 #include "bus.h"
@@ -178,16 +179,16 @@ void init_idt(void)
      *
      * TODO: Get details about reprogramming the PICs.
      */
-    master_pic.write1(0, 0x11);
-    slave_pic .write1(0, 0x11);
-    master_pic.write1(1, 0x20); // IRQ_START?
-    slave_pic .write1(1, 0x28); // IRQ_START + 8?
-    master_pic.write1(1, 0x04);
-    slave_pic .write1(1, 0x02);
-    master_pic.write1(1, 0x01);
-    slave_pic .write1(1, 0x01);
-    master_pic.write1(1, 0);
-    slave_pic .write1(1, 0);
+    master_pic.byte(0, 0x11);
+    slave_pic .byte(0, 0x11);
+    master_pic.byte(1, 0x20); // IRQ_START?
+    slave_pic .byte(1, 0x28); // IRQ_START + 8?
+    master_pic.byte(1, 0x04);
+    slave_pic .byte(1, 0x02);
+    master_pic.byte(1, 0x01);
+    slave_pic .byte(1, 0x01);
+    master_pic.byte(1, 0);
+    slave_pic .byte(1, 0);
 }
 
 /********************************************************************************************************************/
@@ -204,7 +205,7 @@ static void panic_handler(struct regs* r)
     /*
      * Display our own little BSOD and halt the system.
      */
-     //blank_screen();
+    terminal_clear();
     printf("Exception (%02X): %s\n", r->int_no, msg);
     printf("Error code: %d\n\n", r->err_code);
 
@@ -277,13 +278,13 @@ extern "C" void handle_isr(regs* r)
         if (irq_no >= 8)
         {
             bus slave_pic((void*)0x00A0, 2);
-            slave_pic.write1(0, 0x20);
+            slave_pic.byte(0, 0x20);
         }
 
         /*
          * In all cases we need to send an EOI to the master controller.
          */
-        master_pic.write1(0, 0x20);
+        master_pic.byte(0, 0x20);
     }
 
     --s_exception_depth;

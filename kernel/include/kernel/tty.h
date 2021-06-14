@@ -6,6 +6,7 @@
 #include <sys/cdefs.h>
 
 #include <stddef.h>
+#include <stdint.h>
 
 /*************************************************************************/
 
@@ -16,6 +17,8 @@ void terminal_clear(void);
 void terminal_putchar(char c);
 void terminal_write(const char *data, size_t size);
 void terminal_writestr(const char *data);
+
+void terminal_write64(uint64_t val);
 
 __END_EXTERN_C
 

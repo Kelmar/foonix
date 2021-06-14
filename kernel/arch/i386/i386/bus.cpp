@@ -1,7 +1,8 @@
 /********************************************************************************************************************/
 
-#include <stddef.h>
+#include <sys/assert.h>
 #include <sys/cdefs.h>
+#include <stddef.h>
 
 #include "bus.h"
 
@@ -52,34 +53,36 @@ bus::~bus(void)
 
 /********************************************************************************************************************/
 
-uint8_t bus::read1(int offset)
+uint8_t bus::byte(unsigned int offset)
 {
+    ASSERT(offset < m_size, "Bus write overflow");
     return inb(m_base + offset);
 }
 
-uint16_t bus::read2(int offset)
+uint16_t bus::word(unsigned int offset)
 {
     return inw(m_base + offset);
 }
 
-uint32_t bus::read4(int offset)
+uint32_t bus::dword(unsigned int offset)
 {
     return inl(m_base + offset);
 }
 
 /********************************************************************************************************************/
 
-void bus::write1(int offset, uint8_t value)
+void bus::byte(unsigned int offset, uint8_t value)
 {
+    ASSERT(offset < m_size, "Bus write overflow");
     outb(m_base + offset, value);
 }
 
-void bus::write2(int offset, uint16_t value)
+void bus::word(unsigned int offset, uint16_t value)
 {
     outw(m_base + offset, value);
 }
 
-void bus::write4(int offset, uint32_t value)
+void bus::dword(unsigned int offset, uint32_t value)
 {
     outl(m_base + offset, value);
 }

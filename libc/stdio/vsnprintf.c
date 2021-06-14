@@ -1,7 +1,9 @@
 /********************************************************************************************************************/
 
+#include <sys/assert.h>
 #include <sys/cdefs.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
@@ -22,6 +24,8 @@
  * To work around this cast the char to an int:
  *
  * printf("%02X", (int)c);
+ * 
+ * 64-Bit integer support is busted. :/
  */
 
  /********************************************************************************************************************/
@@ -47,7 +51,7 @@
  * Return Value:
  * Pointer to the start of the number in the string.
  */
-static char *base_to_ascii(uint32_t val, int base, bool upper, char *buf, size_t buflen)
+static char *base_to_ascii(uint64_t val, int base, bool upper, char *buf, size_t buflen)
 {
     size_t i = buflen - 1;
     char c, cont = 1;
@@ -81,6 +85,7 @@ static char *base_to_ascii(uint32_t val, int base, bool upper, char *buf, size_t
 
 #define FLAGS_UPPER	0x0001
 #define FLAGS_NOSIGN	0x0002
+#define FLAGS_MAXINT    0x0004
 
 /********************************************************************************************************************/
 /*
@@ -95,6 +100,8 @@ static char *base_to_ascii(uint32_t val, int base, bool upper, char *buf, size_t
  * o   - Unsigned octal number
  * p   - Pointer (upper case hexidecimal with a '0x' prefix)
  * s   - NULL terminated C string.
+ * 
+ * j   - 64-bit flag for integers.  (E.g. %ju)
  *
  * Formatting options include:
  * - Padding with optional leading zeros for numbers.
@@ -106,11 +113,12 @@ int vsnprintf(char *sbuf, size_t slen, const char *fmt, va_list args)
 {
     const char *fp = fmt;
     size_t base, width;
-    char nbuf[32], *p;
+    char nbuf[64], *p;
     size_t s = 0, n;
     char pad, sign;
-    int flags, val;
-
+    int64_t val;
+    int flags;
+    
     for (;;)
     {
         while ((*fp != '%') && (*fp != '\0'))
@@ -161,6 +169,10 @@ reswitch:
             sign = '+';
             goto reswitch;
 
+        case 'j':
+            flags |= FLAGS_MAXINT;
+            goto reswitch;
+
         case 'c':
             sbuf[s++] = (char)va_arg(args, int);
             break;
@@ -192,11 +204,7 @@ reswitch:
             s += 2;
             pad = '0';
 
-#if defined(_FOO64)
-            width = 16;
-#else
-            width = 8;
-#endif
+            width = (flags & FLAGS_MAXINT) ? 16 : 8;
 
             /* FALL THROUGH */
 
@@ -207,7 +215,10 @@ hex:
             base = 16;
 
 number:
-            val = va_arg(args, int);
+            if (flags & FLAGS_MAXINT)
+                val = va_arg(args, int64_t);
+            else
+                val = va_arg(args, int32_t);
 
             if (flags & FLAGS_NOSIGN)
                 sign = '\0';

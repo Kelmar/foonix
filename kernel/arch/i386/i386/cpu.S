@@ -299,7 +299,27 @@ _LABEL(read_rtc_second)
     pause
     inb $0x41, %al
     ret
-	
+
+_LABEL(has_cpuid)
+    pushf
+    pop   %eax
+    movl  %eax, %ecx
+    xorl  $0x00200000, %eax
+    pushl %eax
+    popf
+    pushf
+    popl  %eax
+    push  %ecx
+    popf
+    xor   %ecx, %eax
+    jz    .L_no_cpuid
+    movl  $1, %eax
+    ret
+
+.L_no_cpuid:
+    xorl  %eax, %eax
+    ret
+
 /*
  * Reads the current time of day from the RTC.
  *

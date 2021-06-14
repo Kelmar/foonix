@@ -25,7 +25,7 @@ stack_top:
 _start:
     cli
 
-    /* Setup the stack */
+    # Setup the stack
     mov   $stack_top, %esp
 
     cmp   $0x2BADB002, %eax
@@ -33,6 +33,9 @@ _start:
 
     push  %ebx   # Multiboot data structure.
     call  stage1 # Initialize CPU first
+
+    # EAX should point to where our new stack is located at.
+    #movl  %eax, %esp
 
     # Call static constructors
     call  _init

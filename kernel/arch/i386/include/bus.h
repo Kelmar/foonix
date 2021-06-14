@@ -20,13 +20,13 @@ public:
     /* constructor */ bus(io_port_t base, size_t size);
     virtual ~bus(void);
 
-    uint8_t read1(int offset);
-    uint16_t read2(int offset);
-    uint32_t read4(int offset);
+    uint8_t byte(unsigned int offset);
+    uint16_t word(unsigned int offset);
+    uint32_t dword(unsigned int offset);
 
-    void write1(int offset, uint8_t value);
-    void write2(int offset, uint16_t value);
-    void write4(int offset, uint32_t value);
+    void byte(unsigned int offset, uint8_t value);
+    void word(unsigned int offset, uint16_t value);
+    void dword(unsigned int offset, uint32_t value);
 };
 
 /********************************************************************************************************************/
