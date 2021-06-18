@@ -115,6 +115,18 @@ __END_EXTERN_C
 
 /********************************************************************************************************************/
 
+static inline void stop_interrupts(void)
+{
+    __asm __volatile("cli");
+}
+
+static inline void start_interrupts(void)
+{
+    __asm __volatile("sti");
+}
+
+/********************************************************************************************************************/
+
 static inline void cpuid(uint32_t level, uint32_t& ax, uint32_t& bx, uint32_t& cx, uint32_t& dx)
 {
     __asm __volatile(

@@ -75,6 +75,8 @@ namespace
 
     /************************************************************************************************************/
 
+    extern "C" uintptr_t _end; // Symbol defined by linker script
+
     /*
      * A bit map of allocated pages for the first 4MB.
      * 
@@ -96,6 +98,8 @@ namespace
         uint32_t i_map[LOWER_4MB_DWORDS];
     } s_low_bitmap;
 
+    page_directory_t* s_kernel_page_dir;
+
     /************************************************************************************************************/
 
     //static void mark_reserved_page(uintptr_t page, bool set)
@@ -116,6 +120,25 @@ namespace
     //            return;
     //    }
     //}
+
+    /************************************************************************************************************/
+
+    void init_reserved_bits(void)
+    {
+        // Find where our kernel ends
+        _end = (uintptr_t)&_end;
+
+        uintptr_t end_page = (_end & (PAGE_SIZE - 1)) ? (_end & 0xFFFFE000) + PAGE_SIZE : _end;
+
+        uint32_t page_count = end_page / PAGE_SIZE;
+        uint32_t reserve_bytes = page_count >> 3;
+        uint8_t reserve_bits = (1 << (page_count & 0x07)) - 1;
+
+        // Reserve the whole first 1MB + Kernel space
+        memset(s_low_bitmap.b_map, 0xFF, reserve_bytes);
+        s_low_bitmap.b_map[reserve_bytes++] = reserve_bits;
+        memset(s_low_bitmap.b_map + reserve_bytes, 0, LOWER_4MB_BYTES - LOWER_1MB_BYTES);
+    }
 
     /************************************************************************************************************/
 }
@@ -203,14 +226,22 @@ void release_reserved_page(void* page)
 
 void* init_paging(void)
 {
-    // Reserve the first MiB right off, we'll need this for real mode stuff later.   (E.g. BIOS calls)
-    memset(s_low_bitmap.b_map, 0xFF, LOWER_1MB_BYTES);
-    memset(s_low_bitmap.b_map + LOWER_1MB_BYTES, 0, LOWER_4MB_BYTES - LOWER_1MB_BYTES);
+    init_reserved_bits();
 
-    if (g_multiboot_record && g_multiboot_record->flags & MB_FLAG_MEM)
+    // We can now safely call our alloc_reserved_page() function to allocate a page directory!
+
+    s_kernel_page_dir = (page_directory_t*)alloc_reserved_page();
+    memset(s_kernel_page_dir, 0, PAGE_SIZE);
+
+    if (g_multiboot_record)
     {
-        printf("MemLower: %u KiB\n", g_multiboot_record->mem_lower);
-        printf("MemUpper: %u KiB\n", g_multiboot_record->mem_upper);
+        printf("MBR Flags: %p\n", g_multiboot_record->flags);
+
+        if (g_multiboot_record->flags & MB_FLAG_MEM)
+        {
+            printf("MemLower: %u KiB\n", g_multiboot_record->mem_lower);
+            printf("MemUpper: %u KiB\n", g_multiboot_record->mem_upper);
+        }
 
         //if (g_multiboot_record->flags & MB_FLAG_MMAP)
         //{

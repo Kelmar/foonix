@@ -86,6 +86,9 @@ extern "C" void kmain(void)
     terminal_init();
     printf("Hello world from kernel space!\n");
 
+    for (;;)
+        __asm __volatile("pause");
+
     khalt();
 }
 

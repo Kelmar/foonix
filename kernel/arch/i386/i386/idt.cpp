@@ -13,22 +13,28 @@
 
 /********************************************************************************************************************/
 
-#define IDT_ENTRIES 256
-#define MAX_IRQS 16
-
-/********************************************************************************************************************/
 namespace
 {
-    /*
-     * Interrupt descriptor table entry.
-     */
+    const int IDT_ENTRIES = 256;
+    const int MAX_IRQS = 16;
+
+    const uint8_t TYPE_TSS  = 0x09;
+    const uint8_t TYPE_INT  = 0x0E;
+    const uint8_t TYPE_TRAP = 0x0F;
+
+    // Interrupt descriptor table entry.
     struct idt_entry_t
     {
-        uint16_t base_low;      /* Base address low */
-        uint16_t selector;      /* Kernel segment selector */
-        uint8_t  reserved;      /* Reserved, always zero */
-        uint8_t  flags;         /* Flags */
-        uint16_t base_hi;       /* Base address high */
+        uint16_t base_low;    // Base address low
+        uint16_t selector;    // Kernel segment selector
+        uint8_t  reserved;    // Reserved, always zero
+
+        uint8_t  type    : 4; // 9 = TSS, E = 32bit Int Gate, F = 32bit Trap Gate
+        uint8_t  storage : 1; // Always zero
+        uint8_t  level   : 2; // Privelege level
+        uint8_t  present : 1; // Always 1
+
+        uint16_t base_hi;     // Base address high
     } __attribute__((packed));
 
     /*
@@ -41,6 +47,11 @@ namespace
     } __attribute__((packed));
 
     typedef void (*isr_stub_t)(void);
+
+    /************************************************************************************************************/
+
+    /* Defined in isr.s */
+    extern "C" void load_idt(idt_ptr_t*);
 
     /************************************************************************************************************/
 
@@ -89,63 +100,27 @@ namespace
     };
 
     /************************************************************************************************************/
+
+    void set_idt_entry(int idx, isr_stub_t base, bool trap, int selector, int level)
+    {
+        uintptr_t b = (uintptr_t)base;
+
+        idt_entry_t* idt = &s_idt[idx];
+
+        idt->base_low = (uint16_t)(b & 0xFFFF);
+        idt->base_hi = (uint16_t)((b >> 16) & 0xFFFF);
+        idt->selector = selector;
+        idt->reserved = 0;
+        idt->type = trap ? TYPE_TRAP : TYPE_INT;
+        idt->storage = 0;
+        idt->level = level;
+        idt->present = 1;
+    }
+
+    /************************************************************************************************************/
     // Assembly ISR and IRQ stubs
 
-#define ISR(X) extern "C" void _isr ## X(void)
-#define IRQ(X) extern "C" void _irq ## X(void)
-
-    ISR(0);
-    ISR(1);
-    ISR(2);
-    ISR(3);
-    ISR(4);
-    ISR(5);
-    ISR(6);
-    ISR(7);
-    ISR(8);
-    ISR(9);
-    ISR(10);
-    ISR(11);
-    ISR(12);
-    ISR(13);
-    ISR(14);
-    ISR(15);
-    ISR(16);
-    ISR(17);
-    ISR(18);
-    ISR(19);
-    ISR(20);
-    ISR(21);
-    ISR(22);
-    ISR(23);
-    ISR(24);
-    ISR(25);
-    ISR(26);
-    ISR(27);
-    ISR(28);
-    ISR(29);
-    ISR(30);
-    ISR(31);
-
-    IRQ(0);
-    IRQ(1);
-    IRQ(2);
-    IRQ(3);
-    IRQ(4);
-    IRQ(5);
-    IRQ(6);
-    IRQ(7);
-    IRQ(8);
-    IRQ(9);
-    IRQ(10);
-    IRQ(11);
-    IRQ(12);
-    IRQ(13);
-    IRQ(14);
-    IRQ(15);
-
-#undef IRQ
-#undef ISR
+    extern "C" isr_stub_t vectors[IDT_ENTRIES];
 }
 
 /********************************************************************************************************************/
@@ -181,14 +156,26 @@ void init_idt(void)
      */
     master_pic.byte(0, 0x11);
     slave_pic .byte(0, 0x11);
-    master_pic.byte(1, 0x20); // IRQ_START?
-    slave_pic .byte(1, 0x28); // IRQ_START + 8?
+    master_pic.byte(1, 0x20); // vector: IRQ_START
+    slave_pic .byte(1, 0x28); // vector: IRQ_START + 8
     master_pic.byte(1, 0x04);
     slave_pic .byte(1, 0x02);
     master_pic.byte(1, 0x01);
     slave_pic .byte(1, 0x01);
     master_pic.byte(1, 0);
     slave_pic .byte(1, 0);
+
+    //master_pic.byte(1, 0xFD);
+    //slave_pic.byte(1, 0xFF);
+
+    for (int i = 0; i < IDT_ENTRIES; ++i)
+        set_idt_entry(i, vectors[i], false, 0x08, 0);
+
+    //set_idt_entry(0xF0, isr_call, true, 8, 0);
+
+    load_idt(&s_idtp);
+
+    start_interrupts();
 }
 
 /********************************************************************************************************************/
@@ -202,9 +189,8 @@ static void panic_handler(struct regs* r)
     if (r->int_no < 32)
         msg = exception_messages[r->int_no];
 
-    /*
-     * Display our own little BSOD and halt the system.
-     */
+    // Display our own little BSOD and halt the system.
+
     terminal_clear();
     printf("Exception (%02X): %s\n", r->int_no, msg);
     printf("Error code: %d\n\n", r->err_code);
@@ -226,6 +212,11 @@ static void default_handler(struct regs* r)
 }
 
 /********************************************************************************************************************/
+
+extern "C" uint8_t inb(io_port_t port);
+extern "C" void outb(io_port_t port, uint8_t byte);
+
+/********************************************************************************************************************/
 /*
  * Handles calling the correct callback.
  *
@@ -237,8 +228,10 @@ extern "C" void handle_isr(regs* r)
     //char buf[16];
     //int i;
 
+    //printf("Interrupt %d\n", r->int_no);
+
     int irq_no = r->int_no - 32;
-    int is_irq = ((irq_no >= 0) && (irq_no < MAX_IRQS));
+    bool is_irq = ((irq_no >= 0) && (irq_no < MAX_IRQS));
 
     if (++s_exception_depth > 1)
         panic("Caught nested exceptions.");
@@ -254,13 +247,13 @@ extern "C" void handle_isr(regs* r)
     }
     else
     {
-        /* Call the callback */
+        // Call the callback
         cb(r);
     }
 
     //if (r->int_no != 32)
     //{
-    //    i = snkprintf(buf, sizeof(buf), "INT: %02X", r->int_no);
+    //    i = snprintf(buf, sizeof(buf), "INT: %02X", r->int_no);
     //}
     //else
     //    i = 0;
@@ -270,21 +263,25 @@ extern "C" void handle_isr(regs* r)
 
     if (is_irq)
     {
-        bus master_pic((void*)0x0020, 2);
+        //bus master_pic((void*)0x0020, 2);
 
-        /*
-         * If IRQ 8-15, we need to send an EOI to the slave controller.
-         */
-        if (irq_no >= 8)
+        if (irq_no == 1)
         {
-            bus slave_pic((void*)0x00A0, 2);
-            slave_pic.byte(0, 0x20);
+            uint8_t scan = inb((io_port_t)0x60);
+            (void)(scan);
         }
 
-        /*
-         * In all cases we need to send an EOI to the master controller.
-         */
-        master_pic.byte(0, 0x20);
+        // If IRQ 8-15, we need to send an EOI to the slave controller.
+        if (irq_no >= 8)
+        {
+            //bus slave_pic((void*)0x00A0, 2);
+            //slave_pic.byte(0, 0x20);
+            outb((io_port_t)0x00A0, 0x20);
+        }
+
+        // In all cases we need to send an EOI to the master controller.
+        //master_pic.byte(0, 0x20);
+        outb((io_port_t)0x0020, 0x20);
     }
 
     --s_exception_depth;

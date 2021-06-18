@@ -12,6 +12,7 @@ void terminal_pre_init(void);
 
 void init_gdt(void);
 void init_idt(void);
+void init_timer(void);
 void* init_paging(void);
 
 /********************************************************************************************************************/
@@ -29,8 +30,11 @@ extern "C" void* stage1(multiboot_t* mbr)
 
     init_gdt();
     init_idt();
+    init_timer();
 
-    return init_paging();
+    //init_paging();
+
+    return nullptr;
 }
 
 /********************************************************************************************************************/
