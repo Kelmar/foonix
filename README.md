@@ -16,20 +16,34 @@ The build script will download and build the cross compiler tools for you:
 ## Build System
 * Currently replacing Makefile with CMake/Ninja
 * Some functions need to be moved into a common library.
-* Building is still ugly
+* Building is a bit less ugly:
+
+```bash
+./scripts/prereqs.sh
+cmake .
+make
+```
+
+Or if you have Ninja installed:
+```bash
+cmake -G Ninja .
+ninja
+```
+
+If you want to clean up the various files that CMake creates: ```bash ./scripts/superclean.sh```
 
 ## Kernel Proper
+* Fix broken paging support, get a working memory manager.
+* Need VFS
+* Make a real driver model.
 * Finish ATA driver.
 * Build a file system.
 * Add basic POSIX hooks for getting libc to compile/run.
-* Make a real driver model.
-* Fix broken paging support, get a working memory manager.
 * Everything else that isn't done yet.
 
 ## C/C++ Library
 * Better C++ library
-* Use a prebuilt libc and libc++, maybe mlibc
-  https://github.com/managarm/mlibc
+* Use a premade libc and libc++ (at least for user space)
 
 # Building
 Everything is controlled through the build.sh script for now.
