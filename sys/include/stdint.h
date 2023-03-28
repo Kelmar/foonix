@@ -53,12 +53,8 @@ typedef __uint32_t uint32_t;
 typedef __int64_t  int64_t;
 typedef __uint64_t uint64_t;
 
-typedef __int32_t  __intptr_t;
-typedef __int32_t  __intfptr_t;
-typedef __uint32_t __uintptr_t;
-typedef __uint32_t __uintfptr_t;
-typedef __uint32_t __vm_offset_t;
-typedef __uint32_t __vm_size_t;
+typedef __int32_t  intptr_t;
+typedef __uint32_t uintptr_t;
 
 typedef	__int8_t   int_least8_t;
 typedef	__int16_t  int_least16_t;
