@@ -4,6 +4,9 @@
 #include <kernel/tty.h>
 
 #include <stdio.h>
+#include <string.h>
+
+#include "cpu.h"
 
 //#include "cdefs.h"
 //#include "multboot.h"
@@ -31,6 +34,9 @@ void test_stack_trace(void);
 
 static const uint32_t *start_ebp;
 #endif
+
+void terminal_pre_init(void);
+void terminal_dump(size_t v);
 
 /*************************************************************************/
 /*
@@ -83,13 +89,25 @@ extern "C" void kmain(void)
 
     /* After our first context switch, the code below will stop running. */
 #endif
-    terminal_init();
-    printf("Hello world from kernel space!\n");
+    //uint8_t *term = (uint8_t *)(0x000B8000);
+
+    const char msg[64] = "Hello world from kernel space!\r\n";
+
+    terminal_pre_init();
+    //terminal_init();
+    
+    size_t len = strnlen(msg, sizeof(msg));
+    
+    bochs_breakpoint();
+    terminal_write(msg, len);
+
+    //terminal_init();
+    //printf("Hello world from kernel space!\n");
 
     for (;;)
         __asm __volatile("pause");
 
-    khalt();
+    //khalt();
 }
 
 

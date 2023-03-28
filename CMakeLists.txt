@@ -3,24 +3,29 @@ cmake_minimum_required(VERSION 3.20)
 set(TOOLS_LOCAL ${CMAKE_SOURCE_DIR}/tools/local)
 set(TOOLS_BIN ${TOOLS_LOCAL}/bin)
 
+set(SYSROOT ${CMAKE_BINARY_DIR}/sysroot)
+
 set(CMAKE_TOOLCHAIN_FILE "TC-foonix.cmake")
+
+# We don't want to install to our host OS!
+set(CMAKE_INSTALL_PREFIX ${SYSROOT})
 
 project(foonix)
 
 add_custom_command(
     OUTPUT sysroot
     PRE_BUILD
-    COMMAND bash scripts/sysroot_init.sh
+    COMMAND bash ${CMAKE_SOURCE_DIR}/scripts/sysroot_init.sh
+    COMMENT "Generating system file structure"
 )
 
+add_custom_target(foonix ALL DEPENDS sysroot)
+
 add_subdirectory(sys)
+add_subdirectory(grub)
 
-add_custom_target(boot.iso ALL DEPENDS kernel)
+add_dependencies(foonix kernel)
 
-add_custom_command(
-    OUTPUT boot.iso
-    DEPENDS kernel
-    COMMAND "cp sys/kernel/kernel sysroot/boot/grub"
-    COMMAND "cp grub/grub.cfg sysroot/boot/grub"
-    COMMAND "grub-mkrescue -o boot.iso sysroot"
+install(
+    CODE "execute_process(COMMAND grub-mkrescue -o boot.iso sysroot)"
 )

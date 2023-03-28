@@ -17,7 +17,7 @@ set(CMAKE_C_COMPILER_WORKS 1)
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
 # Set the target environment to our sysroot build folder
-set(CMAKE_FIND_ROOT_PATH sysroot)
+set(CMAKE_FIND_ROOT_PATH ${SYSROOT})
 
 # Search for programs in the host environment
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)

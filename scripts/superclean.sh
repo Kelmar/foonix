@@ -9,3 +9,5 @@ find . -type f -name build.ninja -exec rm -fv {} \;
 #find . -type f -name Makefile -exec rm -fv {} \;
 
 #rm -rf tools
+
+rm -rf sysroot

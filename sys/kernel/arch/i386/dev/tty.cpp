@@ -14,13 +14,15 @@
 
 /********************************************************************************************************************/
 
+#define vga_entry(c__, clr__) ((uint16_t)c__ | (uint16_t)(clr__ << 8))
+
 namespace
 {
     /************************************************************************************************************/
 
     const size_t VGA_WIDTH = 80;
     const size_t VGA_HEIGHT = 25;
-    uint16_t* const VGA_MEMORY = (uint16_t*)0x000B8000;
+    //uint16_t* const VGA_MEMORY = (uint16_t*)0x000B8000;
 
     const uint8_t CUR_LOC_HI = 0x0E;
     const uint8_t CUR_LOC_LO = 0x0F;
@@ -110,10 +112,11 @@ void terminal_pre_init(void)
     terminal_row = 0;
     terminal_column = 0;
     terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-    terminal_buffer = VGA_MEMORY;
+    terminal_buffer = ((uint16_t*)0x000B8000);
 
     terminal_clear();
-    set_loc(0, 0);
+
+    terminal_buffer[0] = vga_entry('C', vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
 }
 
 /********************************************************************************************************************/
@@ -140,11 +143,30 @@ extern "C" void terminal_init(void)
  */
 extern "C" void terminal_clear(void)
 {
-    const uint16_t entry = vga_entry(' ', terminal_color);
+    //const uint16_t entry = vga_entry(' ', terminal_color);
+    //(void)entry;
 
-    _memsetw(terminal_buffer, entry, VGA_WIDTH * VGA_HEIGHT);
+    //_memsetw(terminal_buffer, entry, VGA_WIDTH * VGA_HEIGHT);
 
-    set_loc(0, 0);
+    //set_loc(0, 0);
+
+    terminal_buffer[0] = vga_entry('B', vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
+}
+
+/********************************************************************************************************************/
+
+void terminal_dump(size_t v)
+{
+    const char *hex = "0123456789ABCDEF";
+
+    int idx = 0;
+
+    do
+    {
+        char c = hex[(v & 0x0F)];
+        terminal_buffer[idx] = vga_entry(c, 0x07);
+        v >>= 4;
+    } while (v > 0);
 }
 
 /********************************************************************************************************************/
@@ -204,6 +226,18 @@ extern "C" void terminal_putchar(char c)
 
 extern "C" void terminal_write(const char* data, size_t size)
 {
+    //bochs_breakpoint();
+
+    /*
+    size_t i = 0;
+    while (i < size)
+    {
+        //bochs_breakpoint();
+        terminal_putchar(data[i]);
+        ++i;
+    }
+    */
+
     for (size_t i = 0; i < size; ++i)
         terminal_putchar(data[i]);
 }

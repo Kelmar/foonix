@@ -9,7 +9,7 @@ size_t strnlen(const char* str, size_t max)
     const char* p = memchr(str, '\0', max);
 
     if (p)
-        return (size_t)(str - p);
+        return (size_t)(p - str);
 
     return max;
 }

@@ -27,7 +27,7 @@ add_library(
 )
 
 target_compile_options(k PRIVATE
-    -Wall -Wextra -Wpedantic -Werror -ffreestanding -m32
+    -Wall -Wextra -Wpedantic -Werror -ffreestanding -m32 -g
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -fno-rtti -fno-exceptions>
 )
 

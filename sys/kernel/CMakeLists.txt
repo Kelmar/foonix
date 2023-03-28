@@ -24,8 +24,15 @@ add_executable(kernel ${SOURCES})
 add_dependencies(kernel k)
 
 target_compile_options(kernel PRIVATE
-    -Wall -Wextra -Wpedantic -Werror -ffreestanding -fno-rtti -fno-exceptions -m32
+    -Wall -Wextra -Wpedantic -Werror -ffreestanding -fno-rtti -fno-exceptions -m32 -g
 )
 
-target_link_options(kernel PRIVATE -nostdlib)
+#SET(GCC_COVERAGE_LINK_FLAGS "-T")
+
+target_link_options(kernel PRIVATE -nostdlib -T${CMAKE_SOURCE_DIR}/sys/kernel/arch/${TARGET_HOST}/linker.ld)
 target_link_libraries(kernel PRIVATE k)
+
+install(
+    TARGETS kernel RUNTIME
+    DESTINATION ${SYSROOT}/boot
+)

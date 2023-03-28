@@ -26,19 +26,37 @@ _start:
     cli
 
     # Setup the stack
-    mov   $stack_top, %esp
+    mov  $stack_top, %esp
+    mov  $stack_top, %ebp
+    mov  $stack_top, %eax
 
-    cmp   $0x2BADB002, %eax
-    jne   .L_no_multiboot
+    movl  $0x000B8000, %ecx
+    movb  $0x41, (%ecx) # Write an 'A' showing we made it to kernel space
 
+    /* xchgw %bx,%bx */
+
+    # Not using call so we don't affect ESP
+    /*
+    jmp .L_print_stack_addr
+.L_stack_addr_ret:
+    */
+
+    # cmp   $0x2BADB002, %eax
+    # jne   .L_no_multiboot
+
+    /*
     push  %ebx   # Multiboot data structure.
     call  stage1 # Initialize CPU first
+    */
 
     # EAX should point to where our new stack is located at.
-    #movl  %eax, %esp
+    /*
+    movl  %eax, %esp
+    movl  %eax, %ebp
+    */
 
     # Call static constructors
-    call  _init
+    /* call  _init */
 
     # Call the kernel proper
     call  kmain
@@ -55,5 +73,27 @@ _start:
     hlt
     pause
     jmp   .L_lock
+
+/*
+.L_print_stack_addr:
+    movl  $8, %ecx
+    movl  $0x000B8000, %edx
+    movl  .L_hex_lookup, %edi
+.L_print_loop:
+    movl  %edi, %esi  # Restore ESI from EDI
+    xorl  %ebx, %ebx  # Clear EBX
+    mov   %al, %bl    # Move nibble into EBX
+    andb  $0x0F, %bl
+    add   %ebx, %esi  # Add current index into ESI
+    movb  (%esi),%bl  # Get character into BL
+    movb  %bl, (%edx) # Move the character into video memory
+    addl  $2, %edx    # Move to next character entry
+    shrl  $4, %eax    # Move to next nibble
+    dec   %ecx        # Decrement our loop counter
+    jnz .L_print_loop
     
+    jmp .L_stack_addr_ret
+.L_hex_lookup: .string "0123456789ABCDEF"
+*/
+
 .size _start, . - _start
