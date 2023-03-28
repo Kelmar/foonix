@@ -18,8 +18,15 @@ The build script will download and build the cross compiler tools for you:
 * Some functions need to be moved into a common library.
 * Building is a bit less ugly:
 
+You will need CMake and a compiler that can build GCC 12.2.0 and BinUtils 2.40
+
+The cross compiler can be downloaded and built with the following command:
 ```bash
 ./scripts/prereqs.sh
+```
+
+Then you can build the kernel with:
+```bash
 cmake .
 make
 ```
@@ -29,8 +36,6 @@ Or if you have Ninja installed:
 cmake -G Ninja .
 ninja
 ```
-
-If you want to clean up the various files that CMake creates: ```bash ./scripts/superclean.sh```
 
 ## Kernel Proper
 * Fix broken paging support, get a working memory manager.
