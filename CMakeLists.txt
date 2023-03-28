@@ -15,3 +15,12 @@ add_custom_command(
 
 add_subdirectory(sys)
 
+add_custom_target(boot.iso ALL DEPENDS kernel)
+
+add_custom_command(
+    OUTPUT boot.iso
+    DEPENDS kernel
+    COMMAND "cp sys/kernel/kernel sysroot/boot/grub"
+    COMMAND "cp grub/grub.cfg sysroot/boot/grub"
+    COMMAND "grub-mkrescue -o boot.iso sysroot"
+)
