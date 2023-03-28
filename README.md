@@ -14,7 +14,7 @@ The build script will download and build the cross compiler tools for you:
 
 # Some TODOs
 ## Build System
-* Makefiles need some serious work.
+* Currently replacing Makefile with CMake/Ninja
 * Some functions need to be moved into a common library.
 * Building is still ugly
 

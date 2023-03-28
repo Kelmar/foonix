@@ -25,3 +25,5 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 # Search for libraries and headers in the target environment
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+
+set(TARGET_HOST i386)
