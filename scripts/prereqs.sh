@@ -39,8 +39,7 @@ find_fetch() {
     fi
 }
 
-fetch_missing()
-{
+fetch_missing() {
     mkdir -p $TARS
     cd $TARS
 
@@ -55,16 +54,24 @@ fetch_missing()
     cd $CWD
 }
 
-build_binutils() {
+extract_tarballs() {
     cd $TARS
 
     if [ ! -d binutils-$BUVER ] ; then
-        tar -Jxf $BUTAR
+        tar -Jvxf $BUTAR
     fi
 
     if [ ! -d gcc-$GCCVER ] ; then
-        tar -Jxf $GCCTAR
+        tar -Jvxf $GCCTAR
     fi
+
+    cd gcc-$GCCVER
+    . ./contrib/download_prerequisites
+    cd $CWD
+}
+
+build_binutils() {
+    cd $TARS
 
     mkdir -p build-bu
     cd build-bu
@@ -117,4 +124,5 @@ build_tools() {
 # Look for fetch or wget first
 find_fetch
 fetch_missing
+extract_tarballs
 build_tools

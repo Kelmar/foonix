@@ -65,11 +65,3 @@ void VM::ReserveBootPages(addr_t physicalAddress, size_t count)
 }
 
 /*************************************************************************/
-
-void VM::ReservePage(addr_t start, size_t length)
-{
-    UNUSED(start);
-    UNUSED(length);
-}
-
-/*************************************************************************/

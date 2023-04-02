@@ -16,8 +16,6 @@ namespace VM
     void Init(KernelArgs *);
 
     void ReserveBootPages(addr_t physicalAddress, size_t count = 1);
-
-    void ReservePage(addr_t start, size_t length);
 }
 
 /*************************************************************************/
