@@ -8,21 +8,31 @@ The cross compiler can be downloaded and built with the following command:
 ./scripts/prereqs.sh
 ```
 
+Once you get the tools installed you'll probably want to have CMake put all
+of it's misc files in a separate build folder so clean up is a bit easier.
+(Cleaning from the project still doesn't work quite fully yet.)
+
+```bash
+cd ..
+mkdir build-foonix
+cd build-foonix
+```
+
 Then you can build the kernel with:
 ```bash
-cmake .
+cmake ../foonix
 make
 ```
 
 Or if you have Ninja installed:
 ```bash
-cmake -G Ninja .
+cmake -G Ninja ../foonix
 ninja
 ```
 
 # Some stuff that's done
-* Global descriptor tables (although simple) are working.
-* Interrupts are handled.
+* ~Global descriptor tables (although simple) are working.~
+* ~Interrupts are handled.~
 * ~Code for handling delays using the PIT is working.~
 
 # Some TODOs

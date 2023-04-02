@@ -54,6 +54,8 @@ extern "C" void load_gdt(gdt_ptr_t*);
 
 void init_gdt(void)
 {
+    // This is a fairly basic GDT to get us started, we'll probably want to expand on this system later.
+
     g_gdt_ptr.limit = sizeof(gdt_entry_t) * GDT_ENTRIES - 1;
     g_gdt_ptr.base  = gdt_entries;
 
@@ -63,6 +65,7 @@ void init_gdt(void)
     gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // Code sgement (User)
     gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // Data segment (User)
 
+    // This is probably what's causing our triple fault
     load_gdt(&g_gdt_ptr);
 }
 

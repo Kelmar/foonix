@@ -18,7 +18,7 @@ namespace
     const int IDT_ENTRIES = 256;
     const int MAX_IRQS = 16;
 
-    const uint8_t TYPE_TSS  = 0x09;
+    //const uint8_t TYPE_TSS  = 0x09;
     const uint8_t TYPE_INT  = 0x0E;
     const uint8_t TYPE_TRAP = 0x0F;
 
@@ -233,8 +233,10 @@ extern "C" void handle_isr(regs* r)
     int irq_no = r->int_no - 32;
     bool is_irq = ((irq_no >= 0) && (irq_no < MAX_IRQS));
 
+/*
     if (++s_exception_depth > 1)
         panic("Caught nested exceptions.");
+*/
 
     isr_handler_t cb = s_isr_callbacks[r->int_no];
 
@@ -267,7 +269,7 @@ extern "C" void handle_isr(regs* r)
 
         if (irq_no == 1)
         {
-            uint8_t scan = inb((io_port_t)0x60);
+            uint8_t scan = inb((uint16_t)0x60);
             (void)(scan);
         }
 
@@ -276,12 +278,12 @@ extern "C" void handle_isr(regs* r)
         {
             //bus slave_pic((void*)0x00A0, 2);
             //slave_pic.byte(0, 0x20);
-            outb((io_port_t)0x00A0, 0x20);
+            outb((uint16_t)0x00A0, 0x20);
         }
 
         // In all cases we need to send an EOI to the master controller.
         //master_pic.byte(0, 0x20);
-        outb((io_port_t)0x0020, 0x20);
+        outb((uint16_t)0x0020, 0x20);
     }
 
     --s_exception_depth;

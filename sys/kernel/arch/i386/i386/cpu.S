@@ -7,57 +7,6 @@
 #include "asm.h"
 #include "cpuflags.h"
 
-/* void cli(void); */
-_LABEL(cli)
-    cli
-    ret
-	
-/* void sti(void); */
-_LABEL(sti)
-    sti
-    ret
-
-/* void outb(int port, int byte); */
-_LABEL(outb)
-    movl  4(%esp), %edx
-    movl  8(%esp), %eax
-    outb  %al, %dx
-    ret
-
-/* int inb(int port); */
-_LABEL(inb)
-    movl  4(%esp), %edx
-    xorl  %eax, %eax
-    inb   %dx, %al
-    ret
-
-/* void outw(int port, int word); */
-_LABEL(outw)
-    movl  4(%esp), %edx
-    movl  8(%esp), %eax
-    outw  %ax, %dx
-    ret
-
-/* int inw(int port); */
-_LABEL(inw)
-    movl  4(%esp), %edx
-    xorl  %eax, %eax
-    inw   %dx, %ax
-    ret
-
-/* void outl(int port, int dword); */
-_LABEL(outl)
-    movl  4(%esp), %edx
-    movl  8(%esp), %eax
-    outl  %eax, %dx
-    ret
-	
-/* int inl(int port); */
-_LABEL(inl)
-    movl  4(%esp), %edx
-    inl   %dx, %eax
-    ret
-	
 _LABEL(insb)
     push %ebp
     movl %esp, %ebp

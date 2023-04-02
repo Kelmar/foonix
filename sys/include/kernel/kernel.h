@@ -1,25 +1,17 @@
 /*************************************************************************/
+/*************************************************************************/
 
-#ifndef _STDLIB_H
-#define _STDLIB_H 1
+#ifndef __FOONIX_KERNEL_H__
+#define __FOONIX_KERNEL_H__
 
 /*************************************************************************/
 
-#include <sys/cdefs.h>
-#include <stddef.h>
+#include <stdint.h>
 
-__BEGIN_EXTERN_C
-
-__attribute__((__noreturn__))
-void abort(void);
-
-void* malloc(size_t size);
-void free(void* ptr);
-
-__END_EXTERN_C
+typedef uintptr_t addr_t;
 
 /*************************************************************************/
 
-#endif /* _STDLIB_H */
+#endif /* __FOONIX_KERNEL_H__ */
 
 /*************************************************************************/

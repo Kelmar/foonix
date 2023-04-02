@@ -16,15 +16,19 @@ include_directories(
     ${HOST_DIR}/include
 )
 
-list(APPEND SOURCES main.cpp)
+file(GLOB_RECURSE KERN_SOURCES *.cpp)
+
+list(APPEND SOURCES ${KERN_SOURCES})
 
 include(${HOST_DIR}/build.cmake)
 
 add_executable(kernel ${SOURCES})
 add_dependencies(kernel k)
 
+# When you tell Clang "Pedantic" it means it!
+
 target_compile_options(kernel PRIVATE
-    -Wall -Wextra -Wpedantic -Werror -ffreestanding -fno-rtti -fno-exceptions -m32 -g
+    -Wall -Wextra -Wpedantic -Wno-unused-command-line-argument -Werror -ffreestanding -fno-rtti -fno-exceptions -m32 -g
 )
 
 #SET(GCC_COVERAGE_LINK_FLAGS "-T")

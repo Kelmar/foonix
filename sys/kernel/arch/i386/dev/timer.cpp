@@ -51,6 +51,12 @@ namespace
 
     void tick(struct regs* r)
     {
+        UNUSED(TIMER_COUNTER1);
+        UNUSED(TIMER_COUNTER2);
+        UNUSED(TIMER_FREQ);
+        UNUSED(TIMER_PHYSFREQ);
+        UNUSED(HZ);
+
         UNUSED(r);
         printf("Tick\n");
     }

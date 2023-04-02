@@ -83,9 +83,12 @@ static char *base_to_ascii(uint64_t val, int base, bool upper, char *buf, size_t
 
 /********************************************************************************************************************/
 
-#define FLAGS_UPPER	0x0001
-#define FLAGS_NOSIGN	0x0002
-#define FLAGS_MAXINT    0x0004
+#define FLAGS_UPPER    0x0001
+#define FLAGS_NOSIGN   0x0002
+#define FLAGS_MAXINT   0x0004
+#define FLAGS_LONGINT  0x0008
+#define FLAGS_LONGLONG 0x0010
+#define FLAGS_SHORT    0x0020
 
 /********************************************************************************************************************/
 /*
@@ -102,6 +105,9 @@ static char *base_to_ascii(uint64_t val, int base, bool upper, char *buf, size_t
  * s   - NULL terminated C string.
  * 
  * j   - 64-bit flag for integers.  (E.g. %ju)
+ * ll  - 64-bit flag for integers.  (E.g. %lld)
+ * 
+ *    64-BIT INTS ARE BROKEN!
  *
  * Formatting options include:
  * - Padding with optional leading zeros for numbers.
@@ -124,9 +130,9 @@ int vsnprintf(char *sbuf, size_t slen, const char *fmt, va_list args)
         while ((*fp != '%') && (*fp != '\0'))
         {
             if (s < slen)
-            sbuf[s++] = *fp++;
+                sbuf[s++] = *fp++;
             else
-            goto exit;
+                goto exit;
         }
 
         if (*fp == '\0')
@@ -148,7 +154,7 @@ reswitch:
             sbuf[s++] = *fp;
 
             if (*fp == '\0')
-            goto exit;
+                goto exit;
 
             continue;
 
@@ -176,6 +182,19 @@ reswitch:
         case 'c':
             sbuf[s++] = (char)va_arg(args, int);
             break;
+
+        case 'h':
+            goto reswitch;
+
+        case 'l':
+            if (flags & FLAGS_LONGINT)
+            {
+                flags &= ~FLAGS_LONGINT;
+                flags |= FLAGS_LONGLONG;
+            }
+            else
+                flags |= FLAGS_LONGINT;
+            goto reswitch;
 
         case 'o':
             flags |= FLAGS_NOSIGN;
@@ -215,8 +234,12 @@ hex:
             base = 16;
 
 number:
-            if (flags & FLAGS_MAXINT)
-                val = va_arg(args, int64_t);
+            if ((flags & (FLAGS_MAXINT | FLAGS_LONGLONG)) != 0)
+                val = va_arg(args, long long);
+            else if ((flags & FLAGS_LONGINT) != 0)
+                val = va_arg(args, long);
+            else if ((flags & FLAGS_SHORT) != 0)
+                val = va_arg(args, int);
             else
                 val = va_arg(args, int32_t);
 

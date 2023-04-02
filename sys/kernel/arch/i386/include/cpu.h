@@ -12,6 +12,11 @@
 
 /********************************************************************************************************************/
 
+#define MAX_32_ADDR 0x00000000FFFFFFFFull
+#define PAGE_SIZE 4096
+
+/********************************************************************************************************************/
+
 typedef uint32_t register_t;
 
 struct regs
@@ -115,17 +120,69 @@ __END_EXTERN_C
 
 /********************************************************************************************************************/
 
-static inline void stop_interrupts(void)
+#define FORCE_INLINE __attribute__((always_inline))
+
+static inline FORCE_INLINE uint8_t
+inb(uint16_t port)
+{
+    uint8_t data;
+    __asm __volatile("inb %1,%0" : "=a" (data) : "d" (port));
+    return data;
+}
+
+static inline FORCE_INLINE void
+outb(uint16_t port, uint8_t data)
+{
+    __asm __volatile("outb %0,%1" : : "a" (data), "d" (port));
+}
+
+static inline FORCE_INLINE uint16_t
+inw(uint16_t port)
+{
+    uint16_t data;
+    __asm __volatile("inw %1,%0" : "=a" (data) : "d" (port));
+    return data;
+}
+
+static inline FORCE_INLINE void
+outw(uint16_t port, uint16_t data)
+{
+    __asm __volatile("outw %0,%1" : : "a" (data), "d" (port));
+}
+
+static inline FORCE_INLINE uint32_t
+inl(uint16_t port)
+{
+    uint32_t data;
+    __asm __volatile("inl %1,%0" : "=a" (data) : "d" (port));
+    return data;
+}
+
+static inline FORCE_INLINE void
+outl(uint16_t port, uint32_t data)
+{
+    __asm __volatile("outl %0,%1" : : "a" (data), "d" (port));
+}
+
+/********************************************************************************************************************/
+
+static inline FORCE_INLINE void
+stop_interrupts(void)
 {
     __asm __volatile("cli");
 }
 
-static inline void start_interrupts(void)
+static inline FORCE_INLINE void
+start_interrupts(void)
 {
     __asm __volatile("sti");
 }
 
-#define bochs_breakpoint() __asm __volatile("xchgw %bx,%bx")
+#if defined(NDEBUG) || !defined(_USE_BOCHS)
+# define bochs_breakpoint()
+#else
+# define bochs_breakpoint() __asm __volatile("xchgw %bx,%bx")
+#endif 
 
 /********************************************************************************************************************/
 

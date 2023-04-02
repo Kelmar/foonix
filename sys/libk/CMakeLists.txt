@@ -12,7 +12,6 @@ include_directories(
 )
 
 file(GLOB stdio_srcs stdio/*.c)
-file(GLOB stdlib_srcs stdlib/*.c)
 file(GLOB string_srcs string/*.c)
 
 include(arch/${TARGET_HOST}/build.cmake)
@@ -21,13 +20,14 @@ add_definitions(-D__is_libk)
 add_library(
     k STATIC
     ${stdio_srcs}
-    ${stdlib_srcs}
     ${string_srcs}
     cppfill.cpp
 )
 
+# When you tell Clang "Pedantic" it means it!
+
 target_compile_options(k PRIVATE
-    -Wall -Wextra -Wpedantic -Werror -ffreestanding -m32 -g
+    -Wall -Wextra -Wpedantic -Wno-unused-command-line-argument -Werror -ffreestanding -m32 -g
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -fno-rtti -fno-exceptions>
 )
 

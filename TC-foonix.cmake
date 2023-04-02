@@ -2,6 +2,12 @@ set(CMAKE_SYSTEM_NAME Generic)
 
 set(CMAKE_C_COMPILER   ${TOOLS_BIN}/i686-elf-gcc)
 set(CMAKE_CXX_COMPILER ${TOOLS_BIN}/i686-elf-g++)
+#set(CMAKE_C_COMPILER   /usr/lib/llvm-12/bin/clang)
+#set(CMAKE_CXX_COMPILER /usr/lib/llvm-12/bin/clang++)
+#set(CMAKE_ASM_COMPILER /usr/lib/llvm-12/bin/llvm-as)
+#set(CMAKE_CXX_LINK_EXECUTABLE /usr/lib/llvm-12/bin/clang)
+#set(CMAKE_C_LINK_EXECUTABLE ${TOOLS_BIN}/i686-elf-ld <FLAGS> <CMAKE_C_LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>)
+#set(CMAKE_CXX_LINK_EXECUTABLE ${TOOLS_BIN}/i686-elf-ld <FLAGS> <CMAKE_CXX_LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>)
 
 #[===[
 CMake is going to complain about our compiler not working.

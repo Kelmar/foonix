@@ -23,11 +23,12 @@ isr_stub:
     mov %ax, %gs
     
     /* We push a pointer to the structure we just filled out on the stack. */
-    mov %esp, %eax
-    push %eax
+    ; mov %esp, %eax
+    ; push %eax
+    push %esp
     call handle_isr /* call C code */
-    
-    pop %eax /* remove pointer */
+
+    add $4,%esp /* Remove pointer */
     
     /* Restore registers */
     pop %gs

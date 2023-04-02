@@ -1,79 +1,66 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <stdlib.h>
 
-// TODO: This stuff should be moved into a libc++
+#define THROW_SIG throw()
+#define ERROR(X_) Debug::Panic(X_)
 
-#ifdef __is_libk
-# define THROW_SIG throw()
-# define ERROR(X_) panic(X_)
-
-# include <kernel/flow.h>
-
-#else
-# define THROW_SIG
-# define ERROR(X_) throw std::exception(X_)
-
-# include <stdexcept>
-
-#endif
+#include <kernel/debug.h>
+#include <kernel/flow.h>
+#include <kernel/vm/vm.h>
 
 void* operator new(size_t sz) THROW_SIG
 {
-    void* rval = malloc(sz);
+    UNUSED(sz);
+    void* rval = nullptr; //malloc(sz);
 
     if (rval == nullptr)
-    {
-        ERROR("Out of memory");
-    }
+        Debug::Panic("Out of memory");
 
     return rval;
 }
 
 void* operator new[](size_t sz) THROW_SIG
 {
-    void* rval = malloc(sz);
+    UNUSED(sz);
+    void* rval = nullptr; //malloc(sz);
 
     if (rval == nullptr)
-    {
-        ERROR("Out of memory");
-    }
+        Debug::Panic("Out of memory");
 
     return rval;
 }
 
 void operator delete(void* ptr) throw()
 {
-    free(ptr);
+    UNUSED(ptr);
+    //free(ptr);
 }
 
 void operator delete[](void* ptr) throw()
 {
-    free(ptr);
+    UNUSED(ptr);
+    //free(ptr);
 }
 
 void operator delete(void* ptr, size_t) throw()
 {
-    free(ptr);
+    UNUSED(ptr);
+    //free(ptr);
 }
 
 void operator delete[](void* ptr, size_t) throw()
 {
-    free(ptr);
+    UNUSED(ptr);
+    //free(ptr);
 }
 
 extern "C" void __cxa_pure_virtual(void)
 {
-#ifdef __is_libk
-    panic("Pure virtual call in kernel!");
-#endif
+    Debug::Panic("Pure virtual call in kernel!");
 }
 
 extern "C" int _purecall()
 {
-#ifdef __is_libk
-    panic("Pure call in kernel!");
-#endif
-
+    Debug::Panic("Pure call in kernel!");
     return 0;
 }

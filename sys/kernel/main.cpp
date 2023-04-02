@@ -8,6 +8,11 @@
 
 #include "cpu.h"
 
+#include <kernel/kernel_args.h>
+#include <kernel/arch/dconsole.h>
+#include <kernel/debug.h>
+#include <kernel/vm/vm.h>
+
 //#include "cdefs.h"
 //#include "multboot.h"
 //#include "cpu.h"
@@ -20,6 +25,32 @@
 //#include "process.h"
 
 //#include "ata.h"
+
+/*************************************************************************/
+
+KernelArgs g_KernelArguments;
+
+/*************************************************************************/
+/**
+ * Called before VM is setup and we have just basic paging enabled from
+ * the bootstrap code.
+ * 
+ * Initialize the CPU and the VM system so we can begin allocating memory
+ * for the rest of the OS.
+ */
+extern "C"
+void preinit(void)
+{
+    memset(&g_KernelArguments, 0, sizeof(g_KernelArguments));
+
+    DebugConsole::Init1();
+
+    Debug::PrintF("ENTER: preinit()\r\n");
+
+    //bochs_breakpoint();
+
+    VM::Init(&g_KernelArguments);
+}
 
 /*************************************************************************/
 
@@ -98,7 +129,6 @@ extern "C" void kmain(void)
     
     size_t len = strnlen(msg, sizeof(msg));
     
-    bochs_breakpoint();
     terminal_write(msg, len);
 
     //terminal_init();
@@ -108,26 +138,6 @@ extern "C" void kmain(void)
         __asm __volatile("pause");
 
     //khalt();
-}
-
-
-/*************************************************************************/
-/*
- * Display a "STOP ERROR" message and halt the system.
- */
-
-extern "C" 
-__attribute__((__noreturn__))
-void panic(const char* msg)
-{
-    //blank_screen();
-
-    puts("STOP ERROR: ");
-    puts(msg);
-    puts("\n\nTHE SYSTEM HAS BEEN HALTED");
-
-    /* Die */
-    khalt();
 }
 
 /*************************************************************************/

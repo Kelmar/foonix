@@ -13,7 +13,7 @@
 class bus
 {
 private:
-    uint8_t* m_base;
+    uint16_t m_base;
     size_t m_size;
 
 public:

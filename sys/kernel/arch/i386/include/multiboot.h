@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+#include <kernel/kernel_args.h>
+
 /********************************************************************************************************************/
 /*
  * NOTE:
@@ -73,7 +75,7 @@ struct multiboot_t
     uint8_t boot_device[4];
 
 #define MB_FLAG_CMDLINE	0x00000004
-    uint32_t cmdline; /* C-style nul termianted string command line args. */
+    uint32_t cmdline; /* C-style null termianted string command line args. */
 
 #define MB_FLAG_MODS	0x00000008
     uint32_t mods_count; /* Number of loaded "modules" */
@@ -83,12 +85,12 @@ struct multiboot_t
 #define MB_FLAG_ELFSYMS	 0x00000020
     union
     {
-	mb_aout_syms_t aout_syms;
-	mb_elf_syms_t elf_syms;
+        mb_aout_syms_t aout_syms;
+        mb_elf_syms_t elf_syms;
     } __attribute__((packed));
 
 #define MB_FLAG_MMAP	0x00000040
-    uint32_t mmap_length;
+    uint32_t mmap_length; /* in bytes */
     mb_memory_map_t *mmap_addr;
 
 #define MB_FLAG_DRIVERS	0x00000080
@@ -115,7 +117,10 @@ struct multiboot_t
 
 /********************************************************************************************************************/
 
-extern multiboot_t* g_multiboot_record;
+namespace Multiboot
+{
+    void InitMultibootMemory(KernelArgs *);
+}
 
 /********************************************************************************************************************/
 

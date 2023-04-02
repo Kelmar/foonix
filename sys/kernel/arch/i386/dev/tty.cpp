@@ -226,13 +226,10 @@ extern "C" void terminal_putchar(char c)
 
 extern "C" void terminal_write(const char* data, size_t size)
 {
-    //bochs_breakpoint();
-
     /*
     size_t i = 0;
     while (i < size)
     {
-        //bochs_breakpoint();
         terminal_putchar(data[i]);
         ++i;
     }
