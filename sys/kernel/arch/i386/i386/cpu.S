@@ -148,41 +148,6 @@ _LABEL(flush_page_cache)
 _LABEL(read_eax)
     ret
 
-/* Read's the value of the CR0 register. */
-_LABEL(read_cr0)
-    movl %cr0, %eax
-    ret
-	
-/* Read's the value of the CR2 register. */
-_LABEL(read_cr2)
-    movl %cr2, %eax
-    ret
-
-/* Read's the value of the CR3 register. */
-_LABEL(read_cr3)
-    movl %cr3, %eax
-    ret
-
-/* Read's the value of the CR4 register. */
-_LABEL(read_cr4)
-    movl %cr4, %eax
-    ret
-
-_LABEL(load_cr0)
-    movl 4(%esp), %eax
-    movl %eax, %cr0
-    ret
-	
-_LABEL(load_cr3)
-    movl 4(%esp), %eax
-    movl %eax, %cr3
-    ret
-
-_LABEL(load_cr4)
-    movl 4(%esp), %eax
-    movl %eax, %cr4
-    ret
-	
 /* Reads the SS register */
 _LABEL(read_ss)
     movl %ss, %eax

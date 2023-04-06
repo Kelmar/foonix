@@ -11,6 +11,8 @@
 
 #include <utility>
 
+#include <kernel/kernel.h>
+
 /*************************************************************************/
 
 struct MemoryRange
@@ -46,12 +48,33 @@ struct KernelArgs
 {
     static const size_t MAX_MEMORY_ENTRIES = 16;
 
+    /// @brief Size of the memroy in KBytes
+    size_t MemorySizeKByte;
+
+    /// @brief Memory location where the kernel is located.
+    MemoryRange KernelCode;
+
+    // Number of valid entries in the below array.
     size_t MemoryMapEntries;
 
     /**
-     * @brief List of available memory in the first 4MB of address space.
+     * @brief List of available memory.
      */
     MemoryRange MemoryMap[MAX_MEMORY_ENTRIES];
+
+    /**
+     * @brief Adds a range of available physical memory to the initial boot memory.
+     * 
+     * @remarks
+     * This function expects that the KernelCode structure has been filled out and
+     * will ensure that any memory added does not overlap with the kernel itself.
+     * 
+     * @returns True if there was space to add the memory mapping.  False on error.
+     */
+    bool AddFreeMemory(physical_addr_t base, size_t length);
+
+    /// @brief Display the list of availble memory blocks.
+    void ShowAvailableMemory(void);
 };
 
 /*************************************************************************/

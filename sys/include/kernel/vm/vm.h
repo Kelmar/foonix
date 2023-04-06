@@ -13,9 +13,7 @@
 
 namespace VM
 {
-    void Init(KernelArgs *);
-
-    void ReserveBootPages(addr_t physicalAddress, size_t count = 1);
+    void Init();
 }
 
 /*************************************************************************/

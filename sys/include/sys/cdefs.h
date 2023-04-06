@@ -27,6 +27,8 @@
 # define __END_EXTERN_C
 #endif
 
+#define FORCE_INLINE __attribute__((always_inline))
+
 #define UNUSED(X) (void)(X)
 
 /********************************************************************************************************************/

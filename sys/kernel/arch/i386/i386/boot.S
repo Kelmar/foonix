@@ -66,14 +66,17 @@ stack_top:
 # Area for bootstrap page directory and page tables.
 .section .bss, "aw", @nobits
     .align 4096
+    .global boot_page_directory
 boot_page_directory:
     .skip 4096
 
 # Identity map for the first 4MB
+    .global boot_page_identity
 boot_page_identity:
     .skip 4096
 
 # Map for the actual kernel pages.
+    .global boot_page_table1
 boot_page_table1:
     .skip 4096
 
@@ -171,7 +174,7 @@ _start:
     addl $MAP2PHYS(boot_page_directory), %eax
 
     movl $(MAP2PHYS(boot_page_table1) + 0x003), (%eax)
-    
+
     ret
 
 /*************************************************************************/
@@ -230,7 +233,7 @@ _start:
  * This function tries to actually find our kernel in physical memory space
  * and makes an attempt to map it into the HIGHADDR.
  */
- .L_load_kernel_map:
+.L_load_kernel_map:
     # Blank out the kernel map pages.
     cld
     movl $1024, %ecx

@@ -49,7 +49,7 @@ void preinit(void)
 
     //bochs_breakpoint();
 
-    VM::Init(&g_KernelArguments);
+    VM::Init();
 }
 
 /*************************************************************************/

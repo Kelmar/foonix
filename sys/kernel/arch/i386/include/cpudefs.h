@@ -11,6 +11,8 @@
 #define PAGE_SIZE 4096 /* in bytes */
 #define PAGE_ALIGN_MASK ((~PAGE_SIZE) + 1)
 
+#define MAX_ADDR 0x00000000FFFFFFFFull
+
 /********************************************************************************************************************/
 
 #endif /* __FOONIX_ARCH_I386_CPUDEFS_H__ */

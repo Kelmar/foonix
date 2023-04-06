@@ -12,6 +12,7 @@
 
 /********************************************************************************************************************/
 
+#define RELOCATE_START 0xC0000000
 #define MAX_32_ADDR 0x00000000FFFFFFFFull
 #define PAGE_SIZE 4096
 
@@ -68,14 +69,63 @@ uint32_t read_cpu_counter(uint32_t *lo_value, uint32_t *hi_value);
 
 uint32_t read_eax(void);
 
-uint32_t read_cr0(void);
-uint32_t read_cr2(void);
-uint32_t read_cr3(void);
-uint32_t read_cr4(void);
+static inline FORCE_INLINE uint32_t
+read_cr0(void)
+{
+    uint32_t rval;
+    __asm__("movl %%cr0,%0" : "=r" (rval));
+    return rval;
+}
 
-void load_cr0(uint32_t value);
-void load_cr3(uint32_t value);
-void load_cr4(uint32_t value);
+static inline FORCE_INLINE uint32_t
+read_cr2(void)
+{
+    uint32_t rval;
+    __asm__("movl %%cr2,%0" : "=r" (rval));
+    return rval;
+}
+
+static inline FORCE_INLINE uint32_t
+read_cr3(void)
+{
+    uint32_t rval;
+    __asm__("movl %%cr3,%0" : "=r" (rval));
+    return rval;
+}
+
+static inline FORCE_INLINE uint32_t
+read_cr4(void)
+{
+    uint32_t rval;
+    __asm__("movl %%cr4,%0" : "=r" (rval));
+    return rval;
+}
+
+static inline FORCE_INLINE void
+load_cr0(uint32_t value)
+{
+    __asm__("movl %0,%%cr0" :: "r" (value));
+}
+
+static inline FORCE_INLINE void
+load_cr3(uint32_t value)
+{
+    __asm__("movl %0,%%cr3" :: "r" (value));
+}
+
+static inline FORCE_INLINE void
+load_cr4(uint32_t value)
+{
+    __asm__("movl %0,%%cr4" :: "r" (value));
+}
+
+static inline FORCE_INLINE void
+reload_cr3(void)
+{
+    uint32_t value;
+    __asm__("movl %%cr3,%0" : "=r" (value));
+    __asm__("movl %0,%%cr3" :: "r" (value));
+}
 
 uint32_t read_ss(void);
 uint32_t read_cs(void);
@@ -120,48 +170,46 @@ __END_EXTERN_C
 
 /********************************************************************************************************************/
 
-#define FORCE_INLINE __attribute__((always_inline))
-
 static inline FORCE_INLINE uint8_t
 inb(uint16_t port)
 {
     uint8_t data;
-    __asm __volatile("inb %1,%0" : "=a" (data) : "d" (port));
+    __asm ("inb %1,%0" : "=a" (data) : "d" (port));
     return data;
 }
 
 static inline FORCE_INLINE void
 outb(uint16_t port, uint8_t data)
 {
-    __asm __volatile("outb %0,%1" : : "a" (data), "d" (port));
+    __asm ("outb %0,%1" : : "a" (data), "d" (port));
 }
 
 static inline FORCE_INLINE uint16_t
 inw(uint16_t port)
 {
     uint16_t data;
-    __asm __volatile("inw %1,%0" : "=a" (data) : "d" (port));
+    __asm ("inw %1,%0" : "=a" (data) : "d" (port));
     return data;
 }
 
 static inline FORCE_INLINE void
 outw(uint16_t port, uint16_t data)
 {
-    __asm __volatile("outw %0,%1" : : "a" (data), "d" (port));
+    __asm ("outw %0,%1" : : "a" (data), "d" (port));
 }
 
 static inline FORCE_INLINE uint32_t
 inl(uint16_t port)
 {
     uint32_t data;
-    __asm __volatile("inl %1,%0" : "=a" (data) : "d" (port));
+    __asm__("inl %1,%0" : "=a" (data) : "d" (port));
     return data;
 }
 
 static inline FORCE_INLINE void
 outl(uint16_t port, uint32_t data)
 {
-    __asm __volatile("outl %0,%1" : : "a" (data), "d" (port));
+    __asm__("outl %0,%1" : : "a" (data), "d" (port));
 }
 
 /********************************************************************************************************************/
@@ -169,26 +217,26 @@ outl(uint16_t port, uint32_t data)
 static inline FORCE_INLINE void
 stop_interrupts(void)
 {
-    __asm __volatile("cli");
+    __asm__("cli");
 }
 
 static inline FORCE_INLINE void
 start_interrupts(void)
 {
-    __asm __volatile("sti");
+    __asm__("sti");
 }
 
 #if defined(NDEBUG) || !defined(_USE_BOCHS)
 # define bochs_breakpoint()
 #else
-# define bochs_breakpoint() __asm __volatile("xchgw %bx,%bx")
+# define bochs_breakpoint() __asm__("xchgw %bx,%bx")
 #endif 
 
 /********************************************************************************************************************/
 
 static inline void cpuid(uint32_t level, uint32_t& ax, uint32_t& bx, uint32_t& cx, uint32_t& dx)
 {
-    __asm __volatile(
+    __asm__(
         "cpuid\n\t"
         : "=a"(ax), "=b"(bx), "=c"(cx), "=d"(dx)
         : "0"(level)
