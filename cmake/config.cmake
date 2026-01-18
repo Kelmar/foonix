@@ -24,18 +24,6 @@ string(JSON PLATFORM ERROR_VARIABLE _ GET "${CONFIG_JSON}" platform)
 
 # =========================================================================
 
-if (PLATFORM)
-  message(STATUS "Building for host: ${PLATFORM}")
-  set(TARGET_HOST "${PLATFORM}")
-else()
-  get_default_target()
-
-  message(STATUS "Platform not set defaulting to: ${TARGET_HOST}")
-  set(PLATFORM "${TARGET_HOST}")
-endif()
-
-# =========================================================================
-
 # Setup for global BOCHS debugging
 if (${USE_BOCHS})
     add_definitions(-D_USE_BOCHS)

@@ -5,12 +5,12 @@ cmake_minimum_required(VERSION 3.25)
 # Must be included first
 include("${CMAKE_SOURCE_DIR}/cmake/_tools.cmake")
 
-include("${CMAKE_SOURCE_DIR}/cmake/target.cmake")
-
 # =========================================================================
 
 # Read user's selected configuration file
 include("${CMAKE_SOURCE_DIR}/cmake/config.cmake")
+
+include("${CMAKE_SOURCE_DIR}/cmake/target.cmake")
 
 # =========================================================================
 

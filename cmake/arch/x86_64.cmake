@@ -1,0 +1,1 @@
+set(TARGET_FLAGS "-m64 --target=x86_64 -mno-red-zone")

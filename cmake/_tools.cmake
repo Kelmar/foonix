@@ -39,7 +39,14 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(TARGET_HOST i386)
 #]===]
 
+# When you tell Clang "Pedantic" it means it!
+
+set(W_FLAGS "-Wall -Wextra -Wpedantic -Wno-unused-command-line-argument -Werror")
+
 set(CMAKE_C_COMPILER clang-20)
 set(CMAKE_CXX_COMPILER clang++-20)
 set(CMAKE_ASM_COMPILER clang++-20)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${W_FLAGS} -ffreestanding -nostdlib")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${W_FLAGS} -ffreestanding -nostdlib")
+set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${W_FLAGS} -ffreestanding -nostdlib")

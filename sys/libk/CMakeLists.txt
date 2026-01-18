@@ -7,9 +7,7 @@ link_directories(
     ../sysroot/usr/lib
 )
 
-include_directories(
-    ${CMAKE_SOURCE_DIR}/sys/include
-)
+include_directories("${CMAKE_SOURCE_DIR}/sys/include")
 
 file(GLOB stdio_srcs stdio/*.c)
 file(GLOB string_srcs string/*.c)
@@ -24,11 +22,8 @@ add_library(
     cppfill.cpp
 )
 
-# When you tell Clang "Pedantic" it means it!
-
 target_compile_options(k PRIVATE
-    -Wall -Wextra -Wpedantic -Wno-unused-command-line-argument -Werror -ffreestanding -m32 -g
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -fno-rtti -fno-exceptions>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -fno-rtti -fno-exceptions> -ggdb
 )
 
 target_link_options(k PRIVATE -nostdlib)
