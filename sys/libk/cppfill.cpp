@@ -1,7 +1,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define THROW_SIG throw()
+//#define THROW_SIG throw()
+#define THROW_SIG 
 #define ERROR(X_) Debug::Panic(X_)
 
 #include <kernel/debug.h>

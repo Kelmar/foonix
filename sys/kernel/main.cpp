@@ -41,8 +41,6 @@ KernelArgs g_KernelArguments;
 extern "C"
 void preinit(void)
 {
-    memset(&g_KernelArguments, 0, sizeof(g_KernelArguments));
-
     DebugConsole::Init1();
 
     Debug::PrintF("ENTER: preinit()\r\n");

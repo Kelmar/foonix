@@ -10,10 +10,15 @@
 
 #include <utility>
 
+#include <sys/assert.h>
+
 #include <kernel/bitmap.h>
 #include <kernel/kernel.h>
 
 /*************************************************************************/
+
+const int PAGE_SIZE = 4096; // TODO: Move this to platform.
+
 
 class PageBlock
 {
@@ -138,7 +143,7 @@ public:
     {
         ASSERT(m_pageAllocator, "Invalid page allocator passed to SlabAllocator");
 
-        m_first.m_pageBlock = m_pageAllocator->NewBlock()
+        m_first.m_pageBlock = m_pageAllocator->NewBlock(1);
     }
 
     virtual ~SlabAllocator(void)

@@ -1,7 +1,10 @@
+#[===[
 set(CMAKE_SYSTEM_NAME Generic)
 
 set(CMAKE_C_COMPILER   ${TOOLS_BIN}/i686-elf-gcc)
 set(CMAKE_CXX_COMPILER ${TOOLS_BIN}/i686-elf-g++)
+#]===]
+
 #set(CMAKE_C_COMPILER   /usr/lib/llvm-12/bin/clang)
 #set(CMAKE_CXX_COMPILER /usr/lib/llvm-12/bin/clang++)
 #set(CMAKE_ASM_COMPILER /usr/lib/llvm-12/bin/llvm-as)
@@ -19,6 +22,7 @@ correctly.
 The options below force it to accept our "broken" compiler.
 #]===]
 
+#[===[
 set(CMAKE_C_COMPILER_WORKS 1)
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
@@ -33,3 +37,9 @@ set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 set(TARGET_HOST i386)
+#]===]
+
+set(CMAKE_C_COMPILER clang-20)
+set(CMAKE_CXX_COMPILER clang++-20)
+set(CMAKE_ASM_COMPILER clang++-20)
+

@@ -11,7 +11,7 @@
 #include <kernel/kernel_args.h>
 #include <kernel/vm/vm.h>
 
-#include <kernel/page.h>
+//#include <kernel/page.h>
 
 #include "cpu.h"
 
@@ -59,17 +59,20 @@ public:
         size_t byteSize = count * PAGE_SIZE;
 
         // Start at the bottom of memory and work our way down
-        int index = g_KernelArguments.MemoryMapEntries - 1;
+        size_t index = g_KernelArguments.MemoryMapEntries - 1;
 
         while (index >= 0)
         {
             if (g_KernelArguments.MemoryMap[index].Length >= index)
             {
                 // Okay we have our frames
-                physical_addr_t addr = g_KernelArguments.MemoryMap[index].End() - byteSize;
-
+                /*
+                physical_addr_t addr =
+                    (physical_addr_t)(g_KernelArguments.MemoryMap[index].End() - byteSize);
+                */
+                
                 // Add them to the boot page table
-                logical_addr_t blockAddr = Arch::AddBootFrames(addr, count);
+                logical_addr_t blockAddr = 0; //Arch::AddBootFrames(addr, count);
 
                 PageBlock p(blockAddr, count);
 
@@ -89,6 +92,7 @@ public:
 
     virtual void FreeBlock(PageBlock &block)
     {
+        (void)block;
     }
 } g_BootPageAlloc;
 

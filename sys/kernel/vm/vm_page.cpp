@@ -48,11 +48,12 @@ namespace
         int i = 1;
 
         while (i < base)
-            i << 1;
+            i <<= 1;
 
         return i;
     }
-
+    
+#if 0
     /**
      * @brief Attempts to allocate a frame
      * @remark This will not allocate new pages for the frame.
@@ -117,6 +118,7 @@ namespace
 
         return Kernel::ErrorCode::NoError;
     }
+#endif
 }
 
 /*************************************************************************/

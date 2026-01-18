@@ -62,7 +62,7 @@ public:
         int itemIndex = index / ArrayCount;
         int itemBit = 1 << (index % ArrayCount);
 
-        return m_items[itemIndex] & itemBit != 0;
+        return (m_items[itemIndex] & itemBit) != 0;
     }
 };
 

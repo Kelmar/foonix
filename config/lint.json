@@ -1,0 +1,6 @@
+{
+    "name": "Lint",
+    "isLint": true,
+    "useBochs": false,
+    "platform": "i386"
+}

@@ -20,6 +20,12 @@ struct MemoryRange
     uint32_t Base;
     size_t Length;
 
+    constexpr MemoryRange()
+        : Base(0)
+        , Length(0)
+    {
+    }
+
     inline
     uint32_t End() const { return Base + Length; }
 
@@ -61,6 +67,13 @@ struct KernelArgs
      * @brief List of available memory.
      */
     MemoryRange MemoryMap[MAX_MEMORY_ENTRIES];
+
+    constexpr KernelArgs()
+        : MemorySizeKByte(0)
+        , KernelCode()
+        , MemoryMapEntries(0)
+    {
+    }
 
     /**
      * @brief Adds a range of available physical memory to the initial boot memory.
