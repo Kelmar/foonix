@@ -1,18 +1,34 @@
-cmake_minimum_required(VERSION 3.20)
+# =========================================================================
+# Kernel global CMakeLists
+# =========================================================================
+
+cmake_minimum_required(VERSION 3.25)
 
 project(kernel C CXX ASM)
 
-set(HOST_DIR "${CMAKE_SOURCE_DIR}/sys/kernel/arch/${TARGET_HOST}")
+set(KERNEL_SRC_DIR "${CMAKE_SOURCE_DIR}/sys/kernel")
+set(HOST_DIR "${KERNEL_SRC_DIR}/arch/${PLATFORM}")
 
 include_directories("${CMAKE_SOURCE_DIR}/sys/include")
 
 include("${HOST_DIR}/build.cmake")
 
-file(GLOB_RECURSE KERN_SOURCES *.cpp)
+include("${CMAKE_SOURCE_DIR}/cmake/klink.cmake")
+
+# =========================================================================
+
+list(APPEND KERN_SOURCES
+    debug.cpp kernel_args.cpp main.cpp
+    vm/vm_page.cpp vm/vm.cpp
+)
+
+list(TRANSFORM KERN_SOURCES PREPEND "${KERNEL_SOURCE_DIR}")
 
 #list(APPEND INC_DIRS "${CAMKE_SOURCE_DIR}/sys/kernel/include")
 
 list(APPEND SOURCES ${KERN_SOURCES})
+
+# =========================================================================
 
 add_executable(kernel ${SOURCES})
 add_dependencies(kernel k)
@@ -27,3 +43,5 @@ install(
     TARGETS kernel RUNTIME
     DESTINATION ${SYSROOT}/boot
 )
+
+# =========================================================================

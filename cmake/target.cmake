@@ -10,21 +10,18 @@ function(get_default_target)
         ERROR_QUIET
     )
 
-    string(REPLACE "-" ";" TMP_TARGET ${TARGET_TRIPLE})
-    list(POP_FRONT TMP_TARGET TARGET_HOST)
+    string(REPLACE "-" ";" TRIP ${TARGET_TRIPLE})
+    list(POP_FRONT TRIP PLATFORM)
 
-    return(PROPAGATE TARGET_HOST)
+    return(PROPAGATE PLATFORM)
 endfunction()
 
 # =========================================================================
 
-if (PLATFORM)
-  set(TARGET_HOST "${PLATFORM}")
-else()
+if (NOT DEFINED PLATFORM)
   get_default_target()
 
-  message(STATUS "Platform not set defaulting to: ${TARGET_HOST}")
-  set(PLATFORM "${TARGET_HOST}")
+  message(STATUS "Platform not set defaulting to: ${PLATFORM}")
 endif()
 
 set(TARGET_INCLUDE "${CMAKE_SOURCE_DIR}/cmake/arch/${PLATFORM}.cmake")
@@ -38,8 +35,12 @@ endif()
 message(STATUS "Building for host: ${PLATFORM}")
 include ("${TARGET_INCLUDE}")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TARGET_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TARGET_FLAGS}")
-set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${TARGET_FLAGS}")
+list(JOIN TARGET_FLAGS " " TF)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TF}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TF}")
+set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${TF}")
+
+unset(TF)
 
 # =========================================================================

@@ -45,8 +45,6 @@ void preinit(void)
 
     Debug::PrintF("ENTER: preinit()\r\n");
 
-    //bochs_breakpoint();
-
     VM::Init();
 }
 

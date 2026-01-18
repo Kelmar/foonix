@@ -2,5 +2,5 @@
     "name": "Lint",
     "isLint": true,
     "useBochs": false,
-    "platform": "i386"
+    "platform": "x86_64"
 }

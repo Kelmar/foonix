@@ -1,17 +1,38 @@
-file(GLOB_RECURSE dev_files "${HOST_DIR}/dev/*.cpp")
-file(GLOB_RECURSE x86_cpp "${HOST_DIR}/i386/*.cpp")
-file(GLOB_RECURSE x86_asm "${HOST_DIR}/i386/*.S")
-file(GLOB base_asm "${HOST_DIR}/*.S")
+# =========================================================================
+# Kernel i386 specific build options
+# =========================================================================
 
-# Some one off files....
-list(APPEND x86_asm "${HOST_DIR}/i386/vectors.s")
+set(X86_BUILD true)
+include ("${KERNEL_SRC_DIR}/arch/x86/build.cmake")
 
-list(APPEND SOURCES "${dev_files}")
-list(APPEND SOURCES "${x86_cpp}")
-list(APPEND SOURCES "${x86_asm}")
-list(APPEND SOURCES "${base_asm}")
+# =========================================================================
+
+# Add platform specific files
+list(APPEND i386_sources
+    boot.S cpu.S isr.S memsetw.S vectors.s
+    bus.cpp dconsole.cpp gdt.cpp idt.cpp multiboot.cpp paging.cpp preinit.cpp
+)
+
+list(TRANSFORM i386_source PREPEND "${HOST_DIR}/i386/")
+list(APPEND SOURCES ${i386_source})
+
+# Add platform specific device drivers.
+list(APPEND SOURCES
+    "${HOST_DIR}/dev/timer.cpp"
+    "${HOST_DIR}/dev/tty.cpp"
+)
+
+# CRT platform specific files.
+list(APPEND SOURCES
+    "${HOST_DIR}/crti.S"
+    "${HOST_DIR}/crtn.S"
+)
+
+# =========================================================================
+# Setup include and linker options
 
 include_directories("${HOST_DIR}/include")
 
-list(APPEND LINK_EXTRA "-T{HOST_DIR}/linker.ld")
+list(APPEND LINK_EXTRA "-T${HOST_DIR}/linker.ld")
 
+# =========================================================================
