@@ -1,13 +1,21 @@
-
 .vscode/*
 .vs
+.ninja_deps
+.ninja_log
 
+CMakeCache.txt
+CMakeFiles/
+
+build.ninja
+cmake_install.cmake
+
+out/*
 build/*
 tools/*
 tars/*
 
 *.iso
-sysroot
+sysroot/*
 
 *.d
 *.o
