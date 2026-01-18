@@ -15,8 +15,10 @@ include("${CMAKE_SOURCE_DIR}/cmake/target.cmake")
 # =========================================================================
 
 # We don't want to install to our host OS!
-set(SYSROOT ${CMAKE_BINARY_DIR}/sysroot)
+set(SYSROOT "${CMAKE_BINARY_DIR}/sysroot")
 set(CMAKE_INSTALL_PREFIX ${SYSROOT})
+
+include_directories("${CMAKE_SOURCE_DIR}/sys/include")
 
 project(foonix)
 

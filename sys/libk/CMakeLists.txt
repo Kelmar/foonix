@@ -7,8 +7,6 @@ link_directories(
     ../sysroot/usr/lib
 )
 
-include_directories("${CMAKE_SOURCE_DIR}/sys/include")
-
 file(GLOB stdio_srcs stdio/*.c)
 file(GLOB string_srcs string/*.c)
 
