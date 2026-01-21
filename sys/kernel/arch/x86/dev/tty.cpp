@@ -8,9 +8,10 @@
 
 #include <kernel/tty.h>
 
-#include "bus.h"
+//#include "bus.h"
 #include "vga.h"
-#include "memory.h"
+//#include "memory.h"
+#include "cpu.h"
 
 /********************************************************************************************************************/
 
@@ -20,8 +21,8 @@ namespace
 {
     /************************************************************************************************************/
 
-    const size_t VGA_WIDTH = 80;
-    const size_t VGA_HEIGHT = 25;
+    const int VGA_WIDTH = 80;
+    const int VGA_HEIGHT = 25;
     //uint16_t* const VGA_MEMORY = (uint16_t*)0x000B8000;
 
     const uint8_t CUR_LOC_HI = 0x0E;
@@ -34,14 +35,16 @@ namespace
 
     const uint8_t IO_ADDR_SEL = 0x01;*/
 
+    uint16_t terminal_io = 0;
+
     /************************************************************************************************************/
 
-    size_t terminal_row;
-    size_t terminal_column;
+    int terminal_row;
+    int terminal_column;
     uint8_t terminal_color;
     uint16_t* terminal_buffer;
 
-    bus* crt_bus;
+    //bus* crt_bus;
 
     //uint8_t* crtr_addr;
     //uint8_t* crtr_data;
@@ -52,15 +55,20 @@ namespace
      */
     static void set_loc(int col, int row)
     {
-        if (crt_bus)
+        //if (crt_bus)
         {
             uint16_t tmp = row * VGA_WIDTH * col;
 
-            crt_bus->byte(0, CUR_LOC_HI);
-            crt_bus->byte(1, (uint8_t)((tmp >> 8) & 0xFF));
+            //crt_bus->byte(0, CUR_LOC_HI);
+            //crt_bus->byte(1, (uint8_t)((tmp >> 8) & 0xFF));
 
-            crt_bus->byte(0, CUR_LOC_LO);
-            crt_bus->byte(1, (uint8_t)(tmp & 0xFF));
+            //crt_bus->byte(0, CUR_LOC_LO);
+            //crt_bus->byte(1, (uint8_t)(tmp & 0xFF));
+            outb(terminal_io, CUR_LOC_HI);
+            outb(terminal_io + 1, (uint8_t)((tmp >> 8) & 0xFF));
+
+            outb(terminal_io + 1, CUR_LOC_LO);
+            outb(terminal_io + 1, (uint8_t)(tmp & 0xFF));
         }
 
         terminal_column = col;
@@ -77,11 +85,18 @@ namespace
     {
         uint8_t b[2];
 
-        crt_bus->byte(0, CUR_LOC_LO);
-        b[0] = crt_bus->byte(1);
+        //crt_bus->byte(0, CUR_LOC_LO);
+        //b[0] = crt_bus->byte(1);
 
-        crt_bus->byte(0, CUR_LOC_HI);
-        b[1] = crt_bus->byte(1);
+        //crt_bus->byte(0, CUR_LOC_HI);
+        //b[1] = crt_bus->byte(1);
+
+        outb(terminal_io, CUR_LOC_LO);
+        b[0] = inb(terminal_io + 1);
+
+        outb(termainl_io, CUR_LOC_HI);
+        b[1] = inb(terminal_io + 1);
+
 
         return ((uint16_t)(b[1]) << 8 | b[0]);
     }
@@ -99,7 +114,9 @@ namespace
         memcpy(terminal_buffer, terminal_buffer + VGA_WIDTH, last_line * 2);
 
         /* Fill with term color spaces at the bottom. */
-        _memsetw(terminal_buffer + last_line, entry, VGA_WIDTH);
+        //_memsetw(terminal_buffer + last_line, entry, VGA_WIDTH);
+        for (int i = 0; i < VGA_WIDTH; ++i)
+            terminal_buffer[last_line + i] = entry;
     }
 }
 
@@ -107,7 +124,7 @@ namespace
 
 void terminal_pre_init(void)
 {
-    crt_bus = nullptr;
+    //crt_bus = nullptr;
 
     terminal_row = 0;
     terminal_column = 0;

@@ -17,8 +17,15 @@ list(APPEND x86_sources
     dconsole.cpp
 )
 
+list(APPEND x86_devs
+    tty.cpp
+)
+
 list(TRANSFORM x86_sources PREPEND "${KERNEL_SRC_DIR}/arch/x86/src/")
 list(APPEND SOURCES ${x86_sources})
+
+list(TRANSFORM x86_devs PREPEND "${KERNEL_SRC_DIR}/arch/x86/dev/")
+list(APPEND SOURCES ${x86_devs})
 
 # =========================================================================
 

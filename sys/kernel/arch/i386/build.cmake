@@ -19,7 +19,6 @@ list(APPEND SOURCES ${i386_sources})
 # Add platform specific device drivers.
 list(APPEND SOURCES
     "${HOST_DIR}/dev/timer.cpp"
-    "${HOST_DIR}/dev/tty.cpp"
 )
 
 # CRT platform specific files.

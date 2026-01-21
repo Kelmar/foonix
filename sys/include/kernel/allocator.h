@@ -27,8 +27,18 @@ private:
     size_t m_count;
 
 public:
-    constexpr PageBlock(logical_addr_t start, size_t count);
-    constexpr PageBlock(const PageBlock &rhs);
+    constexpr PageBlock(logical_addr_t start, size_t count)
+        : m_start(start)
+        , m_count(count)
+    {
+    }
+
+    constexpr PageBlock(const PageBlock &rhs)
+        : m_start(rhs.m_start)
+        , m_count(rhs.m_count)
+    {
+    }
+
     /* constructor */ PageBlock(PageBlock &&rhs);
 
     virtual ~PageBlock(void);
@@ -62,7 +72,7 @@ bool operator ==(const PageBlock &lhs, const PageBlock &rhs)
 class PageAllocator
 {
 protected:
-    /* constructor */ PageAllocator(void);
+    constexpr PageAllocator(void) { }
 
 public:
     virtual PageBlock NewBlock(size_t count) = 0;
