@@ -11,8 +11,8 @@ function(find_crt_object FILE dest)
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-    message("COMMAND: ${CMAKE_CXX_COMPILER} ${TARGET_FLAGS} -print-file-name=${FILE}")
-    message("RESULT: ${TMP}")
+    #message("COMMAND: ${CMAKE_CXX_COMPILER} ${TARGET_FLAGS} -print-file-name=${FILE}")
+    #message("RESULT: ${TMP}")
 
     # Clang will return the filename w/o a path if it can't find the object.
     #

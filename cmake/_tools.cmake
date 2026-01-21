@@ -7,7 +7,7 @@ set(TOOLS_PREFIX "${TOOLS_BIN_DIR}/${PLATFORM}-elf-")
 
 set(CMAKE_C_COMPILER ${TOOLS_PREFIX}gcc)
 set(CMAKE_CXX_COMPILER ${TOOLS_PREFIX}g++)
-set(CMAKE_ASM_COMPILER ${TOOLS_PREFIX}as)
+set(CMAKE_ASM_COMPILER ${TOOLS_PREFIX}g++)
 
 # Tell CMake to skip the compiler checks.
 # The normal checks fail because of missing build pieces.

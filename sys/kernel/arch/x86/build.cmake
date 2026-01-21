@@ -13,6 +13,15 @@ endif()
 
 # =========================================================================
 
+list(APPEND x86_sources
+    dconsole.cpp
+)
+
+list(TRANSFORM x86_sources PREPEND "${KERNEL_SRC_DIR}/arch/x86/src/")
+list(APPEND SOURCES ${x86_sources})
+
+# =========================================================================
+
 include_directories("${KERNEL_SRC_DIR}/arch/x86/include")
 
 # =========================================================================

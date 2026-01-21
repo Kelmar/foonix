@@ -27,54 +27,31 @@ private:
     size_t m_count;
 
 public:
-    /* constructor */ PageBlock(logical_addr_t start, size_t count)
-        : m_start(start)
-        , m_count(count)
-    {
-    }
+    constexpr PageBlock(logical_addr_t start, size_t count);
+    constexpr PageBlock(const PageBlock &rhs);
+    /* constructor */ PageBlock(PageBlock &&rhs);
 
-    /* constructor */ PageBlock(const PageBlock &rhs)
-        : m_start(rhs.m_start)
-        , m_count(rhs.m_count)
-    {
-    }
+    virtual ~PageBlock(void);
 
-    /* constructor */ PageBlock(PageBlock &&rhs)
-        : m_start(0)
-        , m_count(0)
-    {
-        std::swap(rhs.m_start, m_start);
-        std::swap(rhs.m_count, m_count);
-    }
-
-    virtual ~PageBlock(void) { }
-
+    inline
     logical_addr_t Address(void) const { return m_start; }
+
+    inline
     size_t Count(void) const { return m_count; }
 
-    PageBlock &operator =(PageBlock &&rhs)
-    {
-        std::swap(rhs.m_start, m_start);
-        std::swap(rhs.m_count, m_count);
+    PageBlock &operator =(PageBlock &&rhs);
+    PageBlock &operator =(const PageBlock &rhs);
 
-        return *this;
-    }
-
-    PageBlock &operator =(const PageBlock &rhs)
-    {
-        m_start = rhs.m_start;
-        m_count = rhs.m_count;
-
-        return *this;
-    }
-
+    inline
     operator bool(void) const { return m_start != 0 && m_count != 0; }
 
+    inline
     operator void *(void) const { return reinterpret_cast<void *>(m_start); }
 };
 
 extern PageBlock NullBlock;
 
+inline
 bool operator ==(const PageBlock &lhs, const PageBlock &rhs)
 {
     return lhs.Address() == rhs.Address() && lhs.Count() == rhs.Count();

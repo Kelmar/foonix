@@ -18,8 +18,8 @@ include("${CMAKE_SOURCE_DIR}/cmake/klink.cmake")
 # =========================================================================
 
 list(APPEND KERN_SOURCES
-    debug.cpp kernel_args.cpp main.cpp
-    vm/vm_page.cpp vm/vm.cpp
+    src/debug.cpp src/kernel_args.cpp src/main.cpp
+    src/allocator.cpp src/vm/vm_page.cpp src/vm/vm.cpp
 )
 
 list(TRANSFORM KERN_SOURCES PREPEND "${KERNEL_SOURCE_DIR}")
@@ -32,6 +32,8 @@ list(APPEND SOURCES ${KERN_SOURCES})
 
 add_executable(kernel ${SOURCES})
 add_dependencies(kernel k)
+
+include("${CMAKE_SOURCE_DIR}/cmake/klink.cmake")
 
 target_compile_options(kernel PRIVATE -fno-rtti -fno-exceptions -ggdb)
 

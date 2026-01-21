@@ -10,6 +10,8 @@ include("${CMAKE_SOURCE_DIR}/cmake/target.cmake")
 
 # =========================================================================
 
+set(CMAKE_CXX_STANDARD 23)
+
 # We don't want to install to our host OS!
 set(SYSROOT "${CMAKE_BINARY_DIR}/sysroot")
 set(CMAKE_INSTALL_PREFIX ${SYSROOT})
@@ -37,8 +39,8 @@ add_subdirectory(grub)
 
 add_dependencies(foonix kernel)
 
-install(
-    CODE "execute_process(COMMAND grub-mkrescue -o boot.iso sysroot)"
-)
+#install(
+#    CODE "execute_process(COMMAND grub-mkrescue -o boot.iso sysroot)"
+#)
 
 # =========================================================================

@@ -10,11 +10,11 @@ include ("${KERNEL_SRC_DIR}/arch/x86/build.cmake")
 # Add platform specific files
 list(APPEND i386_sources
     boot.S cpu.S isr.S memsetw.S vectors.s
-    bus.cpp dconsole.cpp gdt.cpp idt.cpp multiboot.cpp paging.cpp preinit.cpp
+    bus.cpp gdt.cpp idt.cpp multiboot.cpp paging.cpp preinit.cpp
 )
 
-list(TRANSFORM i386_source PREPEND "${HOST_DIR}/i386/")
-list(APPEND SOURCES ${i386_source})
+list(TRANSFORM i386_sources PREPEND "${HOST_DIR}/i386/")
+list(APPEND SOURCES ${i386_sources})
 
 # Add platform specific device drivers.
 list(APPEND SOURCES

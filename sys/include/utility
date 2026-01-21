@@ -12,9 +12,23 @@
 namespace std
 {
     template <class T>
-    typename std::remove_reference<T>::type&& move(T&& t) noexcept 
+    std::remove_reference_t<T>&& move(T &t) noexcept
     {
-        typedef typename remove_reference<T>::type _up;
+        typedef std::remove_reference_t<T> _up;
+        return static_cast<_up&&>(t);
+    }
+
+    template <class T>
+    std::remove_reference_t<T>&& move(T&& t) noexcept 
+    {
+        typedef std::remove_reference_t<T> _up;
+        return static_cast<_up&&>(t);
+    }
+
+    template <class T>
+    std::remove_reference_t<T>&& forward(T &t) noexcept
+    { 
+        typedef std::remove_reference_t<T> _up;
         return static_cast<_up&&>(t);
     }
 
