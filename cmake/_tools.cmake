@@ -1,51 +1,59 @@
-#[===[
-set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_NAME Generic-ELF)
+set(CMAKE_CROSSCOMPILING TRUE)
 
-set(CMAKE_C_COMPILER   ${TOOLS_BIN}/i686-elf-gcc)
-set(CMAKE_CXX_COMPILER ${TOOLS_BIN}/i686-elf-g++)
-#]===]
+set(TOOLS_DIR "${CMAKE_SOURCE_DIR}/tools")
+set(TOOLS_BIN_DIR "${TOOLS_DIR}/bin")
+set(TOOLS_PREFIX "${TOOLS_BIN_DIR}/${PLATFORM}-elf-")
 
-#set(CMAKE_C_COMPILER   /usr/lib/llvm-12/bin/clang)
-#set(CMAKE_CXX_COMPILER /usr/lib/llvm-12/bin/clang++)
-#set(CMAKE_ASM_COMPILER /usr/lib/llvm-12/bin/llvm-as)
-#set(CMAKE_CXX_LINK_EXECUTABLE /usr/lib/llvm-12/bin/clang)
-#set(CMAKE_C_LINK_EXECUTABLE ${TOOLS_BIN}/i686-elf-ld <FLAGS> <CMAKE_C_LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>)
-#set(CMAKE_CXX_LINK_EXECUTABLE ${TOOLS_BIN}/i686-elf-ld <FLAGS> <CMAKE_CXX_LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>)
+set(CMAKE_C_COMPILER ${TOOLS_PREFIX}gcc)
+set(CMAKE_CXX_COMPILER ${TOOLS_PREFIX}g++)
+set(CMAKE_ASM_COMPILER ${TOOLS_PREFIX}as)
 
-#[===[
-CMake is going to complain about our compiler not working.
-
-This is because there is no crt0 to link to for basic programs
-and we need very specific flags to get the libraries to compile
-correctly.
-
-The options below force it to accept our "broken" compiler.
-#]===]
-
-#[===[
+# Tell CMake to skip the compiler checks.
+# The normal checks fail because of missing build pieces.
 set(CMAKE_C_COMPILER_WORKS 1)
 set(CMAKE_CXX_COMPILER_WORKS 1)
+set(CMAKE_ASM_COMPILER_WORKS 1)
 
-# Set the target environment to our sysroot build folder
-set(CMAKE_FIND_ROOT_PATH ${SYSROOT})
+# We will however verify that the files are were we expect them to be
+if (NOT EXISTS "${CMAKE_C_COMPILER}")
+    message(FATAL_ERROR "Cross copmiler not built, please run build.sh in the build directory first.")
+endif()
 
-# Search for programs in the host environment
-set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+if (NOT EXISTS "${CMAKE_CXX_COMPILER}")
+    message(FATAL_ERROR "Cross copmiler not built, please run build.sh in the build directory first.")
+endif()
 
-# Search for libraries and headers in the target environment
-set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+if (NOT EXISTS "${CMAKE_ASM_COMPILER}")
+    message(FATAL_ERROR "Cross copmiler not built, please run build.sh in the build directory first.")
+endif()
 
-set(TARGET_HOST i386)
-#]===]
+# =========================================================================
 
-# When you tell Clang "Pedantic" it means it!
+# Trackdown where the compiler includes are.
+# These are things like stddef.h and stdint.h, which we want/need
+execute_process(
+    COMMAND sh -c "${CMAKE_CXX_COMPILER} --version | head -n 1 | awk '{ print $NF; }'"
+    OUTPUT_VARIABLE CXX_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
-set(W_FLAGS "-Wall -Wextra -Wpedantic -Wno-unused-command-line-argument -Werror")
+string(STRIP ${CXX_VERSION} CXX_VERSION)
 
-set(CMAKE_C_COMPILER clang-20)
-set(CMAKE_CXX_COMPILER clang++-20)
-set(CMAKE_ASM_COMPILER clang++-20)
+set(COMP_DIR "${TOOLS_DIR}/lib/gcc/${PLATFORM}-elf/${CXX_VERSION}")
+
+if ( NOT EXISTS "${COMP_DIR}/include/stdint.h" )
+    message(FATAL_ERROR "Couldn't find ${COMP_DIR}/include/stdint.h")
+endif()
+
+include_directories(SYSTEM "${COMP_DIR}/include")
+
+unset(COMP_DIR)
+
+# =========================================================================
+
+#set(W_FLAGS "-Wall -Wextra -Wpedantic -Wno-unused-command-line-argument -Werror")
+set(W_FLAGS "-Wall -Wextra -Wpedantic -Werror")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${W_FLAGS} -ffreestanding -nostdlib")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${W_FLAGS} -ffreestanding -nostdlib")

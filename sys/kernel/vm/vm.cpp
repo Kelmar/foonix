@@ -59,9 +59,10 @@ public:
         size_t byteSize = count * PAGE_SIZE;
 
         // Start at the bottom of memory and work our way down
-        size_t index = g_KernelArguments.MemoryMapEntries - 1;
+        size_t target = g_KernelArguments.MemoryMapEntries - 1; 
+        size_t index = target;
 
-        while (index >= 0)
+        while (index < target)
         {
             if (g_KernelArguments.MemoryMap[index].Length >= index)
             {

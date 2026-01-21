@@ -2,14 +2,10 @@ cmake_minimum_required(VERSION 3.25)
 
 # =========================================================================
 
-# Must be included first
-include("${CMAKE_SOURCE_DIR}/cmake/_tools.cmake")
-
-# =========================================================================
-
 # Read user's selected configuration file
 include("${CMAKE_SOURCE_DIR}/cmake/config.cmake")
 
+include("${CMAKE_SOURCE_DIR}/cmake/_tools.cmake")
 include("${CMAKE_SOURCE_DIR}/cmake/target.cmake")
 
 # =========================================================================
@@ -18,9 +14,14 @@ include("${CMAKE_SOURCE_DIR}/cmake/target.cmake")
 set(SYSROOT "${CMAKE_BINARY_DIR}/sysroot")
 set(CMAKE_INSTALL_PREFIX ${SYSROOT})
 
-include_directories("${CMAKE_SOURCE_DIR}/sys/include")
+# We also don't want includes from our host OS!
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --sysroot=${SYSROOT} -nostdinc")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${SYSROOT} -nostdinc -nostdinc++")
+set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${SYSROOT} -nostdinc -nostdinc++")
 
-project(foonix)
+project(foonix C CXX ASM)
+
+include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/sys/include")
 
 add_custom_command(
     OUTPUT sysroot
