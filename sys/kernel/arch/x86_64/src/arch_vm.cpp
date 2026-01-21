@@ -1,0 +1,24 @@
+/*************************************************************************/
+/*************************************************************************/
+
+#include <stdint.h>
+#include <string.h>
+
+#include <kernel/arch/arch.h>
+#include <kernel/kernel_args.h>
+#include <kernel/kernel.h>
+#include <kernel/debug.h>
+#include <kernel/vm/vm.h>
+
+#include "cpu.h"
+//#include "multiboot.h"
+//#include "arch_vm.h"
+
+/*************************************************************************/
+
+void Arch::InitBootMemory(KernelArgs *ka)
+{
+    (void)ka;
+}
+
+/*************************************************************************/

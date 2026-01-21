@@ -1,14 +1,17 @@
-/* The bootloader will look at this image and start execution at the symbol designated at the entry point. */
 ENTRY(_start)
 
-/* Tell where the various sections of the object files will be put in the final kernel image. */
+__PAGE_SIZE = 0x1000;
+
+/* TODO: Want to have one spot where we define this for everything. */
+/* __VIRT_START = 0xC0000000; */
+__VIRT_START = 0;
+
 SECTIONS
 {
-    /* Begin putting sections at 1 MiB, a conventional place for kernels to be loaded at by the bootloader. */
     . = 1M;
 
-    /* Start of kernel marker */
-    kernel_start = .; _kernel_start = .;  __kernel_start = .;
+    /* Create start marker */
+    _kernel_phys_start = ABSOLUTE(.);
 
     .multiboot.data :
     {
@@ -25,33 +28,30 @@ SECTIONS
         *(.multiboot.strings)
     }
 
-    . += 0xC0000000;
+    . += __VIRT_START;
 
-    .text ALIGN(4K) : AT (ADDR (.text) - 0xC0000000)
+    .text ALIGN(__PAGE_SIZE) : AT (ADDR (.text) - __VIRT_START)
     {
         *(.text)
     }
 
-    /* Read-only data. */
-    .rodata ALIGN(4K) : AT (ADDR (.rodata) - 0xC0000000)
+    .rodata ALIGN(__PAGE_SIZE) : AT (ADDR (.rodata) - __VIRT_START)
     {
         *(.rodata)
     }
 
-    /* Read-write data (initialized) */
-    .data ALIGN(4K) : AT (ADDR (.data) - 0xC0000000)
+    .data ALIGN(__PAGE_SIZE) : AT (ADDR (.data) - __VIRT_START)
     {
         *(.data)
     }
 
-    /* Read-write data (uninitialized) and stack */
-    .bss ALIGN(4K) : AT (ADDR (.bss) - 0xC0000000)
+    .bss ALIGN(__PAGE_SIZE) : AT (ADDR (.bss) - __VIRT_START)
     {
         *(COMMON)
         *(.bss)
         *(.bootstrap_stack)
     }
 
-    /* End of kernel marker */
-    kernel_end = .; _kernel_end = .; __kernel_end = .;
+    /* Create kernel end marker */
+    _kernel_end = ABSOLUTE(.);
 }

@@ -65,3 +65,7 @@ extern "C" int _purecall()
     Debug::Panic("Pure call in kernel!");
     return 0;
 }
+
+extern "C" void __cxa_atexit()
+{
+}
