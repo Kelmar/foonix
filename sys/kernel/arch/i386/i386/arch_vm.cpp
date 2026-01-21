@@ -16,9 +16,20 @@
 
 /*************************************************************************/
 
-// Symbols defined by linker script
-extern "C" uintptr_t kernel_start; // Located at a physical address
-extern "C" uintptr_t kernel_end;   // Located at a logical address
+/*************************************************************************/
+/*
+ * These are defined in the linker script.
+ */
+
+/// @brief Physical memory location of the start of the kernel.
+extern "C" uintptr_t _kernel_phys_start;
+
+/// @brief Physical memory location of the end of the kernel.
+extern "C" uintptr_t _kernel_end;
+
+constexpr void *kernel_start = &_kernel_phys_start;
+
+constexpr void *kernel_end = &_kernel_end; //VIRT_2_PHYS(&_kernel_end);
 
 /*************************************************************************/
 
@@ -158,8 +169,6 @@ void Arch::InitBootMemory(KernelArgs *ka)
 
     if (err)
         Debug::PrintF("WARN: No memory map, guessing.\r\n");
-
-
 
     // Mark the first 1MB as reserved with the VM, we manage those ourselves.
     //::VM::ReserveBootPages(0, 256);

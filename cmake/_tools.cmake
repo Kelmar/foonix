@@ -3,6 +3,20 @@ set(CMAKE_CROSSCOMPILING TRUE)
 
 set(TOOLS_DIR "${CMAKE_SOURCE_DIR}/tools")
 set(TOOLS_BIN_DIR "${TOOLS_DIR}/bin")
+
+if (PLATFORM MATCHES "i[3-9]86")
+  # We need to find the right prefix; select the one with the highest value.
+  execute_process(
+    COMMAND sh -c "ls i?86-elf-gcc | cut -d - -f 1 | sort -r | head -n 1"
+    WORKING_DIRECTORY "${TOOLS_BIN_DIR}"
+    OUTPUT_VARIABLE TOOL_PLATFORM
+  )
+
+  string(STRIP "${TOOL_PLATFORM}" TOOL_PLATFORM)
+else()
+  set(TOOL_PLATFORM "${PLATFORM}")
+endif()
+
 set(TOOLS_PREFIX "${TOOLS_BIN_DIR}/${PLATFORM}-elf-")
 
 set(CMAKE_C_COMPILER ${TOOLS_PREFIX}gcc)

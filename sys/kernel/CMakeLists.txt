@@ -39,7 +39,7 @@ target_compile_options(kernel PRIVATE -fno-rtti -fno-exceptions -ggdb)
 
 target_link_options(kernel PRIVATE -nostdlib ${LINK_EXTRA})
 
-target_link_libraries(kernel PRIVATE k)
+target_link_libraries(kernel PRIVATE k gcc)
 
 install(
     TARGETS kernel RUNTIME

@@ -254,7 +254,7 @@ number:
                 }
             }
 
-            p = base_to_ascii((uint32_t)val, base, (flags & FLAGS_UPPER) != 0, nbuf, sizeof(nbuf));
+            p = base_to_ascii(val, base, (flags & FLAGS_UPPER) != 0, nbuf, sizeof(nbuf));
 
             n = sizeof(nbuf) - (p - nbuf + 1);
 

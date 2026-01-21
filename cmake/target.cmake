@@ -24,6 +24,11 @@ if (NOT DEFINED PLATFORM)
   message(STATUS "Platform not set defaulting to: ${PLATFORM}")
 endif()
 
+if (PLATFORM MATCHES "i[4-9]86")
+  # Be forgiving about specifying the i386 target.
+  set(PLATFORM "i386")
+endif()
+
 set(TARGET_INCLUDE "${CMAKE_SOURCE_DIR}/cmake/arch/${PLATFORM}.cmake")
 
 if (NOT EXISTS "${TARGET_INCLUDE}")

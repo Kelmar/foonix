@@ -249,7 +249,7 @@ _start:
 
 2:
     # Only map the kernel
-    cmpl $_kernel_start, %esi
+    cmpl $_kernel_phys_start, %esi
     jl 3f
     cmpl $MAP2PHYS(_kernel_end), %esi
     jge 4f
