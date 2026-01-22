@@ -54,7 +54,7 @@ struct KernelArgs
 {
     static const size_t MAX_MEMORY_ENTRIES = 16;
 
-    /// @brief Size of the memroy in KBytes
+    /// @brief Size of the memory in KBytes
     size_t MemorySizeKByte;
 
     /// @brief Memory location where the kernel is located.

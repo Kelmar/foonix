@@ -10,6 +10,10 @@
 #include <kernel/kernel_args.h>
 
 /********************************************************************************************************************/
+
+#define MULTIBOOT_MAGIC 0x2BADB002
+
+/********************************************************************************************************************/
 /*
  * NOTE:
  * We can't use "real" pointers because the multiboot loader specification uses a 32 bit pointer for the structure.

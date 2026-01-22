@@ -5,6 +5,16 @@
 
 /*************************************************************************/
 
+#include "defs.h"
+
+#ifdef __STDC__
+# define __CONCAT(X,Y) X ## Y
+# define __STRING(X) #X
+#else
+# define __CONCAT(X,Y) X/**/Y
+# define __STRING(X) "X"
+#endif
+
 #ifdef __ELF__
 # define _C_LABEL(X) X
 #else
@@ -15,28 +25,10 @@
 # endif
 #endif
 
-#ifdef __STDC__
-# define __CONCAT(X,Y) X ## Y
-# define __STRING(X) #X
-#else
-# define __CONCAT(X,Y) X/**/Y
-# define __STRING(X) "X"
-#endif
-
 #ifdef _TEST_
 # define __PREFIX(X) __CONCAT(_foo_,X)
 #else
 # define __PREFIX(X) X
-#endif
-
-#if !defined(_ALIGN_TEXT) && !defined(_KERNEL)
-# ifdef _STANDALONE
-#  define _ALIGN_TEXT .align 4
-# elif defined __ELF__
-#  define _ALIGN_TEXT .align 16
-# else
-#  define _ALIGN_TEXT .align 4
-# endif
 #endif
 
 #define _ENTRY(X)                \
@@ -49,7 +41,11 @@
     .globl __PREFIX(X); \
     __PREFIX(X):
 
-#define NENTRY(Y)	_ENTRY(_C_LABEL(Y))
+#define NENTRY(X) _ENTRY(_C_LABEL(X))
+#define LABEL(X)  _LABEL(_C_LABEL(X))
+
+#define VIRT_2_PHYS(X_) (X_ - KERNEL_OFFSET)
+#define PHYS_2_VIRT(X_) (X_ + KERNEL_OFFSET)
 
 /*************************************************************************/
 

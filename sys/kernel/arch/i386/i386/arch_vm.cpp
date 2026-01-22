@@ -10,11 +10,60 @@
 #include <kernel/debug.h>
 #include <kernel/vm/vm.h>
 
+#include "asm.h"
 #include "cpu.h"
 #include "multiboot.h"
 #include "arch_vm.h"
 
 /*************************************************************************/
+
+// The assembly code will initialize these values for us.
+uint32_t g_BootMagic; /* Value from EAX register */
+uint32_t g_Multiboot; /* Value from EBX register */
+
+/*************************************************************************/
+
+int Multiboot::InitMultibootMemory(KernelArgs *ka)
+{
+    // We need to come up with some sort of memory map....
+
+    // Remap the multiboot structure into virtual memory space.
+    multiboot_t *multi = reinterpret_cast<multiboot_t *>(PHYS_2_VIRT(g_Multiboot));
+    Debug::PrintF("Multiboot Info: %p\r\n", multi);
+
+    // This is really just a hint, we'll want to detect actual memory config later.
+    ka->MemorySizeKByte = multi->mem_lower + multi->mem_upper;
+
+    if ((multi->flags & MB_FLAG_MEM) == 0)
+    {
+        Debug::PrintF("No memory map provided by multiboot.\r\n");
+        return -1;
+    }
+
+    size_t recordCnt = multi->mmap_length / sizeof(mb_memory_map_t);
+    bool processing = true;
+    
+    for (uint32_t i = 0; processing && i < recordCnt; ++i)
+    {
+        mb_memory_map_t *record = &multi->mmap_addr[i];
+
+        if (record->type != BiosMemoryType::Available)
+        {
+            // Everything else we just mark as unavailable.
+            continue;
+        }
+
+        if (record->base_addr > MAX_32_ADDR)
+        {
+            // Don't think records will show up out of order, but we keep going, just in case.
+            continue; 
+        }
+
+        processing &= ka->AddFreeMemory(record->base_addr, record->length);
+    }
+
+    return 0;
+}
 
 /*************************************************************************/
 /*
@@ -30,22 +79,6 @@ extern "C" uintptr_t _kernel_end;
 constexpr void *kernel_start = &_kernel_phys_start;
 
 constexpr void *kernel_end = &_kernel_end; //VIRT_2_PHYS(&_kernel_end);
-
-/*************************************************************************/
-
-enum class BootMethod : uint32_t
-{
-    /// @brief Booted with an unknown bootloader, expect wild wild west.
-    Unknown   = 0,
-
-    /// @brief Booted via a Multiboot loader, expect g_Multiboot to be filled out.
-    Multiboot = 1,
-
-    /// @brief Booted via (U)EFI system    
-    EFI       = 2,
-};
-
-BootMethod g_BootMethod;
 
 /********************************************************************************************************************/
 
@@ -140,7 +173,7 @@ void Arch::InitBootMemory(KernelArgs *ka)
 {
     Debug::PrintF("ENTER: Arch::InitBootMemory()\r\n");
 
-    Debug::PrintF("Boot Method: %d\r\n", g_BootMethod);
+    Debug::PrintF("Boot Magic: 0x%08X\r\n", g_BootMagic);
 
     // Figure out where we live in physical memory.
     ka->KernelCode.Base = reinterpret_cast<uintptr_t>(&kernel_start);
@@ -154,13 +187,12 @@ void Arch::InitBootMemory(KernelArgs *ka)
 
     int err;
 
-    switch (g_BootMethod)
+    switch (g_BootMagic)
     {
-    case BootMethod::Multiboot:
+    case MULTIBOOT_MAGIC:
         err = Multiboot::InitMultibootMemory(ka);
         break;
 
-    case BootMethod::Unknown:
     default:
         // TODO: Fallback to BIOS probe
         err = -1;

@@ -3,8 +3,8 @@ ENTRY(_start)
 __PAGE_SIZE = 0x1000;
 
 /* TODO: Want to have one spot where we define this for everything. */
-/* __VIRT_START = 0xC0000000; */
-__VIRT_START = 0;
+__VIRT_START = 0xC0000000;
+/* __VIRT_START = 0; */
 
 SECTIONS
 {
@@ -21,11 +21,6 @@ SECTIONS
     .multiboot.text :
     {
         *(.multiboot.text)
-    }
-
-    .multiboot.strings :
-    {
-        *(.multiboot.strings)
     }
 
     . += __VIRT_START;
@@ -49,7 +44,6 @@ SECTIONS
     {
         *(COMMON)
         *(.bss)
-        *(.bootstrap_stack)
     }
 
     /* Create kernel end marker */
