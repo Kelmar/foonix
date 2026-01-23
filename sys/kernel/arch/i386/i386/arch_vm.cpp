@@ -1,5 +1,5 @@
-/*************************************************************************/
-/*************************************************************************/
+/********************************************************************************************************************/
+/********************************************************************************************************************/
 
 #include <stdint.h>
 #include <string.h>
@@ -15,13 +15,13 @@
 #include "multiboot.h"
 #include "arch_vm.h"
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 // The assembly code will initialize these values for us.
 uint32_t g_BootMagic; /* Value from EAX register */
 uint32_t g_Multiboot; /* Value from EBX register */
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 int Multiboot::InitMultibootMemory(KernelArgs *ka)
 {
@@ -65,7 +65,7 @@ int Multiboot::InitMultibootMemory(KernelArgs *ka)
     return 0;
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 /*
  * These are defined in the linker script.
  */
@@ -177,10 +177,8 @@ void Arch::InitBootMemory(KernelArgs *ka)
 
     // Figure out where we live in physical memory.
     ka->KernelCode.Base = reinterpret_cast<uintptr_t>(&kernel_start);
-    uintptr_t kend = reinterpret_cast<uintptr_t>(&kernel_end);
+    uintptr_t kend = VIRT_2_PHYS(reinterpret_cast<uintptr_t>(&kernel_end));
 
-    kend -= RELOCATE_START; // Map kernel end to physical page
-;
     ka->KernelCode.Length = kend - ka->KernelCode.Base;
 
     Debug::PrintF("Kernel: %p %08X\r\n", ka->KernelCode.Base, ka->KernelCode.Length);
@@ -201,10 +199,7 @@ void Arch::InitBootMemory(KernelArgs *ka)
 
     if (err)
         Debug::PrintF("WARN: No memory map, guessing.\r\n");
-
-    // Mark the first 1MB as reserved with the VM, we manage those ourselves.
-    //::VM::ReserveBootPages(0, 256);
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 

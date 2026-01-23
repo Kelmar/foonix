@@ -190,8 +190,8 @@ Kernel::ErrorCode paging::MapPage(page_directory_t dir, paddr_t paddr, vaddr_t v
         Debug::PrintF("WARNING: Page over writting: %p with %p\r\n", maskedPtr, paddr);
     }
 
-    *page = (paddr & 0xFFFF'F000) | flags | page_flags::present;
-    
+    *page = (paddr & page_flags::addr_mask) | flags | page_flags::present;
+
     return Kernel::ErrorCode::NoError;
 }
 
@@ -211,7 +211,7 @@ void paging::UnmapPage(page_directory_t dir, vaddr_t vaddr)
     /*
      * TODO: The pointer in the directory entry is the physical address, find a good
      * way we can map that into the kernel space so we can update it.
-     */ 
+     */
     /*
     auto ptab = reinterpret_cast<page_table_t>(dir[dirIndex] & directory_flags::addr_mask);
     

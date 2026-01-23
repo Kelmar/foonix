@@ -1,4 +1,4 @@
-/*************************************************************************/
+/********************************************************************************************************************/
 /*
  * This is our initial boot loader after stage 0 or 1.  We get called from 
  * evertyhign here, EFI, multiboot and so on.
@@ -8,7 +8,7 @@
  * 1) We need to preserve the initial contents of EAX, which for multiboot has the
  *    multiboot header that we'll want to parse in the C code.
  */
-/*************************************************************************/
+/********************************************************************************************************************/
 
 #include "asm.h"
 
@@ -22,7 +22,7 @@
 #define KERNEL_PAGE_OFFSET (((KERNEL_OFFSET) >> 22) * 4)
 #define VIDEO_PAGE_OFFSET (((VIDEO_OFFSET) >> 12) * 4)
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 # Multiboot header
 .section .multiboot.data, "aw"
@@ -31,7 +31,7 @@
 .long FLAGS
 .long CHECKSUM
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 .section .bss, "aw", @nobits
     /* Boot pages */
@@ -47,7 +47,7 @@
     LABEL(boot_page_directory)
     .skip 4096
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 .section .multiboot.text, "a"
 
@@ -146,14 +146,18 @@ _start:
     movl $VIRT_2_PHYS(boot_page_directory), %ecx
     movl %ecx, %cr3
 
+    /* Restore the EAX and EBX registers */
+    popl %eax
+    popl %ebx
+
     /* Turn on paging and write protection */
 paging_init:
     movl %cr0, %ecx
     orl  $0x80010000, %ecx
     movl %ecx, %cr0
 
-    /* Long jump into our _paged_start function */
+    /* Long jump into our _paged_start function in boot.S */
     lea _paged_start, %ecx
     jmp *%ecx
 
-/*************************************************************************/
+/********************************************************************************************************************/

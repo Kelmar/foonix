@@ -6,7 +6,7 @@
 
 #include "PageFrameAllocator.h"
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 size_t NextPower2(size_t v)
 {
@@ -28,11 +28,11 @@ namespace
 
 constexpr size_t Log2(size_t v) { return SubLog2(v, 1, 0); }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 const PageBlock PageBlock::Nil(0, 0);
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 PageFrameAllocator::PageFrameAllocator(size_t maxSize)
     : m_maxSize(maxSize)
@@ -56,7 +56,7 @@ PageFrameAllocator::~PageFrameAllocator(void)
 {
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 PageFrameAllocator::BuddyNode *PageFrameAllocator::GetFreeNode(void)
 {
@@ -71,7 +71,7 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetFreeNode(void)
     return node;
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 void PageFrameAllocator::ReleaseNode(BuddyNode *node)
 {
@@ -87,7 +87,7 @@ void PageFrameAllocator::ReleaseNode(BuddyNode *node)
     m_freePool.Next = node;
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 PageFrameAllocator::BuddyNode *PageFrameAllocator::AllocNode(void)
 {
@@ -99,7 +99,7 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::AllocNode(void)
     return new BuddyNode();
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 PageFrameAllocator::BuddyNode *PageFrameAllocator::GetExactFrame(uintptr_t address, size_t order)
 {
@@ -143,7 +143,7 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetExactFrame(uintptr_t addre
     return split;
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 PageFrameAllocator::BuddyNode *PageFrameAllocator::GetAvailableNode(size_t order)
 {
@@ -181,7 +181,7 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetAvailableNode(size_t order
     return split;
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 PageBlock PageFrameAllocator::Aquire(uintptr_t address, size_t size)
 {
@@ -232,7 +232,7 @@ PageBlock PageFrameAllocator::Aquire(uintptr_t address, size_t size)
     return rval;
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 PageBlock PageFrameAllocator::Allocate(size_t requested)
 {
@@ -261,7 +261,7 @@ PageBlock PageFrameAllocator::Allocate(size_t requested)
     return rval;
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 void PageFrameAllocator::Release(PageBlock &&block)
 {
@@ -319,7 +319,7 @@ void PageFrameAllocator::Release(PageBlock &&block)
     m_buckets[order].Insert(frame->Start, frame);
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
 
 bool PageFrameAllocator::CheckAllFree(void)
 {
@@ -331,4 +331,4 @@ bool PageFrameAllocator::CheckAllFree(void)
     return cnt == 1;
 }
 
-/*************************************************************************/
+/********************************************************************************************************************/
