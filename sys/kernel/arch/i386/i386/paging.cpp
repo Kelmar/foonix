@@ -20,16 +20,9 @@
 
 /********************************************************************************************************************/
 
-using namespace Arch::Paging;
-
 namespace
 {
 #if 0
-
-    extern "C" Arch::Paging::page_directory_t boot_page_directory;
-    extern "C" Arch::Paging::page_table_t boot_page_identity;
-    extern "C" Arch::Paging::page_table_t boot_page_table1;
-
     /************************************************************************************************************/
     /**
      * @brief Return the number of available entires in the page table.
@@ -126,13 +119,18 @@ namespace
 
 /********************************************************************************************************************/
 
-using namespace Arch::Paging;
+using namespace paging;
 
-Kernel::ErrorCode Arch::InitPaging(KernelArgs *ka)
-{
-    UNUSED(ka);
+extern "C" page_directory_t boot_page_directory;
+extern "C" page_table_t boot_page_identity;
+extern "C" page_table_t boot_page_kernel;
+
+/********************************************************************************************************************/
 
 #if 0
+Kernel::ErrorCode paging::InitPaging(KernelArgs *ka)
+{
+    UNUSED(ka);
 
     int tableIndex = -1;
     int dirIndex = 0;
@@ -161,8 +159,72 @@ Kernel::ErrorCode Arch::InitPaging(KernelArgs *ka)
 
     // Map the new page table into our boot directory:
     
-#endif
     return Kernel::ErrorCode::NoError;
+}
+
+#endif
+
+/********************************************************************************************************************/
+
+Kernel::ErrorCode paging::MapPage(page_directory_t dir, paddr_t paddr, vaddr_t vaddr, uint32_t flags)
+{
+    if (!IsAligned(paddr) || !IsAligned(vaddr))
+        return Kernel::ErrorCode::NotAligned;
+
+    //Debug::PrintF("Map %p -> %p\r\n", physEntry, virtEntry);
+    
+    int pgtIndex = (vaddr >> 12) & 0x03FF;
+    int dirIndex = (vaddr >> 22) & 0x03FF;
+
+    // Assert these entries are correct!
+    if ((dir[dirIndex] & directory_flags::present) == 0)
+        Debug::Panic("Request to map to non present page entry!");
+
+    // TODO: Fix this, hard coded to kernel boot page.
+    page_entry_t *page = &boot_page_kernel[pgtIndex];
+
+    if ((*page & page_flags::present) != 0)
+    {
+        auto maskedPtr = *page & page_flags::addr_mask;
+
+        Debug::PrintF("WARNING: Page over writting: %p with %p\r\n", maskedPtr, paddr);
+    }
+
+    *page = (paddr & 0xFFFF'F000) | flags | page_flags::present;
+    
+    return Kernel::ErrorCode::NoError;
+}
+
+/********************************************************************************************************************/
+
+void paging::UnmapPage(page_directory_t dir, vaddr_t vaddr)
+{
+    uint32_t virtEntry = static_cast<uint32_t>(AlignFloor(vaddr));
+    
+    int pgtIndex = (virtEntry >> 12) & 0x03FF;
+    int dirIndex = (virtEntry >> 22) & 0x03FF;
+
+    // Assert these entries are correct!
+    if ((dir[dirIndex] & directory_flags::present) == 0)
+        return; // Nothing to do
+
+    /*
+     * TODO: The pointer in the directory entry is the physical address, find a good
+     * way we can map that into the kernel space so we can update it.
+     */ 
+    /*
+    auto ptab = reinterpret_cast<page_table_t>(dir[dirIndex] & directory_flags::addr_mask);
+    
+    page_entry_t *page = &ptab[pgtIndex];
+    */
+
+    // Hard coded to our kernel boot page for now.
+    page_entry_t *page = &boot_page_kernel[pgtIndex];
+
+    if ((*page & page_flags::present) == 0)
+        return; // Nothing to do
+
+    *page &= ~page_flags::present;
 }
 
 /********************************************************************************************************************/

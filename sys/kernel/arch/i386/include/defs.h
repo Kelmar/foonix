@@ -3,5 +3,6 @@
 
 /* TODO: Want to have one spot where we define this for everhthing. */
 #define KERNEL_OFFSET 0xC0000000
+#define VIDEO_OFFSET 0x000B8000
 
 #endif /* FOONIX_ARCH_I386_DEFS_H__ */

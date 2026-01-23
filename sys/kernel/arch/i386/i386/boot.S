@@ -17,18 +17,24 @@ stack_bottom:
     .skip 16384 # 16 KiB
 stack_top:
 
+.global stack_top
+
 /*************************************************************************/
 
-.section .text, "a"
+.section .text
 .global _paged_start
 .type _paged_start, @function
 _paged_start:
-    /* Setup temporary stack */
+    /* Setup temporary stack (using virtual addresses) */
     movl $stack_top, %esp
     movl $stack_top, %ebp
 
+    /* Restore boot magic values */
+    popl %eax
+    popl %ebx
+
     /* Setup boot info for our preinit call */
-    movl %edx, g_BootMagic
+    movl %eax, g_BootMagic
     movl %ebx, g_Multiboot
 
     call  preinit /* Initialize CPU & VM first */

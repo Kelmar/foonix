@@ -15,8 +15,8 @@ protected:
     virtual          ~Page(void) { }
 
 public:
-    virtual logical_addr_t  Logical (void) const = 0;
-    virtual physical_addr_t Physical(void) const = 0;
+    virtual vaddr_t  Logical (void) const = 0;
+    virtual paddr_t Physical(void) const = 0;
 };
 
 class PageTable

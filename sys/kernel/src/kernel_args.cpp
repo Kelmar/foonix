@@ -9,7 +9,7 @@
 
 /*************************************************************************/
 
-bool KernelArgs::AddFreeMemory(physical_addr_t addr, size_t length)
+bool KernelArgs::AddFreeMemory(paddr_t addr, size_t length)
 {
     bool rval = true;
 
@@ -51,7 +51,7 @@ bool KernelArgs::AddFreeMemory(physical_addr_t addr, size_t length)
     {
         // Kernel is inside this whole record, split it.
 
-        physical_addr_t newAddr = addr;
+        paddr_t newAddr = addr;
         size_t newLen = KernelCode.Base - addr;
 
         // We can't get here without there already being an entry available, so ignore result.

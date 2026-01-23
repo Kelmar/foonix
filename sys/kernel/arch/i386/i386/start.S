@@ -19,8 +19,8 @@
 .set MAGIC,     0x1BADB002          # 'magic number' lets bootloader find header
 .set CHECKSUM,  -(MAGIC + FLAGS)    # Checksum required
 
-.set TEXTADDR,  0x000B8000          # Physical location of VGA text mode
-.set HIGHADDR,  0xC0000000
+#define KERNEL_PAGE_OFFSET (((KERNEL_OFFSET) >> 22) * 4)
+#define VIDEO_PAGE_OFFSET (((VIDEO_OFFSET) >> 12) * 4)
 
 /*************************************************************************/
 
@@ -40,6 +40,10 @@
     .skip 4096
 
     .align 4096
+    LABEL(boot_page_kernel)
+    .skip 4096
+
+    .align 4096
     LABEL(boot_page_directory)
     .skip 4096
 
@@ -52,17 +56,38 @@
 
 .extern _paged_start
 
+.extern stack_top
+
+.global paging_init
+
 .global _start
 .type _start, @function
 _start:
-    /* Make sure interrupts are disabled for our startup. */
-    cli
+    /* Set some initial flags */
+    cli /* Ensure disabled interrupts */
+    cld /* Clear direction flag so we can setup the boot pages */
 
-    /* Preserve EAX in EDX, we need this for multiboot detection. */
-    movl %eax, %edx
-
+    /* Setup temporary stack (using physical address) */
+    movl $VIRT_2_PHYS(stack_top), %esp
+    movl $VIRT_2_PHYS(stack_top), %ebp
+    
+    /* Preserve EAX and EBX which hold boot info from multiboot */
+    pushl %ebx
+    pushl %eax
+    
     /* Setup directory and page tables */
+
+    /* Clear identity page. */
     movl $VIRT_2_PHYS(boot_page_identity), %edi
+    movl %edi, %edx
+    movl $1024, %ecx
+    shrl $4, %ecx /* Storing DWORDS */
+
+    xorl %eax, %eax
+    rep stosl /* stosd */
+
+    /* Setup kernel pages */
+    movl $VIRT_2_PHYS(boot_page_kernel), %edi
     movl $1024, %ecx
     movl $0, %esi
 
@@ -87,33 +112,42 @@ _start:
 3:
     /* Set entry */
     movl %eax, (%edi)
+    movl %eax, (%edx)
 
     /* Loop tail */
     addl $0x1000, %esi
     addl $4, %edi
+    addl $4, %edx
     loop 1b
 
 4:
     /* Loop complete, blank the remaining pages and our directory */
-    addl $1024, %ecx /* Includ directory in blank */
+    addl $1024, %ecx /* Include directory in blank */
+    shrl $4, %ecx /* Storing DWORDS */
+
     xorl %eax, %eax
     rep  stosl /* stosd */
 
-    /* Tempoary debugging, add text video memory map at 0xC03FF000 */
-    movl $0x000B8003, VIRT_2_PHYS(boot_page_identity) + (1023 * 4)
+    /* Tempoary debugging, add text video memory map */
+    movl $0x000B8003, VIRT_2_PHYS(boot_page_identity) + VIDEO_PAGE_OFFSET
 
     movl $VIRT_2_PHYS(boot_page_identity), %eax
     orl  $0x03, %eax
 
-    /* Add identity map and virtual map */
-    movl %eax, VIRT_2_PHYS(boot_page_directory) /* Identity map */
-    movl %eax, VIRT_2_PHYS(boot_page_directory) + (768 * 4) /* Virtual map */
+    /* Add identity map */
+    movl %eax, VIRT_2_PHYS(boot_page_directory)
+
+    /* Add kernel virtual map */
+    movl $VIRT_2_PHYS(boot_page_kernel), %eax
+    orl  $0x03, %eax
+    movl %eax, VIRT_2_PHYS(boot_page_directory) + KERNEL_PAGE_OFFSET
 
     /* Setup directory address in CR3 */
     movl $VIRT_2_PHYS(boot_page_directory), %ecx
     movl %ecx, %cr3
 
     /* Turn on paging and write protection */
+paging_init:
     movl %cr0, %ecx
     orl  $0x80010000, %ecx
     movl %ecx, %cr0

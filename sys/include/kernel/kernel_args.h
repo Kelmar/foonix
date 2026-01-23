@@ -84,7 +84,7 @@ struct KernelArgs
      * 
      * @returns True if there was space to add the memory mapping.  False on error.
      */
-    bool AddFreeMemory(physical_addr_t base, size_t length);
+    bool AddFreeMemory(paddr_t base, size_t length);
 
     /// @brief Display the list of availble memory blocks.
     void ShowAvailableMemory(void);

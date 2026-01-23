@@ -97,7 +97,7 @@ namespace
 
 /********************************************************************************************************************/
 
-void Arch::VM::ReserveRealMemory(physical_addr_t addr, size_t length)
+void Arch::VM::ReserveRealMemory(paddr_t addr, size_t length)
 {
     if (addr >= LOWER_1MB)
         return;
@@ -122,7 +122,7 @@ void Arch::VM::ReserveRealMemory(physical_addr_t addr, size_t length)
 
 /********************************************************************************************************************/
 
-physical_addr_t Arch::VM::AllocRealMemory(void)
+paddr_t Arch::VM::AllocRealMemory(void)
 {
     uint32_t mapWord;
     size_t index = -1;
@@ -156,7 +156,7 @@ physical_addr_t Arch::VM::AllocRealMemory(void)
 
 /********************************************************************************************************************/
 
-void Arch::VM::ReleaseRealMemory(physical_addr_t addr)
+void Arch::VM::ReleaseRealMemory(paddr_t addr)
 {
     int index = addr / DWORD_PAGES;
     int offset = addr % DWORD_PAGES;

@@ -68,12 +68,12 @@ public:
             {
                 // Okay we have our frames
                 /*
-                physical_addr_t addr =
-                    (physical_addr_t)(g_KernelArguments.MemoryMap[index].End() - byteSize);
+                paddr_t addr =
+                    (paddr_t)(g_KernelArguments.MemoryMap[index].End() - byteSize);
                 */
                 
                 // Add them to the boot page table
-                logical_addr_t blockAddr = 0; //Arch::AddBootFrames(addr, count);
+                paddr_t blockAddr = 0; //Arch::AddBootFrames(addr, count);
 
                 PageBlock p(blockAddr, count);
 

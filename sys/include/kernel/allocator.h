@@ -23,11 +23,11 @@ const int PAGE_SIZE = 4096; // TODO: Move this to platform.
 class PageBlock
 {
 private:
-    logical_addr_t m_start;
+    paddr_t m_start;
     size_t m_count;
 
 public:
-    constexpr PageBlock(logical_addr_t start, size_t count)
+    constexpr PageBlock(paddr_t start, size_t count)
         : m_start(start)
         , m_count(count)
     {
@@ -44,7 +44,7 @@ public:
     virtual ~PageBlock(void);
 
     inline
-    logical_addr_t Address(void) const { return m_start; }
+    paddr_t Address(void) const { return m_start; }
 
     inline
     size_t Count(void) const { return m_count; }
