@@ -7,6 +7,8 @@
 
 #include <stdarg.h>
 
+#include <kernel/flow.h>
+
 namespace Debug
 {
     /**
@@ -18,12 +20,6 @@ namespace Debug
      * @brief Formatted printing to debug console.
      */
     void vPrintF(const char *fmt, va_list args);
-
-    /**
-     * @brief Halts the kernel with a message.
-     */
-    __attribute__((__noreturn__))
-    void Panic(const char *msg);
 }
 
 /********************************************************************************************************************/

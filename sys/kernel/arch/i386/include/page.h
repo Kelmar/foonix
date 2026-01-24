@@ -10,6 +10,7 @@
 #include <stddef.h>
 
 #include <kernel/kernel.h>
+#include <kernel/utilities.h>
 
 #include "cpu.h"
 
@@ -76,150 +77,33 @@ namespace paging
     typedef page_directory_entry_t page_directory_t[PAGING_TABLE_SIZE];
 
     /************************************************************************************************************/
-
+    // Page alignment utilities
+    
     /// @brief Round address down to current page boundary.
     /// @param ptr The address to round.
     /// @return The page boundary of the supplied address.
-    inline constexpr 
-    uintptr_t AlignFloor(uintptr_t ptr)
-    {
-        return ptr & ~(PAGE_SIZE - 1);
-    }
-
-    /// @brief Round address down to current page boundary.
-    /// @param ptr The address to round.
-    /// @return The page boundary of the supplied address.
-    inline constexpr
-    uintptr_t AlignFloor(void *ptr)
-    {
-        return AlignFloor(reinterpret_cast<uintptr_t>(ptr));
-    }
-
-    /// @brief Round address up to next page boundary.
-    /// @param ptr The address to round.
-    /// @return The address of the next page boundary.
-    template <typename T>
-    inline constexpr
-    T *AlignFloor(void *ptr) noexcept
-    {
-        return reinterpret_cast<T *>(AlignFloor(ptr));
-    }
-
-    /************************************************************************************************************/
+    const util::TAlignFloor<PAGE_SIZE> AlignFloor;
 
     /// @brief Round address up to page boundary.
-    /// @remarks Unlike @ref AlignNext this will only round if we're not already on a page boundary.
+    /// @remarks Unlike @ref AlignNext this will only rounded if we're not already on a page boundary.
     /// @param ptr The address to round.
     /// @return The address of the next page boundary.
-    inline constexpr
-    uintptr_t AlignCeiling(uintptr_t ptr)
-    {
-        return AlignFloor(ptr + (PAGE_SIZE - 1));
-    }
-
-    /// @brief Round address up to page boundary.
-    /// @remarks Unlike @ref AlignNext this will only round if we're not already on a page boundary.
-    /// @param ptr The address to round.
-    /// @return The address of the next page boundary.
-    inline constexpr
-    uintptr_t AlignCeiling(void *ptr)
-    {
-        return AlignCeiling(reinterpret_cast<uintptr_t>(ptr));
-    }
-
-    /// @brief Round address up to page boundary.
-    /// @remarks Unlike @ref AlignNext this will only round if we're not already on a page boundary.
-    /// @param ptr The address to round.
-    /// @return The address of the next page boundary.
-    template <typename T>
-    inline constexpr
-    T *AlignCeiling(void *ptr) noexcept
-    {
-        return reinterpret_cast<T *>(AlignCeiling(ptr));
-    }
-
-    /************************************************************************************************************/
+    const util::TAlignCeiling<PAGE_SIZE> AlignCeiling;
     
     /// @brief Get the next page boundary.
     /// @remarks Unlike @ref AlignCeiling this will always return the next page.
     /// @param ptr The address to round.
     /// @return The address of the next page boundary.
-    inline constexpr
-    uintptr_t AlignNext(uintptr_t ptr)
-    {
-        return AlignFloor(ptr + PAGE_SIZE);
-    }
-
-    /// @brief Round address up to next page boundary.
-    /// @remarks Unlike @ref AlignCeiling this will always return the next page.
-    /// @param ptr The address to round.
-    /// @return The address of the next page boundary.
-    inline constexpr
-    uintptr_t AlignNext(void *ptr)
-    {
-        return AlignNext(reinterpret_cast<uintptr_t>(ptr));
-    }
-
-    /// @brief Round address up to next page boundary.
-    /// @param ptr The address to round.
-    /// @return The address of the next page boundary.
-    template <typename T>
-    inline constexpr
-    T *AlignNext(void *ptr) noexcept
-    {
-        return reinterpret_cast<T *>(AlignNext(ptr));
-    }
-
-    /************************************************************************************************************/
+    const util::TAlignNext<PAGE_SIZE> AlignNext;
 
     /// @brief Get the previous page boundary.
     /// @remarks Unlike @ref AlignFloor this will always return the previous page.
     /// @param ptr The address to round.
     /// @return The address of the previous page boundary.
-    inline constexpr
-    uintptr_t AlignPrev(uintptr_t ptr)
-    {
-        return AlignFloor(ptr - PAGE_SIZE);
-    }
-
-    /// @brief Round address up to previous page boundary.
-    /// @remarks Unlike @ref AlignFloor this will always return the previous page.
-    /// @param ptr The address to round.
-    /// @return The address of the previous page boundary.
-    inline constexpr
-    uintptr_t AlignPrev(void *ptr)
-    {
-        return AlignPrev(reinterpret_cast<uintptr_t>(ptr));
-    }
-
-    /// @brief Round address up to previous page boundary.
-    /// @param ptr The address to round.
-    /// @return The address of the previous page boundary.
-    template <typename T>
-    inline constexpr
-    T *AlignPrev(void *ptr) noexcept
-    {
-        return reinterpret_cast<T *>(AlignPrev(ptr));
-    }
-
-    /************************************************************************************************************/
+    const util::TAlignPrev<PAGE_SIZE> AlignPrev;
 
     /// @brief Checks to see if the supplied pointer is page alligned.
-    inline constexpr
-    bool IsAligned(uintptr_t ptr)
-    {
-        uintptr_t x = AlignFloor(ptr);
-        return x == ptr;
-    }
-
-    /// @brief Checks to see if the supplied pointer is page alligned.
-    inline constexpr
-    bool IsAligned(void *ptr)
-    {
-        uintptr_t p = reinterpret_cast<uintptr_t>(ptr);
-        uintptr_t x = AlignFloor(p);
-        return p == x;
-    }
+    const util::TIsAligned<PAGE_SIZE> IsAligned;
 
     /************************************************************************************************************/
 

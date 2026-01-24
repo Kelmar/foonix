@@ -178,7 +178,7 @@ Kernel::ErrorCode paging::MapPage(page_directory_t dir, paddr_t paddr, vaddr_t v
 
     // Assert these entries are correct!
     if ((dir[dirIndex] & directory_flags::present) == 0)
-        Debug::Panic("Request to map to non present page entry!");
+        kpanic("Request to map to non present page entry!");
 
     // TODO: Fix this, hard coded to kernel boot page.
     page_entry_t *page = &boot_page_kernel[pgtIndex];

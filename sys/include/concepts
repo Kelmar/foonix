@@ -1,0 +1,12 @@
+#ifndef _X_CONCEPTS
+#define _X_CONCEPTS 1
+
+#include <type_traits>
+
+namespace std
+{
+    template <typename T>
+    concept integral = is_integral_v<T>;
+}
+
+#endif /* _X_CONCEPTS */

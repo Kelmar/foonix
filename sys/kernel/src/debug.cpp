@@ -27,23 +27,38 @@ void Debug::vPrintF(const char *fmt, va_list args)
 }
 
 /********************************************************************************************************************/
-/*
- * Display a "STOP ERROR" message and halt the system.
- */
-
-void Debug::Panic(const char* msg)
+/// @brief Display a "STOP ERROR" message and halt the system.
+extern "C"
+void kpanic(const char *message)
 {
-    //blank_screen();
+    Debug::PrintF(
+        "**********************************\n"
+        "STOP ERROR: %s\n"
+        "**********************************\n"
+        "\nSYSTEM HALTED!",
+        message
+    );
 
-    puts("STOP ERROR: ");
-    puts(msg);
-    puts("\n\nTHE SYSTEM HAS BEEN HALTED");
-
-    /* Die */
-    for (;;)
-        __asm __volatile("pause");
+    khalt();
 }
 
-extern "C" void kpanic(const char *msg) { Debug::Panic(msg); }
+/********************************************************************************************************************/
+
+/// @brief Display a "STOP ERROR" message and halt the system.
+extern "C"
+void kassert(const char *test, const char *reason, int line, const char *file, const char *function)
+{
+    Debug::PrintF(
+        "**********************************\n"
+        "STOP ERROR: %s\n"
+        "TEST: %s\n"
+        "LOCATOIN: %s (%s:%d)\n"
+        "**********************************\n"
+        "\nSYSTEM HALTED!",
+        reason, test, function, file, line
+    );
+
+    khalt();
+}
 
 /********************************************************************************************************************/

@@ -14,8 +14,10 @@ typedef uintptr_t paddr_t;
 /// @brief Virtual address pointer
 typedef uintptr_t vaddr_t;
 
-/// @brief Type for holding a page index.
-typedef uint32_t page_index_t;
+#define uchar unsigned char
+#define ushort unsigned short
+#define uint unsigned int
+#define ulong unsigned long
 
 /********************************************************************************************************************/
 
