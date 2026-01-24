@@ -1,0 +1,6 @@
+{
+    "name": "x86_65",
+    "isLint": false,
+    "useBochs": false,
+    "platform": "x86_64"
+}

@@ -43,4 +43,10 @@ install(
     CODE "execute_process(COMMAND grub-mkrescue -o boot.iso sysroot)"
 )
 
+set_property(
+    TARGET foonix
+    APPEND
+    PROPERTY ADDITIONAL_CLEAN_FILES boot.iso
+)
+
 # =========================================================================

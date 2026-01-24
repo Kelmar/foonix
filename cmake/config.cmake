@@ -15,9 +15,9 @@ message("Building configuration: ${CONFIG_NAME}")
 
 string(JSON IS_LINT ERROR_VARIABLE _ GET "${CONFIG_JSON}" isLint)
 
-#if (IS_LINT)
-#  message(FATAL_ERROR "Not building a lint configuraiton.  Remove isLint or set to false.")
-#endif()
+if (IS_LINT)
+  message(FATAL_ERROR "Not building a lint configuraiton.  Remove isLint or set to false.")
+endif()
 
 string(JSON USE_BOCHS ERROR_VARIABLE _ GET "${CONFIG_JSON}" useBochs)
 string(JSON PLATFORM ERROR_VARIABLE _ GET "${CONFIG_JSON}" platform)
