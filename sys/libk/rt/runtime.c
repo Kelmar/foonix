@@ -12,8 +12,6 @@
 #define USED __attribute__((used))
 #define WEAK __attribute__((weak))
 
-#define EXPECT(X_, Y_) __builtin_expect(X_, Y_)
-
 /********************************************************************************************************************/
 // Prototype for constructors and destructors.
 typedef void (*fn)(void);
@@ -28,13 +26,19 @@ fn __DTOR_LIST_END__[] IN_SECTION(".dtors") = { 0 };
 
 /********************************************************************************************************************/
 
+__attribute__((visibility("hidden"))) void *__dso_handle = &__dso_handle;
+
+/********************************************************************************************************************/
+
 USED
 void __runtime_init()
 {
     static int called = 0; // Guard against acidental second call.
 
-    if (EXPECT(called, 0))
+    if (called != 0)
         return;
+
+    called = 1;
 
     /*
      * According to the GCC manual, the first item in the .ctor list is 0, 1 or length of 
@@ -56,8 +60,10 @@ void __runtime_fini()
 {
     static int called = 0; // Guard against acidental second call.
 
-    if (EXPECT(called, 0))
+    if (called != 0)
         return;
+
+    called = 1;
 
     // Same as constructors, skip first
     const size_t CNT = __DTOR_LIST_END__ - __DTOR_LIST__ - 1;

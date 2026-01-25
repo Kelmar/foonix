@@ -13,8 +13,6 @@ include_directories("${CMAKE_SOURCE_DIR}/sys/include")
 
 include("${HOST_DIR}/build.cmake")
 
-include("${CMAKE_SOURCE_DIR}/cmake/klink.cmake")
-
 # =========================================================================
 
 list(APPEND KERN_SOURCES
@@ -32,8 +30,6 @@ list(APPEND SOURCES ${KERN_SOURCES})
 
 add_executable(kernel ${SOURCES})
 add_dependencies(kernel k)
-
-#include("${CMAKE_SOURCE_DIR}/cmake/klink.cmake")
 
 target_compile_options(kernel PRIVATE -fno-rtti -fno-exceptions -ggdb)
 
