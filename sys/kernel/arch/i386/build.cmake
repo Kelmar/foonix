@@ -22,12 +22,6 @@ list(APPEND SOURCES
     "${HOST_DIR}/dev/timer.cpp"
 )
 
-# CRT platform specific files.
-list(APPEND SOURCES
-    "${HOST_DIR}/crti.S"
-    "${HOST_DIR}/crtn.S"
-)
-
 # =========================================================================
 # Setup include and linker options
 

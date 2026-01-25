@@ -14,12 +14,22 @@ link_directories(
 # =========================================================================
 # Find generic implementations
 
-file(GLOB stdio_srcs stdio/*.c)
-file(GLOB string_srcs string/*.c)
+set(stdio_srcs
+    putchar.c puts.c
+    printf.c snprintf.c vprintf.c vsnprintf.c
+)
+
+set(string_srcs
+    _s_strncat.c _s_strncpy.c
+    memchr.c memcmp.c memcpy.c memmove.c memset.c
+    strlen.c strncat.c strncpy.c strnlen.c
+)
+
+list(TRANSFORM stdio_srcs PREPEND "stdio/")
+list(TRANSFORM string_srcs PREPEND "string/")
 
 list(APPEND SOURCES ${stdio_srcs})
 list(APPEND SOURCES ${string_srcs})
-list(APPEND SOURCES cppfill.cpp)
 
 # =========================================================================
 # Find host specific overrides
@@ -41,6 +51,14 @@ if (EXISTS "${HOST_DIR}/build.cmake")
         list(APPEND SOURCES "${opt_file}")
     endforeach()
 endif()
+
+# =========================================================================
+# These files cannot be overriden.
+
+list(APPEND SOURCES 
+    "rt/runtime.c"
+    "rt/cppfill.cpp"
+)
 
 # =========================================================================
 

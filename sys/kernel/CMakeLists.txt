@@ -33,7 +33,7 @@ list(APPEND SOURCES ${KERN_SOURCES})
 add_executable(kernel ${SOURCES})
 add_dependencies(kernel k)
 
-include("${CMAKE_SOURCE_DIR}/cmake/klink.cmake")
+#include("${CMAKE_SOURCE_DIR}/cmake/klink.cmake")
 
 target_compile_options(kernel PRIVATE -fno-rtti -fno-exceptions -ggdb)
 

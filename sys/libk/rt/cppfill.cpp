@@ -3,7 +3,7 @@
 
 //#define THROW_SIG throw()
 #define THROW_SIG 
-#define ERROR(X_) Debug::Panic(X_)
+#define ERROR(X_) kpanic(X_)
 
 #include <kernel/debug.h>
 #include <kernel/flow.h>
@@ -57,12 +57,12 @@ void operator delete[](void* ptr, size_t) throw()
 
 extern "C" void __cxa_pure_virtual(void)
 {
-    kpanic("Pure virtual call in kernel!");
+    ERROR("Pure virtual call in kernel!");
 }
 
 extern "C" int _purecall()
 {
-    kpanic("Pure call in kernel!");
+    ERROR("Pure call in kernel!");
     return 0;
 }
 
