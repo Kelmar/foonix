@@ -4,12 +4,14 @@
 //#include "assert.h"
 #include <string.h>
 
-#include <kernel/allocator.h>
 #include <kernel/kernel.h>
+
+#include <kernel/allocator.h>
 #include <kernel/debug.h>
-#include <kernel/arch/arch.h>
 #include <kernel/kernel_args.h>
-#include <kernel/vm/vm.h>
+
+#include <kernel/arch.h>
+#include <kernel/vm.h>
 
 //#include <kernel/page.h>
 
@@ -27,7 +29,7 @@ using namespace VM;
 
 void VM::Init()
 {
-    Arch::InitBootMemory(&g_KernelArguments);
+    arch::InitBootMemory(&g_KernelArguments);
 
     g_KernelArguments.ShowAvailableMemory();
 

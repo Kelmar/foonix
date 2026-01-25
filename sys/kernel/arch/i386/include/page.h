@@ -12,6 +12,8 @@
 #include <kernel/kernel.h>
 #include <kernel/utilities.h>
 
+#include <kernel/vm.h>
+
 #include "cpu.h"
 
 namespace paging
@@ -119,6 +121,25 @@ namespace paging
     /// @param dir Directory to unmap from.
     /// @param vaddr The virtual address to unmap.
     void UnmapPage(page_directory_t dir, vaddr_t vaddr);
+
+    /************************************************************************************************************/
+
+    class PageTable : public PageTableBase<PageTable>
+    {
+    private:
+        page_directory_t m_dir;
+
+        Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t falgs);
+
+        Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
+        
+    public:
+        PageTable();
+        PageTable(const PageTable &rhs) : PageTableBase(rhs) { }
+        PageTable(PageTable &&rhs) : PageTableBase(rhs) { }
+
+        virtual ~PageTable() { }
+    };
 }
 
 /********************************************************************************************************************/

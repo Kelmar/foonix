@@ -4,13 +4,15 @@
 //#include "assert.h"
 #include <string.h>
 
+#include <kernel/kernel.h>
+
 #include <kernel/allocator.h>
 #include <kernel/bitmap.h>
-#include <kernel/kernel.h>
 #include <kernel/debug.h>
-#include <kernel/arch/arch.h>
 #include <kernel/kernel_args.h>
-#include <kernel/vm/vm.h>
+
+#include <kernel/arch.h>
+#include <kernel/vm.h>
 
 #include "cpu.h"
 

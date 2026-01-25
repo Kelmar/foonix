@@ -1,23 +1,26 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
-#ifndef __FOONIX_KERNEL_VM_H__
-#define __FOONIX_KERNEL_VM_H__
+#ifndef __FOONIX_KERNEL_PROC_H__
+#define __FOONIX_KERNEL_PROC_H__
 
 /********************************************************************************************************************/
 
-#include <kernel/kernel.h>
-#include <kernel/kernel_args.h>
+#include <kernel/arch/paging.h>
 
-/********************************************************************************************************************/
-
-namespace VM
+/// @brief Per thread tracking information.
+struct Thread
 {
-    void Init();
-}
+    /// @brief Thread ID
+    /// @remarks For a process thread, this is also the PID.
+    uint32_t tid;
+
+    /// @brief Page table for this thread.
+    PageTable *pageTable;
+};
 
 /********************************************************************************************************************/
 
-#endif /* __FOONIX_KERNEL_VM_H__ */
+#endif /* __FOONIX_KERNEL_PROC_H__ */
 
 /********************************************************************************************************************/

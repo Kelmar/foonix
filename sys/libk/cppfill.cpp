@@ -7,7 +7,7 @@
 
 #include <kernel/debug.h>
 #include <kernel/flow.h>
-#include <kernel/vm/vm.h>
+#include <kernel/vm.h>
 
 void* operator new(size_t sz) THROW_SIG
 {

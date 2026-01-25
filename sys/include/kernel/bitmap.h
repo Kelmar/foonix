@@ -24,6 +24,16 @@ private:
     /* constructor */ Bitmap(const Bitmap &) = delete;
     /* constructor */ Bitmap(Bitmap &&) = delete;
 
+    constexpr int GetItem(size_t index) const
+    {
+        return index / ArrayCount;
+    }
+
+    constexpr int GetBit(size_t index) const
+    {
+        return 1 << (index % ArrayCount);
+    }
+
 public:
     static const size_t BitCount = bits;
 
@@ -37,8 +47,8 @@ public:
         if (index > BitCount)
             return;
 
-        int itemIndex = index / ArrayCount;
-        int itemBit = 1 << (index % ArrayCount);
+        int itemIndex = GetItem(index);
+        int itemBit = GetBit(index);
 
         m_items[itemIndex] |= itemBit;
     }
@@ -48,8 +58,8 @@ public:
         if (index > BitCount)
             return;
 
-        int itemIndex = index / ArrayCount;
-        int itemBit = 1 << (index % ArrayCount);
+        int itemIndex = GetItem(index);
+        int itemBit = GetBit(index);
 
         m_items[itemIndex] &= ~itemBit;
     }
@@ -59,8 +69,8 @@ public:
         if (index > BitCount)
             return false;
 
-        int itemIndex = index / ArrayCount;
-        int itemBit = 1 << (index % ArrayCount);
+        int itemIndex = GetItem(index);
+        int itemBit = GetBit(index);
 
         return (m_items[itemIndex] & itemBit) != 0;
     }

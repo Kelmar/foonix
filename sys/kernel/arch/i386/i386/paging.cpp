@@ -6,10 +6,11 @@
 #include <stdio.h>
 
 #include <kernel/kernel_args.h>
-#include <kernel/arch/arch.h>
-#include <kernel/arch/dconsole.h>
 #include <kernel/debug.h>
-#include <kernel/vm/vm.h>
+
+#include <kernel/vm.h>
+
+#include <kernel/arch.h>
 
 #include "atomic.h"
 #include "cpu.h"
@@ -164,6 +165,81 @@ Kernel::ErrorCode paging::InitPaging(KernelArgs *ka)
 
 #endif
 
+/********************************************************************************************************************/
+/********************************************************************************************************************/
+
+PageTable::PageTable()
+    : PageTableBase()
+{
+    memset(m_dir, 0, sizeof(page_directory_t));
+}
+
+/********************************************************************************************************************/
+
+Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t flags)
+{
+    if (!paging::IsAligned(paddr) || !paging::IsAligned(vaddr))
+        return Kernel::ErrorCode::NotAligned;
+
+    //Debug::PrintF("Map %p -> %p\r\n", physEntry, virtEntry);
+    
+    int pgtIndex = (vaddr >> 12) & 0x03FF;
+    int dirIndex = (vaddr >> 22) & 0x03FF;
+
+    // Assert these entries are correct!
+    if ((m_dir[dirIndex] & directory_flags::present) == 0)
+        kpanic("Request to map to non present page entry!");
+
+    // TODO: Fix this, hard coded to kernel boot page.
+    page_entry_t *page = &boot_page_kernel[pgtIndex];
+
+    if ((*page & page_flags::present) != 0)
+    {
+        auto maskedPtr = *page & page_flags::addr_mask;
+
+        Debug::PrintF("WARNING: Page over writting: %p with %p\r\n", maskedPtr, paddr);
+    }
+
+    *page = (paddr & page_flags::addr_mask) | flags | page_flags::present;
+
+    return Kernel::ErrorCode::NoError;
+}
+
+/********************************************************************************************************************/
+
+Kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
+{
+    uint32_t virtEntry = static_cast<uint32_t>(AlignFloor(vaddr));
+    
+    int pgtIndex = (virtEntry >> 12) & 0x03FF;
+    int dirIndex = (virtEntry >> 22) & 0x03FF;
+
+    // Assert these entries are correct!
+    if ((m_dir[dirIndex] & directory_flags::present) == 0)
+        return Kernel::ErrorCode::NoError; // Nothing to do
+
+    /*
+     * TODO: The pointer in the directory entry is the physical address, find a good
+     * way we can map that into the kernel space so we can update it.
+     */
+    /*
+    auto ptab = reinterpret_cast<page_table_t>(dir[dirIndex] & directory_flags::addr_mask);
+    
+    page_entry_t *page = &ptab[pgtIndex];
+    */
+
+    // Hard coded to our kernel boot page for now.
+    page_entry_t *page = &boot_page_kernel[pgtIndex];
+
+    if ((*page & page_flags::present) == 0)
+        return {}; // Nothing to do
+
+    *page &= ~page_flags::present;
+
+    return Kernel::ErrorCode::NoError;
+}
+
+/********************************************************************************************************************/
 /********************************************************************************************************************/
 
 Kernel::ErrorCode paging::MapPage(page_directory_t dir, paddr_t paddr, vaddr_t vaddr, uint32_t flags)

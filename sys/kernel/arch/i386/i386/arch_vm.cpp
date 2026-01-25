@@ -4,11 +4,12 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <kernel/arch/arch.h>
-#include <kernel/kernel_args.h>
 #include <kernel/kernel.h>
+#include <kernel/kernel_args.h>
 #include <kernel/debug.h>
-#include <kernel/vm/vm.h>
+
+#include <kernel/vm.h>
+#include <kernel/arch.h>
 
 #include "asm.h"
 #include "cpu.h"
@@ -169,7 +170,7 @@ void Arch::VM::ReleaseRealMemory(paddr_t addr)
 
 /********************************************************************************************************************/
 
-void Arch::InitBootMemory(KernelArgs *ka)
+void arch::InitBootMemory(KernelArgs *ka)
 {
     Debug::PrintF("ENTER: Arch::InitBootMemory()\r\n");
 

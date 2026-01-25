@@ -1,33 +1,19 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
-#ifndef __FOONIX_ARCH_PAGING_H__
-#define __FOONIX_ARCH_PAGING_H__
+#ifndef _X_EXPECTED
+#define _X_EXPECTED 1
 
 /********************************************************************************************************************/
 
-#include <kernel/kernel.h>
-
-class Page
+namespace std
 {
-protected:
-    /* constructor */ Page(void) { }
-    virtual          ~Page(void) { }
-
-public:
-    virtual vaddr_t  Logical (void) const = 0;
-    virtual paddr_t Physical(void) const = 0;
-};
-
-class PageTable
-{
-public:
-    /* constructor */ PageTable();
-    virtual          ~PageTable();
-};
+    #include <cppimpl/expected/unexpected.h>
+    #include <cppimpl/expected/expected.h>
+}
 
 /********************************************************************************************************************/
 
-#endif /* __FOONIX_ARCH_PAGING_H__ */
+#endif /* _X_EXPECTED */
 
 /********************************************************************************************************************/

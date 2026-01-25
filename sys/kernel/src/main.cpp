@@ -11,7 +11,8 @@
 #include <kernel/kernel_args.h>
 #include <kernel/arch/dconsole.h>
 #include <kernel/debug.h>
-#include <kernel/vm/vm.h>
+
+#include <kernel/vm.h>
 
 //#include "cdefs.h"
 //#include "multboot.h"
