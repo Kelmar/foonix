@@ -21,9 +21,9 @@ void Debug::vPrintF(const char *fmt, va_list args)
 {
     char buf[512];
 
-    vsnprintf(buf, sizeof(buf), fmt, args);
+    int len = vsnprintf(buf, sizeof(buf), fmt, args);
 
-    DebugConsole::PutString(buf, sizeof(buf));
+    DebugConsole::PutString(buf, len);
 }
 
 /********************************************************************************************************************/

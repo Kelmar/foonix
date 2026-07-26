@@ -10,13 +10,15 @@
 #include <string.h>
 
 /********************************************************************************************************************/
-
-template <size_t bits>
+/*
+ * @brief A fixed sized container containing BITS number of bits that maybe set or cleared.
+ */
+template <size_t BITS>
 class Bitmap
 {
 private:
     static const size_t ItemBits = sizeof(uint32_t) * 8;
-    static const size_t ArrayCount = bits / ItemBits;
+    static const size_t ArrayCount = BITS / ItemBits;
     static const size_t ArraySize = ArrayCount * sizeof(uint32_t);
 
     uint32_t m_items[ArrayCount];
@@ -26,16 +28,16 @@ private:
 
     constexpr int GetItem(size_t index) const
     {
-        return index / ArrayCount;
+        return index / ItemBits;
     }
 
     constexpr int GetBit(size_t index) const
     {
-        return 1 << (index % ArrayCount);
+        return 1 << (index % ItemBits);
     }
 
 public:
-    static const size_t BitCount = bits;
+    static const size_t BitCount = BITS;
 
     /* constructor */ Bitmap(void)
     {

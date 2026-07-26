@@ -4,6 +4,8 @@
 .ninja_deps
 .ninja_log
 
+CLAUDE.md
+
 CMakeCache.txt
 CMakeFiles/
 

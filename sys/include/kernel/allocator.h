@@ -110,11 +110,14 @@ private:
         Cache *m_prev;
         Cache *m_next;
 
+        PageBlock m_first;
+
         Bitmap<ObjectsPerPage> m_allocated;
 
-        /* constructor */ Cache()
+        /* constructor */ Cache(PageBlock &&firstPage)
             : m_prev(nullptr)
             , m_next(nullptr)
+            , m_first(firstPage)
             , m_allocated()
         {
         }
@@ -123,14 +126,18 @@ private:
     Cache m_first;
     PageAllocator *m_pageAllocator;
 
+private: // Constructor helper methods
+    static PageBlock GetFirstPage(PageAllocator *pageAllocator)
+    {
+        ASSERT(pageAllocator, "Invalid page allocator passed to SlabAllocator");
+        return pageAllocator->NewBlock(1);
+    }
+
 public:
     /* constructor */ SlabAllocator(PageAllocator *pageAllocator)
-        : m_first()
+        : m_first(GetFirstPage(pageAllocator))
         , m_pageAllocator(pageAllocator)
     {
-        ASSERT(m_pageAllocator, "Invalid page allocator passed to SlabAllocator");
-
-        m_first.m_pageBlock = m_pageAllocator->NewBlock(1);
     }
 
     virtual ~SlabAllocator(void)
