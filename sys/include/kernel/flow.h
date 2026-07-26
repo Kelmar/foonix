@@ -23,9 +23,6 @@ void kpanic(const char* message);
 __attribute__((__noreturn__))
 void kassert(const char *test, const char *reason, int line, const char *file, const char *function);
 
-#define ASSERT(TEST_, REASON_) \
-    (TEST_) ? (void)(0) : kassert(#TEST_, REASON_, __LINE__, __FILE__, __FUNCTION__)
-
 __END_EXTERN_C
 
 /********************************************************************************************************************/

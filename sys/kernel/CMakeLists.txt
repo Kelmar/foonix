@@ -31,7 +31,7 @@ list(APPEND SOURCES ${KERN_SOURCES})
 add_executable(kernel ${SOURCES})
 add_dependencies(kernel k)
 
-target_compile_options(kernel PRIVATE -fno-rtti -fno-exceptions -ggdb)
+target_compile_options(kernel PRIVATE -fno-rtti -fno-exceptions -ggdb -D__is_foo_kernel)
 
 target_link_options(kernel PRIVATE -nostdlib ${LINK_EXTRA})
 

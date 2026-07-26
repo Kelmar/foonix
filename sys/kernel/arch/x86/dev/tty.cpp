@@ -57,7 +57,7 @@ namespace
     {
         //if (crt_bus)
         {
-            uint16_t tmp = row * VGA_WIDTH * col;
+            uint16_t tmp = row * VGA_WIDTH + col;
 
             //crt_bus->byte(0, CUR_LOC_HI);
             //crt_bus->byte(1, (uint8_t)((tmp >> 8) & 0xFF));
@@ -67,7 +67,7 @@ namespace
             outb(terminal_io, CUR_LOC_HI);
             outb(terminal_io + 1, (uint8_t)((tmp >> 8) & 0xFF));
 
-            outb(terminal_io + 1, CUR_LOC_LO);
+            outb(terminal_io, CUR_LOC_LO);
             outb(terminal_io + 1, (uint8_t)(tmp & 0xFF));
         }
 
@@ -181,7 +181,7 @@ void terminal_dump(size_t v)
     do
     {
         char c = hex[(v & 0x0F)];
-        terminal_buffer[idx] = vga_entry(c, 0x07);
+        terminal_buffer[idx++] = vga_entry(c, 0x07);
         v >>= 4;
     } while (v > 0);
 }

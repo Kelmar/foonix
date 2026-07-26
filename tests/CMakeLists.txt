@@ -86,7 +86,12 @@ add_library(libk_under_test STATIC
 
 target_include_directories(libk_under_test PRIVATE "${SYS_INCLUDE_DIR}")
 
-target_compile_definitions(libk_under_test PRIVATE ${LIBK_SYMBOL_RENAMES})
+# Matches the real libk build (sys/libk/CMakeLists.txt: add_definitions(-D__is_libk)), for
+# fidelity with what actually ships. Also required for sys/assert.h's ASSERT macro to route
+# through kpanic()/kassert() (stubbed in kstubs.c) instead of its non-kernel fprintf()/abort()
+# fallback, which assumes a real host <stdio.h>/<stdlib.h> are already visible -- they aren't
+# here, since sys/include's own minimal <stdio.h> shadows them (see kstubs.c/test_io.c).
+target_compile_definitions(libk_under_test PRIVATE __is_libk ${LIBK_SYMBOL_RENAMES})
 
 target_compile_options(libk_under_test PRIVATE
     -Wall -Wextra -Wpedantic -fno-builtin -g ${SANITIZE_FLAGS}

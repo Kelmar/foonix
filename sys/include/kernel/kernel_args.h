@@ -86,7 +86,7 @@ struct KernelArgs
      */
     bool AddFreeMemory(paddr_t base, size_t length);
 
-    /// @brief Display the list of availble memory blocks.
+    /// @brief Display the list of available memory blocks.
     void ShowAvailableMemory(void);
 };
 

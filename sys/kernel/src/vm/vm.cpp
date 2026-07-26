@@ -63,12 +63,14 @@ public:
         // Start at the bottom of memory and work our way down
         for (size_t index = g_KernelArguments.MemoryMapEntries - 1; index < g_KernelArguments.MemoryMapEntries; --index)
         {
-            if (g_KernelArguments.MemoryMap[index].Length >= index)
+            MemoryRange &memoryMap = g_KernelArguments.MemoryMap[index];
+
+            if (memoryMap.Length >= byteSize)
             {
                 // Okay we have our frames
                 /*
                 paddr_t addr =
-                    (paddr_t)(g_KernelArguments.MemoryMap[index].End() - byteSize);
+                    (paddr_t)(memoryMap.End() - byteSize);
                 */
                 
                 // Add them to the boot page table
@@ -76,9 +78,9 @@ public:
 
                 PageBlock p(blockAddr, count);
 
-                g_KernelArguments.MemoryMap[index].Length -= byteSize;
+                memoryMap.Length -= byteSize;
 
-                if (g_KernelArguments.MemoryMap[index].Length == 0)
+                if (memoryMap.Length == 0)
                     --g_KernelArguments.MemoryMapEntries;
 
                 return p;
