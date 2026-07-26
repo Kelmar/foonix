@@ -42,10 +42,10 @@
  * Remarks:
  * For bases that exceed 10, letters (starting with the letter 'a') are
  * used.  If the case parameter is non-zero then upper case letters are
- * used, if 0 (zero) then lower case leters are used.
+ * used, if 0 (zero) then lower case letters are used.
  *
  * IMPORTANT:
- * For effency this function starts at the end of the string and works its
+ * For efficiency this function starts at the end of the string and works its
  * way backwards to the begining of the string.
  *
  * Return Value:
@@ -91,6 +91,11 @@ static char *base_to_ascii(uint64_t val, int base, bool upper, char *buf, size_t
 #define FLAGS_SHORT    0x0020
 
 /********************************************************************************************************************/
+
+#define SAFE_SBUF_WRITE(C__) \
+    do { if (s < slen) { sbuf[s++] = C__; } else { goto exit; } } while (false)
+
+/********************************************************************************************************************/
 /*
  * Our own "lite" vsnprintf() function.
  *
@@ -113,7 +118,7 @@ static char *base_to_ascii(uint64_t val, int base, bool upper, char *buf, size_t
  * - Padding with optional leading zeros for numbers.
  * - Sign extending for signed number values.
  *
- * Loosly based on the BSD vsnprintf() function.
+ * Loosely based on the BSD vsnprintf() function.
  */
 int vsnprintf(char *sbuf, size_t slen, const char *fmt, va_list args)
 {
@@ -124,18 +129,16 @@ int vsnprintf(char *sbuf, size_t slen, const char *fmt, va_list args)
     char pad, sign;
     int64_t val;
     int flags;
+
+    if (slen == 0)
+        return 0;
     
     for (;;)
     {
         while ((*fp != '%') && (*fp != '\0'))
-        {
-            if (s < slen)
-                sbuf[s++] = *fp++;
-            else
-                goto exit;
-        }
+            SAFE_SBUF_WRITE(*fp++);
 
-        if (*fp == '\0')
+        if (*fp == '\0' || (s >= slen))
             break;
 
         sign = '\0';
@@ -151,7 +154,7 @@ reswitch:
         default:
         case '\0':
         case '%':
-            sbuf[s++] = *fp;
+            SAFE_SBUF_WRITE(*fp);
 
             if (*fp == '\0')
                 goto exit;
@@ -180,7 +183,7 @@ reswitch:
             goto reswitch;
 
         case 'c':
-            sbuf[s++] = (char)va_arg(args, int);
+            SAFE_SBUF_WRITE((char)va_arg(args, int));
             break;
 
         case 'h':
@@ -214,11 +217,11 @@ reswitch:
             flags &= ~FLAGS_UPPER;
             goto hex;
 
-        case 'p': /* formated pointer */
+        case 'p': /* formatted pointer */
             sbuf[s] = '\0';
             p = _s_strncat(sbuf + s, (slen - s), "0x", 3);
 
-            ASSERT(p != NULL, "vsnprintf(): Unable to concatinate string.");
+            ASSERT(p != NULL, "vsnprintf(): Unable to concatenate string.");
 
             s += 2;
             pad = '0';
@@ -259,7 +262,7 @@ number:
             n = sizeof(nbuf) - (p - nbuf + 1);
 
             if (sign != '\0')
-                sbuf[s++] = sign;
+                SAFE_SBUF_WRITE(sign);
 
             goto string;
 
@@ -269,6 +272,9 @@ number:
             pad = ' ';
 
 string:
+            if (s >= slen)
+                goto exit;
+
             if (width > (slen - s - 1))
                 width = slen - s - 1;
 
@@ -282,7 +288,7 @@ string:
             sbuf[s] = '\0';
             p = _s_strncat(sbuf + s, (slen - s), p, n);
 
-            ASSERT(p != NULL, "vsnprintf(): Unable to concatinate string.");
+            ASSERT(p != NULL, "vsnprintf(): Unable to concatenate string.");
 
             s += n;
 
@@ -293,6 +299,7 @@ string:
     }
 
 exit:
+    s = s < (slen - 1) ? s : slen - 1;
     sbuf[s] = '\0';
     return s;
 }

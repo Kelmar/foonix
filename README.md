@@ -50,3 +50,14 @@ ninja
 
 ## C/C++ Library
 * Use a premade libc and libc++ (at least for user space)
+
+
+# Running Tests
+
+(Just a quick note here, needs revising fleshing out later.)
+
+```bash
+cmake -S tests -B tests/build
+cmake --build tests/build
+ctest --test-dir tests/build --output-on-failure
+```

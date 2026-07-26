@@ -7,24 +7,17 @@
 
 char* strncpy(char* dst, const char* src, size_t size)
 {
-    char* end = (char *)memchr(dst, '\0', size);
-    size_t dlen, slen;
+    size_t ssz = strnlen(src, size) + 1; // Include NUL
 
-    if (end == NULL)
+    ssz = ssz > size ? size : ssz;
+
+    memcpy(dst, src, ssz);
+
+    if (ssz < size)
     {
-	/* Panic? */
-	return NULL;
+        // Fill remaining buffer with NUL per Linux man page.
+        memset(dst + ssz, 0, size - ssz);
     }
-
-    dlen = (size_t)(end - dst);
-    slen = strnlen(src, size);
-
-    /* Don't forget to account for NUL */
-    if ((dlen + slen) > (size - 1))
-	slen = size - (dlen + 1);
-
-    memcpy(end, src, slen);
-    end[slen] = '\0';
 
     return dst;
 }

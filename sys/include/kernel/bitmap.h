@@ -46,7 +46,7 @@ public:
 
     void Set(size_t index)
     {
-        if (index > BitCount)
+        if (index >= BitCount)
             return;
 
         int itemIndex = GetItem(index);
@@ -57,7 +57,7 @@ public:
 
     void Clear(size_t index)
     {
-        if (index > BitCount)
+        if (index >= BitCount)
             return;
 
         int itemIndex = GetItem(index);
@@ -68,7 +68,7 @@ public:
 
     bool operator[](size_t index) const
     {
-        if (index > BitCount)
+        if (index >= BitCount)
             return false;
 
         int itemIndex = GetItem(index);

@@ -17,7 +17,11 @@ char* _s_strncpy(char* dst, size_t dsz, const char* src, size_t ssz)
     mlen = (mlen > slen) ? slen : mlen;
 
     memcpy(dst, src, mlen);
-    dst[mlen] = '\0';
+
+
+    // Pedantic safety, should be taken care of with copy of NUL from src to dst.
+    // Could be an issue if the write is unexpected.
+    dst[dsz - 1] = '\0'; 
 
     return dst;
 }
