@@ -6,6 +6,7 @@
 
 #include <kernel/kernel.h>
 #include <kernel/kernel_args.h>
+#include <kernel/bitmap.h>
 #include <kernel/debug.h>
 
 #include <kernel/vm.h>
@@ -85,19 +86,20 @@ constexpr void *kernel_end = &_kernel_end; //VIRT_2_PHYS(&_kernel_end);
 
 namespace
 {
+    // Uses a simple bitmap allocation mark and free for the first 1MB of real memory pages.
+
     // Compute space for a map of the lower 1MB of pages.
     // We track these pages as special identity mapped pages.
-    const size_t LOWER_1MB        = 1024 * 1024;
-    const size_t DWORD_PAGES      = sizeof(uint32_t) * 8;
-    const size_t LOWER_1MB_BITS   = LOWER_1MB / PAGE_SIZE;
-    const size_t LOWER_1MB_BYTES  = LOWER_1MB_BITS / 8;
-    const size_t LOWER_1MB_DWORDS = LOWER_1MB_BYTES / sizeof(uint32_t);
+    const size_t LOWER_1MB       = 1024 * 1024;
+    const size_t LOWER_1MB_PAGES = LOWER_1MB / PAGE_SIZE;
 
-    uint32_t s_RealMemMap[LOWER_1MB_DWORDS];
+    Bitmap<LOWER_1MB_PAGES> s_realMemMap;
 }
 
 /********************************************************************************************************************/
-
+/*
+ * Unconditionally marks a range of pages of real mode memory as in use.
+ */
 void Arch::VM::ReserveRealMemory(paddr_t addr, size_t length)
 {
     if (addr >= LOWER_1MB)
@@ -114,58 +116,57 @@ void Arch::VM::ReserveRealMemory(paddr_t addr, size_t length)
 
     for (size_t i = 0; i < count; ++i, ++pageNumber)
     {
-        size_t pageIndex = pageNumber / (sizeof(uint32_t) * 8);
-        size_t pageOffset = pageNumber % (sizeof(uint32_t) * 8);
-
-        s_RealMemMap[pageIndex] |= 1 << pageOffset;
+        //s_realMemMap[pageNumber] = true; // Ideal
+        s_realMemMap.Set(pageNumber);
     }
 }
 
 /********************************************************************************************************************/
-
+/*
+ * Allocates a page of real memory.
+ *
+ * A return of zero indicates that we weren't able to allocate a real memory page.
+ *
+ * Note that this function will never attempt to allocate the first page, leaving that reserved for a null pointer.
+ *
+ * To get at this page use the above ReserveRealMemory() function.
+ */
 paddr_t Arch::VM::AllocRealMemory(void)
 {
-    uint32_t mapWord;
-    size_t index = -1;
-    size_t offset = 0;
+    size_t index = 0; // See note about 0 index.
 
-    for (;;)
-    {
-        do
-        {
-            mapWord = s_RealMemMap[++index];
-        } while (mapWord == 0xFFFFFFFF && index < LOWER_1MB_DWORDS);
+    // Find first free page.
+    while (s_realMemMap[++index])
+        ;
 
-        if (index >= LOWER_1MB_DWORDS)
-            return 0; // No available memory!
+    if (index >= LOWER_1MB_PAGES)
+        return 0; // No available memory!
 
-        for (offset = 0; offset < 8; ++offset)
-        {
-            int bit = 1 << offset;
-
-            if ((mapWord & bit) == 0)
-            {
-                s_RealMemMap[index] |= bit;
-                break;
-            }
-        }
-
-        if (offset < 8)
-            return (index * DWORD_PAGES) + offset;
-    }
+    return (index * PAGE_SIZE);
 }
 
 /********************************************************************************************************************/
 
 void Arch::VM::ReleaseRealMemory(paddr_t addr)
 {
-    int index = addr / DWORD_PAGES;
-    int offset = addr % DWORD_PAGES;
+    if (addr == 0)
+    {
+        /*
+         * We're not panicking here, as there could be a legitimate reason to pass nullptr into this function.
+         *
+         * This mimics the behaviour of free() and delete with a nullptr.
+         *
+         * Note that this also prevents the first page from ever being freed.  This is actually an ideal side
+         * effect to ensure things don't try to use it, leaving it reserved indicating it's special status.
+         */
 
-    if (index == 0 || offset == 0)
         return; // Do not release the NULL page!
+    }
 
-    s_RealMemMap[index] &= ~(1 << offset);
+    size_t index = (addr / PAGE_SIZE);
+
+    //s_realMemMap[index] = false; // Ideal
+    s_realMemMap.Clear(index);
 }
 
 /********************************************************************************************************************/

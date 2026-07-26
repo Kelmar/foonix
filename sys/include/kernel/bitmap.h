@@ -44,27 +44,16 @@ public:
         memset(m_items, 0, ArraySize);
     }
 
-    void Set(size_t index)
-    {
-        if (index >= BitCount)
-            return;
+    #define BIT_OPERATION(NAME__, OP__)             \
+        void NAME__(size_t index) {                 \
+            if (index >= BitCount) return;          \
+            int idx = GetItem(index);               \
+            int bit = GetBit(index);                \
+            m_items[idx] = m_items[idx] OP__ bit; }
 
-        int itemIndex = GetItem(index);
-        int itemBit = GetBit(index);
-
-        m_items[itemIndex] |= itemBit;
-    }
-
-    void Clear(size_t index)
-    {
-        if (index >= BitCount)
-            return;
-
-        int itemIndex = GetItem(index);
-        int itemBit = GetBit(index);
-
-        m_items[itemIndex] &= ~itemBit;
-    }
+    BIT_OPERATION(Set, |)
+    BIT_OPERATION(Clear, & ~)
+    BIT_OPERATION(Flip, ^)
 
     bool operator[](size_t index) const
     {
