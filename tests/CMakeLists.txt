@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
+
+# =========================================================================
+
 project(foonix_libk_tests C)
+enable_language(CXX)
 
 # =========================================================================
 # Standalone project: builds and runs libk against the HOST compiler, to
@@ -18,6 +22,9 @@ project(foonix_libk_tests C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(FOONIX_TESTS_SANITIZE "Build with AddressSanitizer + UndefinedBehaviorSanitizer" ON)
 
@@ -106,13 +113,13 @@ target_compile_options(libk_under_test PRIVATE
 # reports to stderr and abort()s the test process instead of halting the
 # "system".
 add_library(kstubs STATIC kstubs.c)
-target_compile_options(kstubs PRIVATE -Wall -Wextra ${SANITIZE_FLAGS})
+target_compile_options(kstubs PRIVATE -Wall -Wextra -g ${SANITIZE_FLAGS})
 
 # Deliberately built WITHOUT sys/include on its path: the project's own
 # <stdio.h> is a minimal freestanding subset (no fprintf/stderr/FILE), so
 # this is the one place that needs the real host <stdio.h>.
 add_library(test_io STATIC test_io.c)
-target_compile_options(test_io PRIVATE -Wall -Wextra ${SANITIZE_FLAGS})
+target_compile_options(test_io PRIVATE -Wall -Wextra -g ${SANITIZE_FLAGS})
 
 # =========================================================================
 
@@ -127,9 +134,47 @@ add_executable(libk_tests
 
 target_include_directories(libk_tests PRIVATE "${SYS_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
 target_compile_definitions(libk_tests PRIVATE ${LIBK_SYMBOL_RENAMES})
-target_compile_options(libk_tests PRIVATE -Wall -Wextra -fno-builtin ${SANITIZE_FLAGS})
+target_compile_options(libk_tests PRIVATE -Wall -Wextra -fno-builtin -g ${SANITIZE_FLAGS})
 target_link_options(libk_tests PRIVATE ${SANITIZE_FLAGS})
 target_link_libraries(libk_tests PRIVATE libk_under_test kstubs test_io)
 
 enable_testing()
 add_test(NAME libk_tests COMMAND libk_tests)
+
+# =========================================================================
+# sys/kernel/src/kernel_args.cpp -- kernel-side (not libk) memory-map
+# bookkeeping, compiled and linked unmodified, same principle as libk above.
+# No symbol renaming needed here: unlike libk, this code doesn't call
+# anything on ASan's well-known-libc-name interceptor list.
+# =========================================================================
+
+set(KERNEL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../sys/kernel")
+
+add_library(kernel_args_under_test STATIC
+    "${KERNEL_DIR}/src/kernel_args.cpp"
+)
+
+target_include_directories(kernel_args_under_test PRIVATE
+    "${SYS_INCLUDE_DIR}"
+    "${KERNEL_DIR}/arch/i386/include"
+)
+
+target_compile_options(kernel_args_under_test PRIVATE
+    -Wall -Wextra -Wpedantic -g ${SANITIZE_FLAGS}
+)
+
+# kpanic()/Debug::PrintF(): see kernel_args_stubs.cpp for why this doesn't
+# get sys/include on its path.
+add_library(kernel_args_stubs STATIC kernel_args_stubs.cpp)
+target_compile_options(kernel_args_stubs PRIVATE -Wall -Wextra -g ${SANITIZE_FLAGS})
+
+add_executable(kernel_args_tests
+    test_kernel_args.cpp
+)
+
+target_include_directories(kernel_args_tests PRIVATE "${SYS_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_options(kernel_args_tests PRIVATE -Wall -Wextra -g ${SANITIZE_FLAGS})
+target_link_options(kernel_args_tests PRIVATE ${SANITIZE_FLAGS})
+target_link_libraries(kernel_args_tests PRIVATE kernel_args_under_test kernel_args_stubs test_io)
+
+add_test(NAME kernel_args_tests COMMAND kernel_args_tests)

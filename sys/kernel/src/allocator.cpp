@@ -8,7 +8,7 @@ PageBlock::PageBlock(PageBlock &&rhs)
     : m_start(0)
     , m_count(0)
 {
-    operator =(std::forward(rhs));
+    operator =(std::move(rhs));
 }
 
 PageBlock::~PageBlock()

@@ -61,8 +61,11 @@ int Multiboot::InitMultibootMemory(KernelArgs *ka)
             continue; 
         }
 
-        processing &= ka->AddFreeMemory(record->base_addr, record->length);
+        processing &= ka->AddMemoryMap(record->base_addr, record->length);
     }
+
+    // Remove any memory used by boot loader (e.g. Kernel code space)
+    ka->KnockoutUsedMemory();
 
     return 0;
 }

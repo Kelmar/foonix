@@ -1,9 +1,16 @@
+/********************************************************************************************************************/
+/********************************************************************************************************************/
+
 #ifndef _X_CPPIMPL_TT_POINTER_H__
 #define _X_CPPIMPL_TT_POINTER_H__
 
+/********************************************************************************************************************/
+
 template <class T>
-struct is_pointer : std::bool_constant<__is_pointer(T)>
-{ };
+struct is_pointer : public false_type { };
+
+template <class T>
+struct is_pointer<T*> : public true_type { };
 
 template <class T>
 constexpr bool is_pointer_v = std::is_pointer<T>::value;
@@ -23,4 +30,8 @@ _MAKE_RM(* const volatile);
 template <class T>
 using remove_pointer_t = class remove_pointer<T>::type;
 
+/********************************************************************************************************************/
+
 #endif /* _X_CPPIMPL_TT_POINTER_H__ */
+
+/********************************************************************************************************************/

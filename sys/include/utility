@@ -26,10 +26,18 @@ namespace std
     }
 
     template <class T>
-    std::remove_reference_t<T>&& forward(T &t) noexcept
-    { 
-        typedef std::remove_reference_t<T> _up;
-        return static_cast<_up&&>(t);
+    T&& forward(std::remove_reference_t<T> &t) noexcept
+    {
+        return static_cast<T&&>(t);
+    }
+
+    template <class T>
+    T&& forward(std::remove_reference_t<T> &&t) noexcept
+    {
+        static_assert(!std::is_lvalue_reference_v<T>,
+            "std::forward: cannot forward an rvalue as an lvalue");
+
+        return static_cast<T&&>(t);
     }
 
     template <class T>

@@ -13,7 +13,7 @@ namespace Arch::VM
     void ReserveRealMemory(paddr_t addr, size_t length);
 
     /// @brief Allocates a page of real memory (< 1MB)
-    /// @return Returns a page alligned real memory address
+    /// @return Returns a page aligned real memory address
     paddr_t AllocRealMemory(void);
 
     /// @brief Releases a page of real memory (< 1MB)

@@ -19,7 +19,7 @@ public:
     constexpr unexpected(unexpected &&) = default;
 
     constexpr unexpected(Err &&e)
-        : m_error(std::forward(e))
+        : m_error(std::move(e))
     {
     }
 

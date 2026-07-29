@@ -1,0 +1,23 @@
+#ifndef _X_ALGORITHM
+#define _X_ALGORITHM 1
+
+#include <type_traits>
+
+namespace std
+{
+    // TODO: min and max should apply std::totally_ordered concept at some point.
+
+    template <class T>
+    inline T min(const T &x, const T &y) noexcept
+    {
+        return x < y ? x : y;
+    }
+
+    template <class T>
+    inline T max(const T &x, const T y) noexcept
+    {
+        return x > y ? x : y;
+    }
+}
+
+#endif /* _X_ALGORITHM */
