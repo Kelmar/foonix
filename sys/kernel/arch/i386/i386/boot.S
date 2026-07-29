@@ -20,7 +20,12 @@ stack_top:
 .global stack_top
 
 /********************************************************************************************************************/
-
+/*
+ * Called from start.S
+ *
+ * From here on out we use virtual addresses as the C/C++ compiler expects them to be.
+ * (In other words, it is now safe to call C/C++ functions.)
+ */
 .section .text
 .global _paged_start
 .type _paged_start, @function
@@ -35,8 +40,9 @@ _paged_start:
 
     call  preinit /* Initialize CPU & VM first */
 
-    /* Call static constructors */
-    call  _init
+    /* Call C++ static constructors */
+    /*call  _init*/
+    call __runtime_init
 
     # Call the kernel proper
     call  kmain

@@ -16,6 +16,7 @@
 #include "cpu.h"
 #include "multiboot.h"
 #include "arch_vm.h"
+#include "page.h"
 
 /********************************************************************************************************************/
 
@@ -28,13 +29,21 @@ uint32_t g_Multiboot; /* Value from EBX register */
 int Multiboot::InitMultibootMemory(KernelArgs *ka)
 {
     // We need to come up with some sort of memory map....
-
+   
     // Remap the multiboot structure into virtual memory space.
     multiboot_t *multi = reinterpret_cast<multiboot_t *>(PHYS_2_VIRT(g_Multiboot));
+
+    auto result = paging::g_bootPageTable.MapStruct(g_Multiboot, multi, 0);
+
+    if (result != Kernel::ErrorCode::NoError)
+        kpanic("Unable to map multiboot structure into page table");
+
     Debug::PrintF("Multiboot Info: %p\r\n", multi);
 
     // This is really just a hint, we'll want to detect actual memory config later.
     ka->MemorySizeKByte = multi->mem_lower + multi->mem_upper;
+
+    Debug::PrintF("Multiboot reports %d KBytes available.\r\n", ka->MemorySizeKByte);
 
     if ((multi->flags & MB_FLAG_MEM) == 0)
     {
@@ -44,10 +53,18 @@ int Multiboot::InitMultibootMemory(KernelArgs *ka)
 
     size_t recordCnt = multi->mmap_length / sizeof(mb_memory_map_t);
     bool processing = true;
+
+    mb_memory_map_t *memMap = reinterpret_cast<mb_memory_map_t *>(PHYS_2_VIRT(multi->mmap_addr));
+    paddr_t addr = reinterpret_cast<paddr_t>(reinterpret_cast<uintptr_t>(multi->mmap_addr));
+
+    result = paging::g_bootPageTable.MapStruct(addr, memMap, 0);
+
+    Debug::PrintF("Adding %d free record(s) from multiboot.\r\n", recordCnt);
     
     for (uint32_t i = 0; processing && i < recordCnt; ++i)
     {
-        mb_memory_map_t *record = &multi->mmap_addr[i];
+        //mb_memory_map_t *record = &multi->mmap_addr[i];
+        mb_memory_map_t *record = &memMap[i];
 
         if (record->type != BiosMemoryType::Available)
         {
@@ -64,8 +81,12 @@ int Multiboot::InitMultibootMemory(KernelArgs *ka)
         processing &= ka->AddMemoryMap(record->base_addr, record->length);
     }
 
+    Debug::PrintF("Removing kernel usage from memory map.\r\n");
+
     // Remove any memory used by boot loader (e.g. Kernel code space)
     ka->KnockoutUsedMemory();
+
+    Debug::PrintF("Multiboot memory read complete.\r\n");
 
     return 0;
 }

@@ -16,6 +16,11 @@ namespace DebugConsole
 {
     /**
      * @brief Initialization called before MMU setup.
+     *
+     * @remarks
+     * This function is called before the memory manager is setup.  As such, it must not allocate any memory using
+     * the MMU.  It may use some statically allocated variables allocated by the bootloader; but these should be
+     * kept as minimal as reasonably possible.
      */
     int Init1(void);
 
@@ -40,7 +45,7 @@ namespace DebugConsole
      * @brief Writes data to the console.
      * 
      * @remark This writes raw data to the console and does not try
-     * to interperet the data (including NULL characters).
+     * to interpret the data (including NULL characters).
      */
     void Write(const char *str, size_t len);
 

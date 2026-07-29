@@ -12,14 +12,17 @@
 
 #include <kernel/arch.h>
 
+#include "asm.h"
 #include "atomic.h"
 #include "cpu.h"
 #include "cpudefs.h"
 #include "multiboot.h"
-#include "page.h"
 #include "arch_vm.h"
+#include "page.h"
 
 /********************************************************************************************************************/
+
+using namespace paging;
 
 namespace
 {
@@ -116,15 +119,119 @@ namespace
         return -1;
     }
 #endif
+
+    /************************************************************************************************************/
+    /**
+     * @brief Convert a page_directory_entry into a page_table_t.
+     *
+     * @remarks Effectively just strips the flags off the page_directory_entry_t value.
+     */
+    inline
+    page_entry_t *GetPageTable(const page_directory_entry_t &pde)
+    {
+        /*
+         * TODO: The pointer in the directory entry is the physical address, find a good
+         * way we can map that into the kernel space so we can update it.
+         *
+         * Right now we have it hard coded to our PHYS_2_VIRT macro.
+         */
+
+        uintptr_t ptr = pde & directory_flags::addr_mask;
+        return reinterpret_cast<page_entry_t *>(PHYS_2_VIRT(ptr));
+    }
+
+    /************************************************************************************************************/
+
+    /**
+     * @brief Check if a physical address is mapped in a page_directory_t.
+     */
+    bool IsMapped(const paging::page_directory_t dir, paddr_t paddr)
+    {
+        (void)(dir);
+        (void)(paddr);
+
+        return false;
+    }
+
+    /************************************************************************************************************/
+    /**
+     * @brief Map a phyiscal memory page to a virtual memory page.
+     * @remark Note that addresses and sizes might get aligned to processor page boundaries.
+     * @param dir Directory to map the page in.
+     * @param paddr The phyiscal address to be mapped
+     * @param vaddr The virtual address
+     * @param flags Flags to be set on the page (The present flag is added automatically.)
+     */
+    Kernel::ErrorCode MapPage(paging::page_directory_t dir, paddr_t paddr, vaddr_t vaddr, uint32_t flags)
+    {
+        if (!IsAligned(paddr) || !IsAligned(vaddr))
+            return Kernel::ErrorCode::NotAligned;
+
+        //Debug::PrintF("Map %p -> %p\r\n", physEntry, virtEntry);
+        
+        int pgtIndex = (vaddr >> 12) & 0x03FF;
+        int dirIndex = (vaddr >> 22) & 0x03FF;
+
+        page_directory_entry_t &pde = dir[dirIndex];
+
+        // Assert these entries are correct!
+        if ((pde & directory_flags::present) == 0)
+            kpanic("Request to map to non present page entry!");
+
+        page_entry_t *pageTable = GetPageTable(pde);
+        page_entry_t &page = pageTable[pgtIndex];
+
+        if ((page & page_flags::present) != 0)
+        {
+            auto maskedPtr = page & page_flags::addr_mask;
+
+            Debug::PrintF("WARNING: Page over writing: %p with %p\r\n", maskedPtr, paddr);
+        }
+
+        page = (paddr & page_flags::addr_mask) | flags | page_flags::present;
+
+        return Kernel::ErrorCode::NoError;
+    }
+
+    /************************************************************************************************************/
+    /**
+     * @brief Remove a virtual page from paging.
+     * @param dir Directory to unmap from.
+     * @param vaddr The virtual address to unmap.
+     */
+    Kernel::ErrorCode UnmapPage(paging::page_directory_t dir, vaddr_t vaddr)
+    {
+        if (!IsAligned(vaddr))
+            return Kernel::ErrorCode::NotAligned;
+        
+        int pgtIndex = (vaddr >> 12) & 0x03FF;
+        int dirIndex = (vaddr >> 22) & 0x03FF;
+
+        page_directory_entry_t &pde = dir[dirIndex];
+
+        // Assert these entries are correct!
+        if ((pde & directory_flags::present) == 0)
+            return Kernel::ErrorCode::NoError; // Nothing to do
+
+        page_entry_t *pageTable = GetPageTable(pde);
+        page_entry_t &page = pageTable[pgtIndex];
+
+        if ((page & page_flags::present) == 0)
+            return Kernel::ErrorCode::NoError; // Nothing to do
+
+        page &= ~page_flags::present;
+
+        return Kernel::ErrorCode::NoError;
+    }
 }
 
 /********************************************************************************************************************/
 
-using namespace paging;
-
 extern "C" page_directory_t boot_page_directory;
 extern "C" page_table_t boot_page_identity;
 extern "C" page_table_t boot_page_kernel;
+
+BootPageTable paging::g_bootPageTable;
 
 /********************************************************************************************************************/
 
@@ -176,131 +283,45 @@ PageTable::PageTable()
 
 /********************************************************************************************************************/
 
+bool PageTable::doIsMapped(paddr_t paddr) const
+{
+    return ::IsMapped(m_dir, paddr);
+}
+
+/********************************************************************************************************************/
+
 Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t flags)
 {
-    if (!paging::IsAligned(paddr) || !paging::IsAligned(vaddr))
-        return Kernel::ErrorCode::NotAligned;
-
-    //Debug::PrintF("Map %p -> %p\r\n", physEntry, virtEntry);
-    
-    int pgtIndex = (vaddr >> 12) & 0x03FF;
-    int dirIndex = (vaddr >> 22) & 0x03FF;
-
-    // Assert these entries are correct!
-    if ((m_dir[dirIndex] & directory_flags::present) == 0)
-        kpanic("Request to map to non present page entry!");
-
-    // TODO: Fix this, hard coded to kernel boot page.
-    page_entry_t *page = &boot_page_kernel[pgtIndex];
-
-    if ((*page & page_flags::present) != 0)
-    {
-        auto maskedPtr = *page & page_flags::addr_mask;
-
-        Debug::PrintF("WARNING: Page over writting: %p with %p\r\n", maskedPtr, paddr);
-    }
-
-    *page = (paddr & page_flags::addr_mask) | flags | page_flags::present;
-
-    return Kernel::ErrorCode::NoError;
+    return ::MapPage(m_dir, paddr, vaddr, flags);
 }
 
 /********************************************************************************************************************/
 
 Kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
 {
-    uint32_t virtEntry = static_cast<uint32_t>(AlignFloor(vaddr));
-    
-    int pgtIndex = (virtEntry >> 12) & 0x03FF;
-    int dirIndex = (virtEntry >> 22) & 0x03FF;
-
-    // Assert these entries are correct!
-    if ((m_dir[dirIndex] & directory_flags::present) == 0)
-        return Kernel::ErrorCode::NoError; // Nothing to do
-
-    /*
-     * TODO: The pointer in the directory entry is the physical address, find a good
-     * way we can map that into the kernel space so we can update it.
-     */
-    /*
-    auto ptab = reinterpret_cast<page_table_t>(dir[dirIndex] & directory_flags::addr_mask);
-    
-    page_entry_t *page = &ptab[pgtIndex];
-    */
-
-    // Hard coded to our kernel boot page for now.
-    page_entry_t *page = &boot_page_kernel[pgtIndex];
-
-    if ((*page & page_flags::present) == 0)
-        return {}; // Nothing to do
-
-    *page &= ~page_flags::present;
-
-    return Kernel::ErrorCode::NoError;
+    return ::UnmapPage(m_dir, vaddr);
 }
 
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
-Kernel::ErrorCode paging::MapPage(page_directory_t dir, paddr_t paddr, vaddr_t vaddr, uint32_t flags)
+bool BootPageTable::doIsMapped(paddr_t paddr) const
 {
-    if (!IsAligned(paddr) || !IsAligned(vaddr))
-        return Kernel::ErrorCode::NotAligned;
-
-    //Debug::PrintF("Map %p -> %p\r\n", physEntry, virtEntry);
-    
-    int pgtIndex = (vaddr >> 12) & 0x03FF;
-    int dirIndex = (vaddr >> 22) & 0x03FF;
-
-    // Assert these entries are correct!
-    if ((dir[dirIndex] & directory_flags::present) == 0)
-        kpanic("Request to map to non present page entry!");
-
-    // TODO: Fix this, hard coded to kernel boot page.
-    page_entry_t *page = &boot_page_kernel[pgtIndex];
-
-    if ((*page & page_flags::present) != 0)
-    {
-        auto maskedPtr = *page & page_flags::addr_mask;
-
-        Debug::PrintF("WARNING: Page over writting: %p with %p\r\n", maskedPtr, paddr);
-    }
-
-    *page = (paddr & page_flags::addr_mask) | flags | page_flags::present;
-
-    return Kernel::ErrorCode::NoError;
+    return ::IsMapped(boot_page_directory, paddr);
 }
 
 /********************************************************************************************************************/
 
-void paging::UnmapPage(page_directory_t dir, vaddr_t vaddr)
+Kernel::ErrorCode BootPageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t flags)
 {
-    uint32_t virtEntry = static_cast<uint32_t>(AlignFloor(vaddr));
-    
-    int pgtIndex = (virtEntry >> 12) & 0x03FF;
-    int dirIndex = (virtEntry >> 22) & 0x03FF;
+    return ::MapPage(boot_page_directory, paddr, vaddr, flags);
+}
 
-    // Assert these entries are correct!
-    if ((dir[dirIndex] & directory_flags::present) == 0)
-        return; // Nothing to do
+/********************************************************************************************************************/
 
-    /*
-     * TODO: The pointer in the directory entry is the physical address, find a good
-     * way we can map that into the kernel space so we can update it.
-     */
-    /*
-    auto ptab = reinterpret_cast<page_table_t>(dir[dirIndex] & directory_flags::addr_mask);
-    
-    page_entry_t *page = &ptab[pgtIndex];
-    */
-
-    // Hard coded to our kernel boot page for now.
-    page_entry_t *page = &boot_page_kernel[pgtIndex];
-
-    if ((*page & page_flags::present) == 0)
-        return; // Nothing to do
-
-    *page &= ~page_flags::present;
+Kernel::ErrorCode BootPageTable::doUnmapPage(vaddr_t vaddr)
+{
+    return ::UnmapPage(boot_page_directory, vaddr);
 }
 
 /********************************************************************************************************************/

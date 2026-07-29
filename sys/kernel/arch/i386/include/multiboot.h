@@ -100,7 +100,7 @@ struct multiboot_t
     uint8_t boot_device[4];
 
 #define MB_FLAG_CMDLINE	0x00000004
-    uint32_t cmdline; /* C-style null termianted string command line args. */
+    uint32_t cmdline; /* C-style null terminated string command line args. */
 
 #define MB_FLAG_MODS	0x00000008
     uint32_t mods_count; /* Number of loaded "modules" */

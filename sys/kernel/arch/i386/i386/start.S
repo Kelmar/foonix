@@ -1,12 +1,12 @@
 /********************************************************************************************************************/
 /*
  * This is our initial boot loader after stage 0 or 1.  We get called from 
- * evertyhign here, EFI, multiboot and so on.
+ * everything here, EFI, multiboot and so on.
  *
- * This file establishes a few conventions to make sure we preseve some information:
+ * This file establishes a few conventions to make sure we preserve some information:
  *
- * 1) We need to preserve the initial contents of EAX, which for multiboot has the
- *    multiboot header that we'll want to parse in the C code.
+ * 1) We need to preserve the initial contents of EAX and EBX, which for multiboot has the multiboot information we
+ *    need later in the C++ code.
  */
 /********************************************************************************************************************/
 
@@ -60,12 +60,16 @@
 
 .global paging_init
 
+/*
+ * This is the very first thing that the bootloader calls for our kernel.
+ */
+
 .global _start
 .type _start, @function
 _start:
-    /* Set some initial flags */
+    /* Get some CPU flags into a known state. */
     cli /* Ensure disabled interrupts */
-    cld /* Clear direction flag so we can setup the boot pages */
+    cld /* Clear direction flag so we can use stosX to setup the boot pages */
 
     /* Setup temporary stack (using physical address) */
     movl $VIRT_2_PHYS(stack_top), %esp
@@ -128,7 +132,7 @@ _start:
     xorl %eax, %eax
     rep  stosl /* stosd */
 
-    /* Tempoary debugging, add text video memory map */
+    /* Temporary debugging, add text video memory map */
     movl $0x000B8003, VIRT_2_PHYS(boot_page_identity) + VIDEO_PAGE_OFFSET
 
     movl $VIRT_2_PHYS(boot_page_identity), %eax

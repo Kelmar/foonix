@@ -25,8 +25,10 @@ namespace Kernel
     {
         Unknown = -1,
 
+        /// @brief Successful operation result.
         NoError = 0,
-        
+      
+        /// @brief Out of memory.
         OutOfMemory = 2,
 
         /// @brief The requested resource has already been allocated.
@@ -34,6 +36,9 @@ namespace Kernel
 
         /// @brief A requested memory operation needs to be aligned
         NotAligned = 4,
+
+        /// @brief A resource of some sort was not found.
+        NotFound = 5,
     };
 }
 

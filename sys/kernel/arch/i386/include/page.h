@@ -109,37 +109,47 @@ namespace paging
 
     /************************************************************************************************************/
 
-    /// @brief Map a phyiscal memory page to a virtual memory page.
-    /// @remark Note that addresses and sizes might get aligned to processor page boundaries.
-    /// @param dir Directory to map the page in.
-    /// @param paddr The phyiscal address to be mapped
-    /// @param vaddr The virtual address
-    /// @param flags Flags to be set on the page (The present flag is added automatically.)
-    Kernel::ErrorCode MapPage(page_directory_t dir, paddr_t paddr, vaddr_t vaddr, uint32_t flags);
-
-    /// @brief Remove a virtual page from paging.
-    /// @param dir Directory to unmap from.
-    /// @param vaddr The virtual address to unmap.
-    void UnmapPage(page_directory_t dir, vaddr_t vaddr);
-
-    /************************************************************************************************************/
-
     class PageTable : public PageTableBase<PageTable>
     {
     private:
         page_directory_t m_dir;
 
-        Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t falgs);
+        PageTable(const PageTable &rhs) = delete;
+        PageTable(PageTable &&rhs) = delete;
 
-        Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
-        
     public:
         PageTable();
-        PageTable(const PageTable &rhs) : PageTableBase(rhs) { }
-        PageTable(PageTable &&rhs) : PageTableBase(rhs) { }
-
+        
         virtual ~PageTable() { }
+
+        bool doIsMapped(paddr_t addr) const;
+
+        Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t flags);
+        Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
     };
+
+    /************************************************************************************************************/
+
+    class BootPageTable : public PageTableBase<BootPageTable>
+    {
+    private:
+        BootPageTable(const BootPageTable &rhs) = delete;
+        BootPageTable(BootPageTable &&rhs) = delete;
+
+    public:
+        constexpr BootPageTable() : PageTableBase() { }
+
+        virtual ~BootPageTable() { }
+
+        bool doIsMapped(paddr_t addr) const;
+
+        Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t flags);
+        Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
+    };
+
+    extern BootPageTable g_bootPageTable;
+
+    /************************************************************************************************************/
 }
 
 /********************************************************************************************************************/

@@ -45,6 +45,9 @@ namespace DebugConsole
 {
     int Init1(void)
     {
+        // Setup debugging serial port.
+        // We assume that the serial port is compatible with a 16550.
+
         // Disable interrupts, we're just going to manually poll.
         outb(SERIAL_INT_CTL, 0);
 
@@ -54,14 +57,14 @@ namespace DebugConsole
         // Setup bit pattern, and enable writing ot the divisor latches
         outb(SERIAL_LINE_CTL, SERIAL_CONTROL_FLAGS | SERIAL_DLA_BIT);
 
-        // Set up for 19200 buad
+        // Set up for 19200 baud
         outb(SERIAL_DLA_MSB, 0);
         outb(SERIAL_DLA_LSB, 6);
 
         // Now clear the DLA bit so we can read/write data
         outb(SERIAL_LINE_CTL, SERIAL_CONTROL_FLAGS);
 
-        // Anounce ourselves
+        // Announce ourselves
         const char msg[] = "FooNIX Ready!\r\n";
         PutString(msg, strnlen(msg, sizeof(msg)));
 

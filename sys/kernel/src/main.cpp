@@ -28,7 +28,9 @@
 //#include "ata.h"
 
 /********************************************************************************************************************/
-
+/**
+ * @brief Global kernel arguments structure.
+ */
 KernelArgs g_KernelArguments;
 
 /********************************************************************************************************************/
@@ -42,11 +44,13 @@ KernelArgs g_KernelArguments;
 extern "C"
 void preinit(void)
 {
-    DebugConsole::Init1();
+    DebugConsole::Init1(); // Non allocating initialization.
 
     Debug::PrintF("ENTER: preinit()\r\n");
 
     VM::Init();
+
+    Debug::PrintF("EXIT: preinit()\r\n");
 }
 
 /********************************************************************************************************************/
@@ -118,6 +122,8 @@ extern "C" void kmain(void)
     /* After our first context switch, the code below will stop running. */
 #endif
     //uint8_t *term = (uint8_t *)(0x000B8000);
+
+    Debug::PrintF("ENTER: kmain()\r\n");
 
     const char msg[64] = "Hello world from kernel space!\r\n";
 
