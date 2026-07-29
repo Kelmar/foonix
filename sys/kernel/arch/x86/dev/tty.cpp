@@ -131,6 +131,8 @@ void terminal_pre_init(void)
     terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
     terminal_buffer = ((uint16_t*)0x000B8000);
 
+    terminal_io = 0x03D4;
+
     terminal_clear();
 
     terminal_buffer[0] = vga_entry('C', vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
@@ -211,9 +213,11 @@ extern "C" void terminal_putchar(char c)
         break;
 
     case '\r': /* CR */
+        col = 0;
+        break;
+
     case '\n': /* LF */
         ++row;
-        col = 0;
         break;
 
     default:
@@ -227,7 +231,6 @@ extern "C" void terminal_putchar(char c)
     {
         col -= VGA_WIDTH;
         ++terminal_row;
-
     }
 
     while (row >= VGA_HEIGHT)

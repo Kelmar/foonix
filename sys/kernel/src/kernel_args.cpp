@@ -221,6 +221,7 @@ void KernelArgs::KnockoutUsedMemory()
 void KernelArgs::ShowAvailableMemory(void)
 {
     Debug::PrintF("Free Memory\r\n");
+    Debug::PrintF("    Start      Length\r\n");
 
     for (uint32_t i = 0; i < MemoryMapEntries; ++i)
     {

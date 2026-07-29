@@ -36,7 +36,7 @@ int Multiboot::InitMultibootMemory(KernelArgs *ka)
     auto result = paging::g_bootPageTable.MapStruct(g_Multiboot, multi, 0);
 
     if (result != Kernel::ErrorCode::NoError)
-        kpanic("Unable to map multiboot structure into page table");
+        kpanic("Unable to map multiboot structure into page table.");
 
     Debug::PrintF("Multiboot Info: %p\r\n", multi);
 
@@ -59,7 +59,10 @@ int Multiboot::InitMultibootMemory(KernelArgs *ka)
 
     result = paging::g_bootPageTable.MapStruct(addr, memMap, 0);
 
-    Debug::PrintF("Adding %d free record(s) from multiboot.\r\n", recordCnt);
+    if (result != Kernel::ErrorCode::NoError)
+        kpanic("Unable to map multiboot memory map into page table.");
+
+    Debug::PrintF("Checking %d memory record(s) from multiboot.\r\n", recordCnt);
     
     for (uint32_t i = 0; processing && i < recordCnt; ++i)
     {
@@ -68,7 +71,7 @@ int Multiboot::InitMultibootMemory(KernelArgs *ka)
 
         if (record->type != BiosMemoryType::Available)
         {
-            // Everything else we just mark as unavailable.
+            // Ignore anything that isn't marked as available.
             continue;
         }
 
