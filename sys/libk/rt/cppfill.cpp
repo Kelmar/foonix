@@ -15,7 +15,7 @@ void* operator new(size_t sz) THROW_SIG
     void* rval = nullptr; //malloc(sz);
 
     if (rval == nullptr)
-        kpanic("Out of memory");
+        ERROR("Out of memory");
 
     return rval;
 }
@@ -26,7 +26,7 @@ void* operator new[](size_t sz) THROW_SIG
     void* rval = nullptr; //malloc(sz);
 
     if (rval == nullptr)
-        kpanic("Out of memory");
+        ERROR("Out of memory");
 
     return rval;
 }
@@ -57,12 +57,12 @@ void operator delete[](void* ptr, size_t) throw()
 
 extern "C" void __cxa_pure_virtual(void)
 {
-    ERROR("Pure virtual call in kernel!");
+    ERROR("Pure virtual call in kernel");
 }
 
 extern "C" int _purecall()
 {
-    ERROR("Pure call in kernel!");
+    ERROR("Pure call in kernel");
     return 0;
 }
 

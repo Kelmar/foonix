@@ -24,6 +24,12 @@ fn __CTOR_LIST_END__[] IN_SECTION(".ctors") = { 0 };
 fn __DTOR_LIST__    [] IN_SECTION(".dtors") = { 0 };
 fn __DTOR_LIST_END__[] IN_SECTION(".dtors") = { 0 };
 
+/*
+ * TODO: Could need to detect between this and .init_array sections.
+ *
+ * Not clear on how that is done yet, but is presumably the more modern approach is to do this.
+ */
+
 /********************************************************************************************************************/
 
 __attribute__((visibility("hidden"))) void *__dso_handle = &__dso_handle;

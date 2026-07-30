@@ -41,7 +41,6 @@ _paged_start:
     call  preinit /* Initialize CPU & VM first */
 
     /* Call C++ static constructors */
-    /*call  _init*/
     call __runtime_init
 
     # Call the kernel proper

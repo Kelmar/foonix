@@ -94,7 +94,7 @@ namespace
         outb(terminal_io, CUR_LOC_LO);
         b[0] = inb(terminal_io + 1);
 
-        outb(termainl_io, CUR_LOC_HI);
+        outb(terminal_io, CUR_LOC_HI);
         b[1] = inb(terminal_io + 1);
 
 

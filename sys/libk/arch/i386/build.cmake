@@ -9,8 +9,3 @@ set(string_asms
 list(TRANSFORM string_asms PREPEND "${HOST_DIR}/string/")
 
 list(APPEND platform_files ${string_asms})
-
-list(APPEND platform_files
-    "${HOST_DIR}/rt/crti.S"
-    "${HOST_DIR}/rt/crtn.S"
-)
