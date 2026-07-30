@@ -35,22 +35,29 @@ ninja
 * ~Interrupts are handled.~
 * ~Code for handling delays using the PIT is working.~
 
+(Long ago broke a lot of this in favor of a rework)
+
 # Some TODOs
 ## Build System
-* Currently replacing Makefile with CMake/Ninja
+[ ] Currently replacing Makefile with CMake/Ninja
+[ ] Build x64
+[ ] Better unit test system. ([doctest](https://github.com/doctest/doctest) maybe?)
+[ ] Maybe use docker so we can better control the build environment.
 
 ## Kernel Proper
-* Fix broken paging support, get a working memory manager.
-* Need VFS
-* Make a real driver model.
-* Finish ATA driver.
-* Build a file system.
-* Add basic POSIX hooks for getting libc to compile/run.
-* Everything else that isn't done yet.
+[ ] Fix broken paging support
+    (somewhat fixed now)
+[ ] Working memory manager.
+[ ] Need VFS
+[ ] Make a real driver model.
+[ ] Finish ATA driver.
+[ ] Build a file system.
+[ ] Add basic POSIX hooks for getting libc to compile/run.
+[ ] x64 code
+[ ] Everything else that isn't done yet.
 
 ## C/C++ Library
 * Use a premade libc and libc++ (at least for user space)
-
 
 # Running Tests
 
