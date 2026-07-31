@@ -10,7 +10,7 @@ include ("${KERNEL_SRC_DIR}/arch/x86/build.cmake")
 include_directories("${HOST_DIR}/include")
 
 list(APPEND x64_sources
-    boot.S
+    boot.S cpu.S
     arch_vm.cpp
 )
 

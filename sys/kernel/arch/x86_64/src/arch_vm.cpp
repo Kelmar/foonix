@@ -4,11 +4,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <kernel/arch/arch.h>
+#include <kernel/arch.h>
 #include <kernel/kernel_args.h>
 #include <kernel/kernel.h>
 #include <kernel/debug.h>
-#include <kernel/vm/vm.h>
+#include <kernel/vm.h>
 
 #include "cpu.h"
 //#include "multiboot.h"
@@ -16,7 +16,7 @@
 
 /********************************************************************************************************************/
 
-void Arch::InitBootMemory(KernelArgs *ka)
+void arch::InitBootMemory(KernelArgs *ka)
 {
     (void)ka;
 }

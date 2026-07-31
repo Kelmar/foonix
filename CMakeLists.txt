@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.25)
 # Read user's selected configuration file
 include("${CMAKE_SOURCE_DIR}/cmake/config.cmake")
 
-include("${CMAKE_SOURCE_DIR}/cmake/_tools.cmake")
+#include("${CMAKE_SOURCE_DIR}/cmake/_tools.cmake")
 include("${CMAKE_SOURCE_DIR}/cmake/target.cmake")
 
 # =========================================================================
@@ -17,13 +17,24 @@ set(SYSROOT "${CMAKE_BINARY_DIR}/sysroot")
 set(CMAKE_INSTALL_PREFIX ${SYSROOT})
 
 # We also don't want includes from our host OS!
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --sysroot=${SYSROOT} -nostdinc")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${SYSROOT} -nostdinc -nostdinc++")
-set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${SYSROOT} -nostdinc -nostdinc++")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --sysroot=${SYSROOT} -nostdinc -nostdlib")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${SYSROOT} -nostdinc -nostdinc++ -nostdlib")
+set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${SYSROOT} -nostdinc -nostdinc++ -nostdlib")
+
+# Except we DO want the compiler includes.
+execute_process(
+    COMMAND clang -print-resource-dir
+    OUTPUT_VARIABLE CLANG_RESOURCE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 project(foonix C CXX ASM)
 
-include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/sys/include")
+include_directories(
+    SYSTEM
+    "${CLANG_RESOURCE_DIR}/include"
+    "${CMAKE_SOURCE_DIR}/sys/include"
+)
 
 add_custom_command(
     OUTPUT sysroot
