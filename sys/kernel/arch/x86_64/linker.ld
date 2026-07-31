@@ -23,11 +23,6 @@ SECTIONS
         *(.multiboot.text)
     }
 
-    .multiboot.strings :
-    {
-        *(.multiboot.strings)
-    }
-
     . += __VIRT_START;
 
     .text ALIGN(__PAGE_SIZE) : AT (ADDR (.text) - __VIRT_START)
@@ -49,7 +44,6 @@ SECTIONS
     {
         *(COMMON)
         *(.bss)
-        *(.bootstrap_stack)
     }
 
     /* Create kernel end marker */

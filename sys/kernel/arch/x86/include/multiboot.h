@@ -1,17 +1,21 @@
 /********************************************************************************************************************/
+/*
+ * Multiboot 1 definitions and structures.
+ *
+ * Used by C++, not suitable for ASM inclusion.
+ */
+/********************************************************************************************************************/
 
 #ifndef __FOONIX_KERNEL_MULTBOOT_H__
 #define __FOONIX_KERNEL_MULTBOOT_H__
 
 /********************************************************************************************************************/
 
+#include "mb_defs.h"
+
 #include <stdint.h>
 
 #include <kernel/kernel_args.h>
-
-/********************************************************************************************************************/
-
-#define MULTIBOOT_MAGIC 0x2BADB002
 
 /********************************************************************************************************************/
 /*
@@ -87,51 +91,44 @@ struct multiboot_t
 {
     uint32_t flags;
 
-#define MB_FLAG_MEM	0x00000001
+// MB_FLAG_MEM
     uint32_t mem_lower;	/* Amount of available lower memory in KBytes (640K) */
     uint32_t mem_upper; /* Amount of available upper memory in KBytes (1M) */
 
-#define MB_FLAG_BOOTDEV	0x00000002
-
-#define MB_BOOT_DRIVE 0
-#define MB_BOOT_PART1 1 /* Primary partition (includes DOS ext, starting at 4)*/
-#define MB_BOOT_PART2 2 /* "Sub" partition, (BSD partitions) */
-#define MB_BOOT_PART3 3 /* Sub-Sub partition.... */
+// MB_FLAG_BOOTDEV (See also MB_BOOT_xxxx)
     uint8_t boot_device[4];
 
-#define MB_FLAG_CMDLINE	0x00000004
+// MB_FLAG_CMDLINE
     uint32_t cmdline; /* C-style null terminated string command line args. */
 
-#define MB_FLAG_MODS	0x00000008
+// MB_FLAG_MODS
     uint32_t mods_count; /* Number of loaded "modules" */
     uint32_t mods_addr;  /* Physical address of first module entry. */
 
-#define MB_FLAG_AOUTSYMS 0x00000010
-#define MB_FLAG_ELFSYMS	 0x00000020
     union
     {
-        mb_aout_syms_t aout_syms;
-        mb_elf_syms_t elf_syms;
+        mb_aout_syms_t aout_syms; // MB_FLAG_AOUTSYMS
+        mb_elf_syms_t elf_syms;   // MB_FLAG_ELFSYMS
     } __attribute__((packed));
 
-#define MB_FLAG_MMAP	0x00000040
+// MB_FLAG_MMAP
     uint32_t mmap_length; /* in bytes */
     mb_memory_map_t *mmap_addr;
 
-#define MB_FLAG_DRIVERS	0x00000080
+// MB_FLAG_DRIVERS
     uint32_t drives_length;
     uint32_t drives_addr;
 
-#define MB_FLAG_CONFIG	0x00000100
+// MB_FLAG_CONFIG
     uint32_t config_table;
 
-#define MB_FLAG_BLNAME	0x00000200
+// MB_FLAG_BLNAME
     uint32_t boot_loader_name;
 
-#define MB_FLAG_APM	0x00000400
+// MB_FLAG_APM
     uint32_t apm_table;
 
-#define MB_FLAG_VBE	0x00000800
+// MB_FLAG_VBE
     uint32_t vbe_control_info;
     uint32_t vbe_mode_info;
     uint32_t vbe_mode;
@@ -139,13 +136,6 @@ struct multiboot_t
     uint32_t vbe_interface_off;
     uint32_t vbe_interface_len;
 } __attribute__((packed));
-
-/********************************************************************************************************************/
-
-namespace Multiboot
-{
-    int InitMultibootMemory(KernelArgs *);
-}
 
 /********************************************************************************************************************/
 

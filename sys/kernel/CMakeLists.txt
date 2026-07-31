@@ -31,9 +31,17 @@ list(APPEND SOURCES ${KERN_SOURCES})
 add_executable(kernel ${SOURCES})
 add_dependencies(kernel k)
 
-target_compile_options(kernel PRIVATE -fno-rtti -fno-exceptions -ggdb -D__is_foo_kernel)
+#target_assembler_options(kernel PRIVATE ${ASSEMBLE_EXTRA} ${ALL_EXTRA})
 
-target_link_options(kernel PRIVATE -nostdlib ${LINK_EXTRA})
+target_compile_options(kernel PRIVATE 
+    -fno-rtti
+    -fno-exceptions
+    -ggdb
+    ${COMPILE_EXTRA}
+    ${ALL_EXTRA}
+    -D__is_foo_kernel)
+
+target_link_options(kernel PRIVATE -nostdlib ${ALL_EXTRA} ${LINK_EXTRA})
 
 #target_link_libraries(kernel PRIVATE k gcc)
 target_link_libraries(kernel PRIVATE k)

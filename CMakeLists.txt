@@ -8,6 +8,10 @@ include("${CMAKE_SOURCE_DIR}/cmake/config.cmake")
 #include("${CMAKE_SOURCE_DIR}/cmake/_tools.cmake")
 include("${CMAKE_SOURCE_DIR}/cmake/target.cmake")
 
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_ASM_COMPILER clang++)
+
 # =========================================================================
 
 set(CMAKE_CXX_STANDARD 23)

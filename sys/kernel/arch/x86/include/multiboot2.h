@@ -1,21 +1,38 @@
 /********************************************************************************************************************/
 /*
- * X86-64 specific platform defines.
+ * Multiboot 2 definitions and structures.
+ *
+ * Used by C++, not suitable for ASM inclusion.
  */
 /********************************************************************************************************************/
 
-#ifndef FOONIX_ARCH_X86_64_DEFS_H__
-#define FOONIX_ARCH_X86_64_DEFS_H__
+#ifndef __FOONIX_KERNEL_MULTBOOT2_H__
+#define __FOONIX_KERNEL_MULTBOOT2_H__
 
 /********************************************************************************************************************/
 
-/* TODO: Want to have one spot where we define this for everything. */
+#include "mb2_defs.h"
 
-#define KERNEL_OFFSET 0x00000000C0000000
-#define VIDEO_OFFSET 0x00000000000B8000
+#include <stdint.h>
 
 /********************************************************************************************************************/
 
-#endif /* FOONIX_ARCH_X86_64_DEFS_H__ */
+struct mb2_tag
+{
+    uint32_t type;
+    uint32_t size;
+} __attribute__((packed));
+
+struct mb2_info
+{
+    uint32_t total_size;
+    uint32_t reserved;
+
+    // Tags immediately follow
+} __attribute__((packed));
+
+/********************************************************************************************************************/
+
+#endif /* __FOONIX_KERNEL_MULTBOOT2_H__ */
 
 /********************************************************************************************************************/

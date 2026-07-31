@@ -16,6 +16,12 @@
 
 /********************************************************************************************************************/
 
+// The assembly code will initialize these values for us.
+uint32_t g_BootMagic; /* Value from EAX register */
+uint32_t g_Multiboot; /* Value from EBX register */
+
+/********************************************************************************************************************/
+
 void arch::InitBootMemory(KernelArgs *ka)
 {
     (void)ka;
