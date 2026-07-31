@@ -1,6 +1,8 @@
 #!/usr/bin/bash
 # Utility for downloading and compiling the build tool chain
 
+set -e
+
 BUVER=2.45
 GCCVER=15.2.0
 
@@ -77,7 +79,7 @@ extract_tarballs() {
 
 configure_binutils() {
     ../binutils-$BUVER/configure "--prefix=$PREFIX" "--target=$TARGET" \
-        --with-sysroot --disable-nsl --disable-werror
+        --with-sysroot --disable-nls --disable-werror
 }
 
 build_binutils() {

@@ -45,6 +45,9 @@ ninja
 [ ] Maybe use docker so we can better control the build environment.
 
 ## Kernel Proper
+[ ] Get it so we can use a debugger with qemu.
+[ ] Remove use of GRUB and switch to EFI
+[ ] x64 code
 [ ] Fix broken paging support
     (somewhat fixed now)
 [ ] Working memory manager.
@@ -53,7 +56,6 @@ ninja
 [ ] Finish ATA driver.
 [ ] Build a file system.
 [ ] Add basic POSIX hooks for getting libc to compile/run.
-[ ] x64 code
 [ ] Everything else that isn't done yet.
 
 ## C/C++ Library
