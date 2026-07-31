@@ -2,7 +2,7 @@
 /*
  * Paged mode entry point.
  *
- * Called by multiboot.S
+ * Called from start.S
  */
 /********************************************************************************************************************/
 
@@ -21,8 +21,6 @@ stack_top:
 
 /********************************************************************************************************************/
 /*
- * Called from start.S
- *
  * From here on out we use virtual addresses as the C/C++ compiler expects them to be.
  * (In other words, it is now safe to call C/C++ functions.)
  */

@@ -227,6 +227,7 @@ namespace
 
 /********************************************************************************************************************/
 
+// Defined in start.S
 extern "C" page_directory_t boot_page_directory;
 extern "C" page_table_t boot_page_identity;
 extern "C" page_table_t boot_page_kernel;

@@ -1,0 +1,1 @@
+readelf -s -C -W sys/kernel/kernel.elf | grep FUNC | awk '{print strtonum("0x" $2), $0}' | sort -n -k1,1

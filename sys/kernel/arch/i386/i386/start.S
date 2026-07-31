@@ -13,7 +13,7 @@
 #include "asm.h"
 
 # Setting up the multiboot header - see GRUB docs for details.
-.set ALIGN,     1<<0                # Align laoded modules on page boundaries
+.set ALIGN,     1<<0                # Align loaded modules on page boundaries
 .set MEMINFO,   1<<1                # Provide memory map
 .set FLAGS,     ALIGN | MEMINFO     # This is the multiboot 'flag' field
 .set MAGIC,     0x1BADB002          # 'magic number' lets bootloader find header
