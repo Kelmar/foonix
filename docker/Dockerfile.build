@@ -6,15 +6,7 @@ RUN apt upgrade -y
 RUN apt install -y cmake
 RUN apt install -y grub-pc-bin grub-common xorriso
 
-RUN mkdir -p /src/sys
-
-COPY config /src/config
-COPY CMakeLists.txt /src
-COPY cmake /src/cmake
-COPY scripts /src/scripts
-COPY grub /src/grub
-COPY tests /src/tests
-COPY sys /src/sys
+COPY src /src
 
 WORKDIR /work
 
