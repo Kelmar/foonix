@@ -22,10 +22,10 @@ jobs:
           CONFIG: ${{ matrix.platform }}
 
       - name: Build Tools
-        run docker build -f docker/Dockerfile.tools --progress=plain --load .
+        run: docker build -f docker/Dockerfile.tools --progress=plain --load .
 
       - name: Build ${{ matrix.platform }}
-        run docker build -f docker/Dockerfile.build --progress=plain --build-arg CONFIG="$CONFIG" --build-arg OUTPUT="$OUTPUT"
+        run: docker build -f docker/Dockerfile.build --progress=plain --build-arg CONFIG="$CONFIG" --build-arg OUTPUT="$OUTPUT"
 
       - name: Upload build output
         uses: actions/upload-artifact@v4
