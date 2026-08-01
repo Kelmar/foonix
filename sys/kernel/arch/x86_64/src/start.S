@@ -123,8 +123,8 @@ _start:
     addl $8, %edi      // Size of page table entry
     loop 1b
 
-    popl %ebx
     popl %eax
+    popl %ebx
 
     movl $boot_pml4t, %edi
     movl %edi, %cr3 // Load up our new page table addresses.
@@ -134,8 +134,13 @@ _start:
     orl $(1 << 5), %ecx
     movl %ecx, %cr4
 
-    /* Using EDX to preserve EAX long enough to get past the next few instructions w/o the stack. */
-    movl %eax, %edx
+    /*
+     * Using EDI to preserve EAX while we transition to x64 mode w/o using the stack.
+     *
+     * We can't use EBX because that has it's own value we need to preserve.
+     * rdmsr/wrmsr use EAX, ECX, and EDX....
+     */
+    movl %eax, %edi
 
     movl $0xC0000080, %ecx
     rdmsr
@@ -147,7 +152,7 @@ _start:
     movl %eax, %cr0
 
     /* Restore EAX */
-    movl %edx, %eax
+    movl %edi, %eax
 
     /* Load the global descriptor table */
     lgdt bootstrap_gdt_ptr

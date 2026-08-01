@@ -41,8 +41,10 @@ _x64_start:
     movq $stack_top, %rbp
 
     # Load in parameters from the bootloader into places the C++ code can get to them.
-    movq %rax, g_BootMagic
-    movq %rbx, g_Multiboot
+    movl %eax, g_BootMagic
+    movl %ebx, g_Multiboot
+
+    call preinit /* Initialize CPU & VM first */
 
     # Call C++ static constructors
     call __runtime_init
