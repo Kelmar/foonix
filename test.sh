@@ -2,6 +2,7 @@
 
 set -e
 
-cmake -S tests -B tests/build 
-cmake --build tests/build
-ctest --test-dir tests/build --output-on-failure
+cmake -S src/tests -B build/tests
+cmake --build build/tests
+ctest --test-dir build/tests --output-on-failure
+

@@ -1,8 +1,15 @@
 .vscode/*
 .vs
 
+qemu.log
+kernel.log
+kernel.elf
+boot.iso
+
 .ninja_deps
 .ninja_log
+
+.tmp.*
 
 CLAUDE.md
 

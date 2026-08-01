@@ -1,0 +1,23 @@
+FROM foonix-tools:latest AS base
+
+ARG CONFIG=x86_64
+ARG OUTPUT=boot.x86_64.iso
+
+COPY src /src
+
+WORKDIR /work
+
+RUN cmake ../src -DCONFIG=${CONFIG}
+
+RUN cmake --build . -v
+RUN cmake --install . -v
+
+RUN grub-mkrescue -o boot.iso sysroot
+
+FROM scratch AS output
+
+ARG CONFIG=x86_64
+ARG OUTPUT=boot.x86_64.iso
+
+COPY --from=base /work/boot.iso /${OUTPUT}
+COPY --from=base /work/sys/kernel/kernel.elf /kernel.${CONFIG}.elf
