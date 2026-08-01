@@ -58,8 +58,7 @@ docker build \
      --progress=plain \
      --build-arg CONFIG="$PLATFORM" \
      --build-arg OUTPUT="$OUTPUT" \
-     -t \
-     foonix-env:latest \
+     -t foonix-env:latest \
      -o type=local,dest=./out .
 
 echo "Build Complete"
