@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.25)
 # =========================================================================
 
 # Read user's selected configuration file
-include("${CMAKE_SOURCE_DIR}/cmake/config.cmake")
+include("${CMAKE_SOURCE_DIR}/src/cmake/config.cmake")
 
-#include("${CMAKE_SOURCE_DIR}/cmake/_tools.cmake")
-include("${CMAKE_SOURCE_DIR}/cmake/target.cmake")
+#include("${CMAKE_SOURCE_DIR}/src/cmake/_tools.cmake")
+include("${CMAKE_SOURCE_DIR}/src/cmake/target.cmake")
 
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
@@ -37,7 +37,7 @@ project(foonix C CXX ASM)
 include_directories(
     SYSTEM
     "${CLANG_RESOURCE_DIR}/include"
-    "${CMAKE_SOURCE_DIR}/sys/include"
+    "${CMAKE_SOURCE_DIR}/src/sys/include"
 )
 
 add_custom_command(
@@ -49,8 +49,8 @@ add_custom_command(
 
 add_custom_target(foonix ALL DEPENDS sysroot)
 
-add_subdirectory(sys)
-add_subdirectory(grub)
+add_subdirectory(src/sys)
+add_subdirectory(src/grub)
 
 add_dependencies(foonix kernel)
 
