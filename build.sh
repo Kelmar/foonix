@@ -51,17 +51,15 @@ if [ ! -f "src/config/${PLATFORM}.json" ] || [ "$PLATFORM" = "lint" ]; then
     usage
 fi
 
+docker build -f docker/Dockerfile.tools -t foonix-tools:latest --load .
+
 docker build \
     -f docker/Dockerfile.build \
      --progress=plain \
      --build-arg CONFIG="$PLATFORM" \
+     --build-arg OUTPUT="$OUTPUT" \
      -t \
      foonix-env:latest \
      -o type=local,dest=./out .
 
-mv ./out/boot.iso "./out/${OUTPUT}"
-mv ./out/kernel.elf "./out/kernel.${PLATFORM}.elf"
-
-echo ""
-echo "Wrote ./out/${OUTPUT}"
-echo "Wrote ./out/kernel.${PLATFORM}.elf"
+echo "Build Complete"

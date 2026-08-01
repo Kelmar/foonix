@@ -1,12 +1,7 @@
-FROM silkeh/clang AS base
+FROM foonix-tools:latest AS base
 
 ARG CONFIG=x86_64
-
-RUN apt update
-RUN apt upgrade -y
-
-RUN apt install -y cmake
-RUN apt install -y grub-pc-bin grub-common xorriso
+ARG OUTPUT=boot.x86_64.iso
 
 COPY src /src
 
@@ -20,5 +15,9 @@ RUN cmake --install . -v
 RUN grub-mkrescue -o boot.iso sysroot
 
 FROM scratch AS output
-COPY --from=base /work/boot.iso /
-COPY --from=base /work/sys/kernel/kernel.elf /kernel.elf
+
+ARG CONFIG=x86_64
+ARG OUTPUT=boot.x86_64.iso
+
+COPY --from=base /work/boot.iso /${OUTPUT}
+COPY --from=base /work/sys/kernel/kernel.elf /kernel.${CONFIG}.elf
