@@ -9,6 +9,8 @@ boot.iso
 .ninja_deps
 .ninja_log
 
+.tmp.*
+
 CLAUDE.md
 
 CMakeCache.txt

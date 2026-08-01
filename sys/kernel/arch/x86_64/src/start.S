@@ -62,10 +62,8 @@ _start:
     cld /* Clear direction flag for stosX instructions */
 
     /* Setup temporary stack (using physical address) */
-    /*movl $VIRT_2_PHYS(stack_top), %esp
-    movl $VIRT_2_PHYS(stack_top), %ebp */
-    movl stack_top, %esp
-    movl stack_top, %ebp
+    movl $stack_top, %esp
+    movl $stack_top, %ebp
 
     /* Preserve EAX and EBX which may hold boot info from multiboot */
     pushl %ebx
@@ -96,12 +94,8 @@ _start:
     /* Okay, NOW we actually check for x64 support. */
     movl $CPUID_FEATURES, %eax
     cpuid
-    testl $CPUID_FEATURE_X64, %eax
+    testl $CPUID_FEATURE_X64, %edx
     jz 1f
-
-    /* Restore the EAX and EBX registers with (possible) multiboot info */
-    popl %eax
-    popl %ebx
 
     /* Congrats!  It looks like x64 is supported, let's get the page tables setup. */
 
@@ -115,13 +109,33 @@ _start:
     movl %eax, boot_pdpt
 
     movl $boot_pt, %eax
+    movl %eax, %edi
     orl $0x3, %eax // Double check flags
     movl %eax, boot_pdt
+
+    /* Identity map first 2MiB of addresses */
+    movl $0x03, %ebx // Mark page as present and readable.
+    movl $512, %ecx  // Number of entries.
+
+1:
+    movl %ebx, (%edi)
+    addl $0x1000, %ebx // Page size
+    addl $8, %edi      // Size of page table entry
+    loop 1b
+
+    popl %ebx
+    popl %eax
+
+    movl $boot_pml4t, %edi
+    movl %edi, %cr3 // Load up our new page table addresses.
 
     // Enable PAE
     movl %cr4, %ecx
     orl $(1 << 5), %ecx
-    movl %eax, %cr4
+    movl %ecx, %cr4
+
+    /* Using EDX to preserve EAX long enough to get past the next few instructions w/o the stack. */
+    movl %eax, %edx
 
     movl $0xC0000080, %ecx
     rdmsr
@@ -132,23 +146,29 @@ _start:
     orl $(1 << 31), %eax
     movl %eax, %cr0
 
+    /* Restore EAX */
+    movl %edx, %eax
+
     /* Load the global descriptor table */
     lgdt bootstrap_gdt_ptr
 
     ljmp $0x08, $_x64_start
 
 1:  /* CPU Not Supported */
-    movl $VGA_MEMORY, %esi
-    //movl $VIRT_2_PHYS(cpu_not_supported), %edi
-    movl cpu_not_supported, %edi
+    movl $VGA_MEMORY, %edi
+    movl $cpu_not_supported, %esi
 
 2: /* Write message to VGA memory */
     lodsb
     testb %al, %al
     jz 3f
+
     stosb
-    inc %esi
-    inc %edi
+
+    /* Write color data */
+    movb $0x07, %al
+    stosb
+
     jmp 2b
 
 3: /* Not supported death loop */
