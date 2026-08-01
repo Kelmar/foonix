@@ -2,6 +2,15 @@
 
 QEMU="qemu-system-x86_64"
 
+PLATFORM="${1:-x86_64}"
+ISO="out/boot.${PLATFORM}.iso"
+
+if [ ! -f "$ISO" ]; then
+    echo "ISO not found: $ISO" >&2
+    echo "Usage: $0 [platform]" >&2
+    exit 1
+fi
+
 #$QEMU -nographic -kernel kernel.elf -serial mon:stdio
 
 rm -f out/qemu.log
@@ -23,4 +32,4 @@ $QEMU \
     -no-reboot \
     -no-shutdown \
     -serial mon:stdio \
-    -cdrom out/boot.iso | tee out/kernel.log
+    -cdrom "$ISO" | tee out/kernel.log

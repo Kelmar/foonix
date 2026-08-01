@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [i686, x86_64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.platform }}
+        run: ./build.sh ${{ matrix.platform }}
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: foonix-${{ matrix.platform }}
+          path: |
+            out/boot.${{ matrix.platform }}.iso
+            out/kernel.${{ matrix.platform }}.elf
+          if-no-files-found: error
