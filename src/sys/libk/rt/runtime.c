@@ -37,7 +37,7 @@ __attribute__((visibility("hidden"))) void *__dso_handle = &__dso_handle;
 /********************************************************************************************************************/
 
 USED
-void __runtime_init()
+void __runtime_init(void)
 {
     static int called = 0; // Guard against accidental second call.
 
@@ -62,7 +62,7 @@ void __runtime_init()
 /********************************************************************************************************************/
 
 USED
-void __runtime_fini()
+void __runtime_fini(void)
 {
     static int called = 0; // Guard against accidental second call.
 

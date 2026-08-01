@@ -44,8 +44,16 @@
 #define NENTRY(X) _ENTRY(_C_LABEL(X))
 #define LABEL(X)  _LABEL(_C_LABEL(X))
 
-#define VIRT_2_PHYS(X_) (X_ - KERNEL_OFFSET)
-#define PHYS_2_VIRT(X_) (X_ + KERNEL_OFFSET)
+#if defined(__cplusplus)
+# define _LANG_CAST(X_) (reinterpret_cast<uintptr_t>(X_))
+//#elif defined(__STDC__)
+//# define _LANG_CAST(X_) ((uintptr_t)X_)
+#else
+# define _LANG_CAST(X_) X_
+#endif
+
+#define VIRT_2_PHYS(X_) (_LANG_CAST(X_) - KERNEL_OFFSET)
+#define PHYS_2_VIRT(X_) (_LANG_CAST(X_) + KERNEL_OFFSET)
 
 /********************************************************************************************************************/
 

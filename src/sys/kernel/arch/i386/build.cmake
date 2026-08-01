@@ -25,8 +25,16 @@ list(APPEND SOURCES
 # =========================================================================
 # Setup include and linker options
 
+# Find compiler-rt libraries to add back in for i386
+execute_process(
+    COMMAND clang++ -m32 --rtlib=compiler-rt -print-libgcc-file-name
+    OUTPUT_VARIABLE RT_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 include_directories("${HOST_DIR}/include")
 
 list(APPEND LINK_EXTRA "-T${HOST_DIR}/linker.ld")
+list(APPEND LINK_LIBS "${RT_PATH}")
 
 # =========================================================================

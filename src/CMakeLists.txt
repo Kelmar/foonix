@@ -21,9 +21,12 @@ set(SYSROOT "${CMAKE_BINARY_DIR}/sysroot")
 set(CMAKE_INSTALL_PREFIX ${SYSROOT})
 
 # We also don't want includes from our host OS!
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --sysroot=${SYSROOT} -nostdinc -nostdlib")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${SYSROOT} -nostdinc -nostdinc++ -nostdlib")
-set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${SYSROOT} -nostdinc -nostdinc++ -nostdlib")
+
+set(COMMON_FLAGS "--sysroot=${SYSROOT} -nostdinc -nostdlib -Wall -Wpedantic -Wno-unused-command-line-argument -Werror")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -nostdinc++")
+set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${COMMON_FLAGS} -nostdinc++")
 
 # Except we DO want the compiler includes.
 execute_process(

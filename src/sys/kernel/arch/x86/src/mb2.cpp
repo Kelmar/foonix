@@ -57,6 +57,8 @@ int MB2::ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr)
     }
 
     Debug::PrintF("MB2: Detected %d total tags.\r\n", i);
+
+    return 0; //Kernel::ErrorCode::NoError;
 }
 
 /********************************************************************************************************************/

@@ -14,8 +14,14 @@
 
 #include "asm.h"
 #include "cpu.h"
+
 #include "multiboot.h"
+#include "multiboot2.h"
+
+#include "bootinfo.h"
+
 #include "arch_vm.h"
+
 #include "page.h"
 
 /********************************************************************************************************************/
@@ -26,14 +32,14 @@ uint32_t g_Multiboot; /* Value from EBX register */
 
 /********************************************************************************************************************/
 
-int Multiboot::InitMultibootMemory(KernelArgs *ka)
+int Multiboot::ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr)
 {
     // We need to come up with some sort of memory map....
    
     // Remap the multiboot structure into virtual memory space.
-    multiboot_t *multi = reinterpret_cast<multiboot_t *>(PHYS_2_VIRT(g_Multiboot));
+    multiboot_t *multi = reinterpret_cast<multiboot_t *>(PHYS_2_VIRT(multiboot_ptr));
 
-    auto result = paging::g_bootPageTable.MapStruct(g_Multiboot, multi, 0);
+    auto result = paging::g_bootPageTable.MapStruct(multiboot_ptr, multi, 0);
 
     if (result != Kernel::ErrorCode::NoError)
         kpanic("Unable to map multiboot structure into page table.");
@@ -217,7 +223,7 @@ void arch::InitBootMemory(KernelArgs *ka)
     switch (g_BootMagic)
     {
     case MULTIBOOT_MAGIC:
-        err = Multiboot::InitMultibootMemory(ka);
+        err = Multiboot::ReadInfo(ka, g_Multiboot);
         break;
 
     default:

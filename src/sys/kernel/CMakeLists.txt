@@ -46,7 +46,7 @@ target_compile_options(kernel PRIVATE
 target_link_options(kernel PRIVATE -nostdlib ${ALL_EXTRA} ${LINK_EXTRA})
 
 #target_link_libraries(kernel PRIVATE k gcc)
-target_link_libraries(kernel PRIVATE k)
+target_link_libraries(kernel PRIVATE k ${LINK_LIBS})
 
 install(
     TARGETS kernel RUNTIME
