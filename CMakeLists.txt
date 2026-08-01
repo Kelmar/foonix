@@ -54,9 +54,9 @@ add_subdirectory(grub)
 
 add_dependencies(foonix kernel)
 
-install(
-    CODE "execute_process(COMMAND grub-mkrescue -o boot.iso sysroot)"
-)
+#install(
+#    CODE "execute_process(COMMAND grub-mkrescue -o boot.iso sysroot)"
+#)
 
 set_property(
     TARGET foonix

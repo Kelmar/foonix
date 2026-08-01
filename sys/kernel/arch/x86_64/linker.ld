@@ -13,20 +13,13 @@ SECTIONS
     /* Create start marker */
     _kernel_phys_start = ABSOLUTE(.);
 
-    .multiboot.data :
-    {
-        *(.multiboot.data)
-    }
-
-    .multiboot.text :
-    {
-        *(.multiboot.text)
-    }
-
     . += __VIRT_START;
 
     .text ALIGN(__PAGE_SIZE) : AT (ADDR (.text) - __VIRT_START)
     {
+        . = ALIGN(8);
+        KEEP(*(.multiboot.data))
+        *(.multiboot.text)
         *(.text)
     }
 

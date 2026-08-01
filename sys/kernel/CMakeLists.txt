@@ -31,6 +31,8 @@ list(APPEND SOURCES ${KERN_SOURCES})
 add_executable(kernel ${SOURCES})
 add_dependencies(kernel k)
 
+set_target_properties(kernel PROPERTIES OUTPUT_NAME "kernel.elf")
+
 #target_assembler_options(kernel PRIVATE ${ASSEMBLE_EXTRA} ${ALL_EXTRA})
 
 target_compile_options(kernel PRIVATE 

@@ -15,7 +15,7 @@ multiboot_header:
 .long MB2_HDR_MAGIC
 .long MB2_ARCH_I386
 .long multiboot_header_end - multiboot_header
-.long -(MB2_MAGIC + MB2_ARCH_I386 + (multiboot_header_end - multiboot_header))
+.long 0x100000000 - (MB2_HDR_MAGIC + MB2_ARCH_I386 + (multiboot_header_end - multiboot_header))
 
 /*
 .align 8

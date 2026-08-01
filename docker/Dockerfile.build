@@ -21,3 +21,10 @@ WORKDIR /work
 RUN cmake ../src -DCONFIG=x86_64
 
 RUN cmake --build . -v
+RUN cmake --install . -v
+
+RUN grub-mkrescue -o boot.iso sysroot
+
+FROM scratch AS output
+COPY --from=base /work/boot.iso /
+COPY --from=base /work/sys/kernel/kernel.elf /kernel.elf
