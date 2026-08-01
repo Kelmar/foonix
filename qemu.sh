@@ -18,7 +18,8 @@ rm -f kernel.log
 
 $QEMU \
     -d int,cpu_reset,guest_errors,invalid_mem \
-    -D qemu.log -s -S \
+    -D qemu.log \
+    -s -S \
     -no-reboot \
     -no-shutdown \
     -serial mon:stdio \

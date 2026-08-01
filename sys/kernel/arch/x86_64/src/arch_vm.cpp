@@ -11,8 +11,11 @@
 #include <kernel/vm.h>
 
 #include "cpu.h"
-//#include "multiboot.h"
-//#include "arch_vm.h"
+
+#include "multiboot.h"
+#include "multiboot2.h"
+
+#include "arch_vm.h"
 
 /********************************************************************************************************************/
 
@@ -42,7 +45,6 @@ void arch::InitBootMemory(KernelArgs *ka)
     Debug::PrintF("ENTER: Arch::InitBootMemory()\r\n");
 
     Debug::PrintF("Boot Magic: 0x%08X\r\n", g_BootMagic);
-    Debug::PrintF("Multiboot : 0x%08X\r\n", g_Multiboot);
     
     // Figure out where we live in physical memory.
     ka->KernelCode.Base = reinterpret_cast<uintptr_t>(&kernel_start);
@@ -51,6 +53,23 @@ void arch::InitBootMemory(KernelArgs *ka)
     ka->KernelCode.Length = kend - ka->KernelCode.Base;
 
     Debug::PrintF("Kernel: %p 0x%08X\r\n", ka->KernelCode.Base, ka->KernelCode.Length);
+
+    int err;
+
+    switch (g_BootMagic)
+    {
+    case MB2_MAGIC:
+        err = MB2::InitMemory(ka, g_Multiboot);
+        break;
+
+    default:
+        // TODO: Fallback to BIOS/EFI probe?
+        err = -1;
+        break;
+    }
+
+    if (err)
+        Debug::PrintF("WARN: No memory map, guessing.\r\n");
 }
 
 /********************************************************************************************************************/
