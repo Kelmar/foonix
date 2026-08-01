@@ -1,4 +1,8 @@
 /********************************************************************************************************************/
+/*
+ * Code for reading Multiboot2 information.
+ */
+/********************************************************************************************************************/
 
 #include <stdint.h>
 #include <string.h>
@@ -15,11 +19,11 @@
 #include "multiboot.h"
 #include "multiboot2.h"
 
-#include "arch_vm.h"
+#include "bootinfo.h"
 
 /********************************************************************************************************************/
 
-int MB2::InitMemory(KernelArgs *ka, uint32_t multiboot_ptr)
+int MB2::ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr)
 {
     Debug::PrintF("Multiboot 2 load detected.\r\n");
 

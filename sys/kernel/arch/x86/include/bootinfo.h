@@ -1,25 +1,23 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
-#ifndef FOONIX_ARCH_X86_64_ARCH_VM_H__
-#define FOONIX_ARCH_X86_64_ARCH_VM_H__
+#ifndef FOONIX_ARCH_X86_BOOTINFO_H__
+#define FOONIX_ARCH_X86_BOOTINFO_H__
 
 /********************************************************************************************************************/
 
-#if 0
 namespace Multiboot
 {
-    int InitMemory(KernelArgs *ka);
+    int ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr);
 }
-#endif
 
 namespace MB2
 {
-    int InitMemory(KernelArgs *ka, uint32_t multiboot_ptr);
+    int ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr);
 }
 
 /********************************************************************************************************************/
 
-#endif /* FOONIX_ARCH_X86_64_ARCH_VM_H__ */
+#endif /* FOONIX_ARCH_X86_BOOTINFO_H__ */
 
 /********************************************************************************************************************/

@@ -15,7 +15,7 @@
 #include "multiboot.h"
 #include "multiboot2.h"
 
-#include "arch_vm.h"
+#include "bootinfo.h"
 
 /********************************************************************************************************************/
 
@@ -58,8 +58,14 @@ void arch::InitBootMemory(KernelArgs *ka)
 
     switch (g_BootMagic)
     {
+#if 0
+    case MULTIBOOT_MAGIC:
+        err = Multiboot::ReadInfo(ka, g_Multiboot);
+        break;
+#endif
+
     case MB2_MAGIC:
-        err = MB2::InitMemory(ka, g_Multiboot);
+        err = MB2::ReadInfo(ka, g_Multiboot);
         break;
 
     default:

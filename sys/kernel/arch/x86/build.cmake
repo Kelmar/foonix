@@ -14,7 +14,7 @@ endif()
 # =========================================================================
 
 list(APPEND x86_sources
-    dconsole.cpp
+    dconsole.cpp mb1.cpp mb2.cpp
 )
 
 list(APPEND x86_devs
