@@ -4,8 +4,8 @@ QEMU="qemu-system-x86_64"
 
 #$QEMU -nographic -kernel kernel.elf -serial mon:stdio
 
-rm -f qemu.log
-rm -f kernel.log
+rm -f out/qemu.log
+rm -f out/kernel.log
 
 # Some debugging options....
 #-d trace:ahci_*,trace:ide_*,trace:cmd_identify,int,cpu_reset,guest_errors,invalid_mem \
@@ -18,9 +18,9 @@ rm -f kernel.log
 
 $QEMU \
     -d int,cpu_reset,guest_errors,invalid_mem \
-    -D qemu.log \
+    -D out/qemu.log \
     -s -S \
     -no-reboot \
     -no-shutdown \
     -serial mon:stdio \
-    -cdrom boot.iso | tee kernel.log
+    -cdrom out/boot.iso | tee out/kernel.log
