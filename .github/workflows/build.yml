@@ -6,28 +6,51 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build tools image
+        run: docker build -f docker/Dockerfile.tools -t foonix-tools:latest --progress=plain --load .
+
+      - name: Save tools image
+        run: docker save foonix-tools:latest -o foonix-tools.tar
+
+      - name: Upload tools image
+        uses: actions/upload-artifact@v4
+        with:
+          name: foonix-tools-image
+          path: foonix-tools.tar
+          retention-days: 1
+
   build:
+    needs: build-tools
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         platform: [i686, x86_64]
+    env:
+      OUTPUT: boot.${{ matrix.platform }}.iso
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set environment variables
-        env:
-          OUTPUT: boot.${{ matrix.platform }}.iso
-          CONFIG: ${{ matrix.platform }}
-        run: echo "Building config $CONFIG"
+      - name: Download tools image
+        uses: actions/download-artifact@v4
+        with:
+          name: foonix-tools-image
+
+      - name: Load tools image
+        run: docker load -i foonix-tools.tar
 
       - name: Build ${{ matrix.platform }}
         run: |
-          docker build -f docker/Dockerfile.tools --progress=plain --load .
           docker build -f docker/Dockerfile.build \
             --progress=plain \
-            --build-arg CONFIG="$CONFIG" \
+            --build-arg CONFIG="${{ matrix.platform }}" \
             --build-arg OUTPUT="$OUTPUT" \
             -t foonix-env:latest \
             -o type=local,dest=./out \
@@ -37,5 +60,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: foonix-${{ matrix.platform }}
-          path: out/${OUTPUT}
+          path: |
+            out/${{ env.OUTPUT }}
+            out/kernel.${{ matrix.platform }}.elf
           if-no-files-found: error
