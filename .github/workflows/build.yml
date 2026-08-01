@@ -22,11 +22,9 @@ jobs:
           CONFIG: ${{ matrix.platform }}
         run: echo "Building config $CONFIG"
 
-      - name: Build Tools
-        run: docker build -f docker/Dockerfile.tools --progress=plain --load .
-
       - name: Build ${{ matrix.platform }}
         run: |
+          docker build -f docker/Dockerfile.tools --progress=plain --load .
           docker build -f docker/Dockerfile.build \
             --progress=plain \
             --build-arg CONFIG="$CONFIG" \
