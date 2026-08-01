@@ -48,35 +48,35 @@ ctest --test-dir build/tests --output-on-failure
 ```
 
 # Some stuff that's done
-* ~Global descriptor tables (although simple) are working.~
-* ~Interrupts are handled.~
-* ~Code for handling delays using the PIT is working.~
+- [x] ~Global descriptor tables (although simple) are working.~
+- [x] ~Interrupts are handled.~
+- [x] ~Code for handling delays using the PIT is working.~
 
 (Long ago broke a lot of this in favor of a rework)
 
 # Some TODOs
 ## In Progress
-[ ] x64 code
-[ ] Fix broken paging support
+- [ ] x64 code
+- [ ] Fix broken paging support
     (somewhat fixed now)
 
 ## Build System
-[x] Replace Makefile with CMake/Ninja
-[x] Build x64
-[x] Use docker so we can better control the build environment.
-[ ] Better unit test system. ([doctest](https://github.com/doctest/doctest) maybe?)
+- [x] Replace Makefile with CMake/Ninja
+- [x] Build x64
+- [x] Use docker so we can better control the build environment.
+- [ ] Better unit test system. ([doctest](https://github.com/doctest/doctest) maybe?)
 
 ## Kernel Proper
-[x] Get it so we can use a debugger with qemu.
-[ ] Remove use of GRUB and switch to EFI
-[ ] Working memory manager.
-[ ] Need VFS
-[ ] Make a real driver model.
-[ ] Finish ATA driver.
-[ ] Build a file system.
-[ ] Add basic POSIX hooks for getting libc to compile/run.
-[ ] Everything else that isn't done yet.
+- [x] Get it so we can use a debugger with qemu.
+- [ ] Remove use of GRUB and switch to EFI
+- [ ] Working memory manager.
+- [ ] Need VFS
+- [ ] Make a real driver model.
+- [ ] Finish ATA driver.
+- [ ] Build a file system.
+- [ ] Add basic POSIX hooks for getting libc to compile/run.
+- [ ] Everything else that isn't done yet.
 
 ## C/C++ Library
-[ ] Use a premade libc and libc++ (at least for user space)
+- [ ] Use a premade libc and libc++ (at least for user space)
 
