@@ -18,8 +18,7 @@ SECTIONS
     .text ALIGN(__PAGE_SIZE) : AT (ADDR (.text) - __VIRT_START)
     {
         . = ALIGN(8);
-        KEEP(*(.multiboot.data))
-        *(.multiboot.text)
+        KEEP(*(.multiboot))
         *(.text)
     }
 

@@ -12,24 +12,8 @@
 
 #include "asm.h"
 
-# Setting up the multiboot header - see GRUB docs for details.
-.set ALIGN,     1<<0                # Align loaded modules on page boundaries
-.set MEMINFO,   1<<1                # Provide memory map
-.set FLAGS,     ALIGN | MEMINFO     # This is the multiboot 'flag' field
-.set MAGIC,     0x1BADB002          # 'magic number' lets bootloader find header
-.set CHECKSUM,  -(MAGIC + FLAGS)    # Checksum required
-
 #define KERNEL_PAGE_OFFSET (((KERNEL_OFFSET) >> 22) * 4)
 #define VIDEO_PAGE_OFFSET (((VIDEO_OFFSET) >> 12) * 4)
-
-/********************************************************************************************************************/
-
-# Multiboot header
-.section .multiboot.data, "aw"
-.align 4
-.long MAGIC
-.long FLAGS
-.long CHECKSUM
 
 /********************************************************************************************************************/
 
@@ -49,7 +33,7 @@
 
 /********************************************************************************************************************/
 
-.section .multiboot.text, "a"
+.section .text
 
 .extern _kernel_phys_start
 .extern _kernel_end

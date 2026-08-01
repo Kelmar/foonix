@@ -15,18 +15,13 @@ SECTIONS
 
     .multiboot.data :
     {
-        *(.multiboot.data)
-    }
-
-    .multiboot.text :
-    {
-        *(.multiboot.text)
+        KEEP(*(.multiboot))
     }
 
     . += __VIRT_START;
 
     .text ALIGN(__PAGE_SIZE) : AT (ADDR (.text) - __VIRT_START)
-    {
+    {        
         *(.text)
     }
 

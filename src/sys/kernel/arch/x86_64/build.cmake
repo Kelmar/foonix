@@ -19,7 +19,7 @@ include_directories("${HOST_DIR}/include")
 #list(APPEND LINK_EXTRA "${RT_PATH}")
 
 list(APPEND x64_sources
-    start.S boot.S cpu.S multiboot.S
+    start.S boot.S cpu.S
     arch_vm.cpp
 )
 

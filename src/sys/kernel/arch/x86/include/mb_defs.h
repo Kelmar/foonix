@@ -10,20 +10,26 @@
 #define __FOONIX_KERNEL_MB_DEFS_H__
 
 /********************************************************************************************************************/
+// Multiboot header values.
 
-#include <stdint.h>
+#define MB_MAGIC 0x1BADB002
 
-#include <kernel/kernel_args.h>
+#define MB_REQ_ALIGN   (1 << 0)
+#define MB_REQ_MEMINFO (1 << 1)
+#define MB_REQ_VIDEO   (1 << 2)
 
 /********************************************************************************************************************/
 
 #define MULTIBOOT_MAGIC 0x2BADB002
+
 #define MB_FLAG_MEM 0x00000001
 #define MB_FLAG_BOOTDEV 0x00000002
+
 #define MB_BOOT_DRIVE 0
 #define MB_BOOT_PART1 1 /* Primary partition (includes DOS ext, starting at 4)*/
 #define MB_BOOT_PART2 2 /* "Sub" partition, (BSD partitions) */
 #define MB_BOOT_PART3 3 /* Sub-Sub partition.... */
+
 #define MB_FLAG_CMDLINE 0x00000004
 #define MB_FLAG_MODS 0x00000008
 #define MB_FLAG_AOUTSYMS 0x00000010
