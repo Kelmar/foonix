@@ -16,14 +16,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Environment Variables
+        env:
+          OUTPUT: boot.${{ matrix.platform }}.iso
+          CONFIG: ${{ matrix.platform }}
+
+      - name: Build Tools
+        run docker build -f docker/Dockerfile.tools --progress=plain --load .
+
       - name: Build ${{ matrix.platform }}
-        run: ./build.sh ${{ matrix.platform }}
+        run: docker build -f docker/Dockerfile.build --progress=plain --build-arg CONFIG="$CONFIG" --build-arg OUTPUT="$OUTPUT"
 
       - name: Upload build output
         uses: actions/upload-artifact@v4
         with:
           name: foonix-${{ matrix.platform }}
-          path: |
-            out/boot.${{ matrix.platform }}.iso
-            out/kernel.${{ matrix.platform }}.elf
+          path: out/${OUTPUT}
           if-no-files-found: error
