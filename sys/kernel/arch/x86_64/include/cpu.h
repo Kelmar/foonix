@@ -7,32 +7,46 @@
 
 #define MAX_ADDR 0x00000000FFFFFFFFull
 
-static inline uint8_t
+static inline FORCE_INLINE uint8_t
 inb(uint16_t port)
 {
-    (void)port;
-    return 0;
+    uint8_t data;
+    __asm ("inb %1,%0" : "=a" (data) : "d" (port));
+    return data;
 }
 
-static inline void
+static inline FORCE_INLINE void
 outb(uint16_t port, uint8_t data)
 {
-    (void)port;
-    (void)data;
+    __asm ("outb %0,%1" : : "a" (data), "d" (port));
 }
 
-static inline uint16_t
+static inline FORCE_INLINE uint16_t
 inw(uint16_t port)
 {
-    (void)port;
-    return 0;
+    uint16_t data;
+    __asm ("inw %1,%0" : "=a" (data) : "d" (port));
+    return data;
 }
 
-static inline void
+static inline FORCE_INLINE void
 outw(uint16_t port, uint16_t data)
 {
-    (void)port;
-    (void)data;
+    __asm ("outw %0,%1" : : "a" (data), "d" (port));
+}
+
+static inline FORCE_INLINE uint32_t
+inl(uint16_t port)
+{
+    uint32_t data;
+    __asm__("inl %1,%0" : "=a" (data) : "d" (port));
+    return data;
+}
+
+static inline FORCE_INLINE void
+outl(uint16_t port, uint32_t data)
+{
+    __asm__("outl %0,%1" : : "a" (data), "d" (port));
 }
 
 /********************************************************************************************************************/
