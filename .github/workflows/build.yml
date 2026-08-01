@@ -16,10 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Environment Variables
+      - name: Set environment variables
         env:
           OUTPUT: boot.${{ matrix.platform }}.iso
           CONFIG: ${{ matrix.platform }}
+        run: echo "Building config $CONFIG"
 
       - name: Build Tools
         run: docker build -f docker/Dockerfile.tools --progress=plain --load .
