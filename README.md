@@ -1,34 +1,44 @@
 # Building
-Build is a bit less ugly now, but still not great.
+The build runs entirely inside Docker, so no cross-compiler toolchain needs to be built or
+installed locally.
 
-You will need CMake and a tool chain that can build GCC and BinUtils.
-
-The cross compiler can be downloaded and built with the following command:
 ```bash
-./scripts/prereqs.sh
+./build.sh [platform] [-o|--output <file>]
 ```
 
-Once you get the tools installed you'll probably want to have CMake put all
-of it's misc files in a separate build folder so clean up is a bit easier.
-(Cleaning from the project still doesn't work quite fully yet.)
+`platform` is `i686` or `x86_64` (defaults to `x86_64`); run `./build.sh -h` to list the
+platforms available under `src/config/`. This builds a `foonix-tools` base image
+(`docker/Dockerfile.tools`, the clang/cmake/grub toolchain — this layer doesn't depend on
+platform, so Docker's layer cache keeps rebuilds of it fast), then builds
+`docker/Dockerfile.build` on top of it for the requested platform. The resulting
+`boot.<platform>.iso` and `kernel.<platform>.elf` land in `./out/`; pass `-o` to override the
+ISO's filename.
+
+Other scripts at the repo root:
+- `clean.sh` — removes `./out` (`-t` also removes `build/tools`, a leftover from the legacy
+  non-Docker cross-compiler flow described below).
+- `test.sh` — configures/builds/runs the host-side unit tests under `src/tests` via CTest.
+- `qemu.sh [platform]` — boots `out/boot.<platform>.iso` (defaults to `x86_64`) under
+  `qemu-system-x86_64`, halted with a GDB stub on `:1234`.
+
+CI (`.github/workflows/build.yml`) builds both `i686` and `x86_64` on every push/PR and
+uploads the resulting ISO/ELF as workflow artifacts.
+
+### Building without Docker
+
+If you'd rather build directly against a host toolchain (`clang`/`clang++`, `cmake`, and
+`grub-mkrescue` via `grub-pc-bin`/`grub-common`/`xorriso`), `src/` is a self-contained CMake
+project and supports out-of-tree builds:
 
 ```bash
-cd ..
-mkdir build-foonix
-cd build-foonix
-```
-
-Then you can build the kernel with:
-```bash
-cmake ../foonix
-make
-```
-
-Or if you have Ninja installed:
-```bash
-cmake -G Ninja ../foonix
+mkdir build-foonix && cd build-foonix
+cmake -DCONFIG=x86_64 -G Ninja ../src
 ninja
 ```
+
+(`build/tool-build.sh` also exists for building a standalone `*-elf` GCC/binutils cross-compiler
+into `tools/`, predating the Docker/clang build — it isn't part of the `build.sh`/CMake flow
+above and is kept only for reference.)
 
 # Some stuff that's done
 * ~Global descriptor tables (although simple) are working.~
@@ -39,10 +49,10 @@ ninja
 
 # Some TODOs
 ## Build System
-[ ] Currently replacing Makefile with CMake/Ninja
-[ ] Build x64
+[x] Replace Makefile with CMake/Ninja
+[x] Build x64
+[x] Use docker so we can better control the build environment.
 [ ] Better unit test system. ([doctest](https://github.com/doctest/doctest) maybe?)
-[ ] Maybe use docker so we can better control the build environment.
 
 ## Kernel Proper
 [ ] Get it so we can use a debugger with qemu.
@@ -63,10 +73,16 @@ ninja
 
 # Running Tests
 
-(Just a quick note here, needs revising fleshing out later.)
+Host-side unit tests (currently covering `libk` and `KernelArgs`) build and run natively,
+independent of the Docker kernel build:
 
 ```bash
-cmake -S tests -B tests/build
-cmake --build tests/build
-ctest --test-dir tests/build --output-on-failure
+./test.sh
+```
+
+which is equivalent to:
+```bash
+cmake -S src/tests -B build/tests
+cmake --build build/tests
+ctest --test-dir build/tests --output-on-failure
 ```
