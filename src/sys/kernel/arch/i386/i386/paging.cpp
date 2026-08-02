@@ -28,18 +28,20 @@ namespace
 {
     /********************************************************************************************************************/
 
+#if 0
     constexpr uint32_t MapToDirFlags(PageFlags flags)
     {
         uint32_t rval = directory_flags::user;
 
-        if (has_flag(flags, PageFlags::Write))
+        if (has_flags(flags, PageFlags::Write))
             rval |= directory_flags::writable;
 
-        if (has_flag(flags, PageFlags::Kernel))
+        if (has_flags(flags, PageFlags::Kernel))
             rval &= ~directory_flags::user;
 
         return rval;
     }
+#endif
 
     /********************************************************************************************************************/
 
