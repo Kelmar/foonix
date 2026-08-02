@@ -8,6 +8,17 @@
 #include "cpu.h"
 
 #include <algorithm>
+#include <string.h>
+
+/********************************************************************************************************************/
+
+void KernelArgs::SetCommandLine(const char *data, size_t sn)
+{
+    size_t len = strnlen(data, sn);
+
+    if (len > 1)
+        Debug::PrintF("Command Line: %s\r\n", data);
+}
 
 /********************************************************************************************************************/
 /**
@@ -139,7 +150,10 @@ bool KernelArgs::AddMemoryMap(paddr_t addr, size_t length)
     // If we get here, we need a new memory map.
 
     if (MemoryMapEntries + 1 >= MAX_MEMORY_ENTRIES)
+    {
+        Debug::PrintF("WARN: Attempt to add more entries than available in boot up memory map of %u\r\n", MAX_MEMORY_ENTRIES);
         return false; // Out of space!
+    }
 
     MemoryMap[MemoryMapEntries++] = newRange;
     MergeContiguousMappings();

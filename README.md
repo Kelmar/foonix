@@ -100,7 +100,7 @@ The code is structured so that new platforms can be added without a lot of fuss 
 
 To do so you will need a new configuration file in `src/config`.  These control some build
 options and make it a bit easier to select which build is desired without having to edit
-a lot of stuff in the main build system files.  See the `lint.json` file some details on
+a lot of stuff in the main build system files.  See the `lint.jsonc` file some details on
 how these files are constructed.
 
 After that you need a new folder in the `src/kernel/arch` with the name of the platform as

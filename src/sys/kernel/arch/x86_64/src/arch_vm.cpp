@@ -40,9 +40,9 @@ constexpr void *kernel_end = &_kernel_end; //VIRT_2_PHYS(&_kernel_end);
 
 /********************************************************************************************************************/
 
-void arch::InitBootMemory(KernelArgs *ka)
+void arch::Init(KernelArgs *ka)
 {
-    Debug::PrintF("ENTER: Arch::InitBootMemory()\r\n");
+    Debug::PrintF("ENTER: Arch::Init()\r\n");
 
     Debug::PrintF("Boot Magic: 0x%08X\r\n", g_BootMagic);
     

@@ -29,8 +29,6 @@ using namespace VM;
 
 void VM::Init()
 {
-    arch::InitBootMemory(&g_KernelArguments);
-
     g_KernelArguments.ShowAvailableMemory();
 
     //Kernel::ErrorCode errCode = Arch::InitPaging(ka);

@@ -204,9 +204,9 @@ void Arch::VM::ReleaseRealMemory(paddr_t addr)
 
 /********************************************************************************************************************/
 
-void arch::InitBootMemory(KernelArgs *ka)
+void arch::Init(KernelArgs *ka)
 {
-    Debug::PrintF("ENTER: Arch::InitBootMemory()\r\n");
+    Debug::PrintF("ENTER: Arch::Init()\r\n");
 
     Debug::PrintF("Boot Magic: 0x%08X\r\n", g_BootMagic);
 

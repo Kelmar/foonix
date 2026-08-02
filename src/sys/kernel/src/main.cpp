@@ -48,6 +48,8 @@ void preinit(void)
 
     Debug::PrintF("ENTER: preinit()\r\n");
 
+    arch::Init(&g_KernelArguments);
+
     VM::Init();
 
     Debug::PrintF("EXIT: preinit()\r\n");

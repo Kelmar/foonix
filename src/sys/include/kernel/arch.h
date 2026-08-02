@@ -17,7 +17,14 @@
 
 namespace arch
 {
-    void InitBootMemory(KernelArgs *ka);
+    /**
+     * @brief Read bootloader information (if available).
+     *
+     * @details
+     * This function should read any information from the bootloader, firmware, or whatever that is needed to get
+     * the kernel up and running.  This includes things like memory maps, command line arguments, etc.
+     */
+    void Init(KernelArgs *ka);
 }
 
 /********************************************************************************************************************/
