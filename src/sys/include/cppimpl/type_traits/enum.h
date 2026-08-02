@@ -1,27 +1,35 @@
 /********************************************************************************************************************/
+/********************************************************************************************************************/
+
+#ifndef _X_CPPIMPL_TT_ENUM_H__
+#define _X_CPPIMPL_TT_ENUM_H__ 1
 
 /********************************************************************************************************************/
 
-#ifndef _X_CONCEPTS
-#define _X_CONCEPTS 1
+#define _COMP_IS_ENUM(T__) __is_enum(T__)
+#define _COMP_UNDER_TYPE(T__) __underlying_type(T__)
 
-/********************************************************************************************************************/
+template <typename T>
+struct is_enum : bool_constant<_COMP_IS_ENUM(T)> { };
 
-#include <type_traits>
+template <typename T>
+constexpr bool is_enum_v = is_enum<T>::value;
 
-/********************************************************************************************************************/
-
-namespace std
+template <typename T>
+struct underlying_type
 {
-    template <typename T>
-    concept integral = is_integral_v<T>;
+    using type = _COMP_UNDER_TYPE(T);
+};
 
-    template <class T, class U>
-    concept same_as = std::is_same_v<T, U> && std::is_same_v<U, T>;
-}
+template <typename T>
+using underlying_type_t = typename underlying_type<T>::type;
+
+#undef _COMP_IS_ENUM
+#undef _COMP_UNDER_TYPE
+
+/********************************************************************************************************************/
+
+#endif /* _X_CPPIMPL_TT_ENUM_H__ */
 
 /********************************************************************************************************************/
 
-#endif /* _X_CONCEPTS */
-
-/********************************************************************************************************************/

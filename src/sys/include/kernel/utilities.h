@@ -37,6 +37,8 @@ namespace util
     #include <kernel/utils/align.h>
 }
 
+#include <kernel/utils/flags.h>
+
 /********************************************************************************************************************/
 
 #endif /* __FOONIX_KERNEL_UTILITIES_H__ */

@@ -19,12 +19,6 @@
 
 /********************************************************************************************************************/
 
-struct mb2_tag
-{
-    uint32_t type;
-    uint32_t size;
-} __attribute__((packed));
-
 struct mb2_info
 {
     uint32_t total_size;
@@ -32,6 +26,17 @@ struct mb2_info
 
     // Tags immediately follow
 } __attribute__((packed));
+
+/********************************************************************************************************************/
+// Base structure for MB2 tags
+
+struct mb2_tag
+{
+    uint32_t type;
+    uint32_t size;
+} __attribute__((packed));
+
+/********************************************************************************************************************/
 
 // MB2_TAG_BOOT_CMD (1), MB2_TAG_BOOTLOADER (2)
 struct mb2_str_tag : mb2_tag
@@ -47,12 +52,31 @@ struct mb2_str_tag : mb2_tag
     }
 } __attribute__((packed));
 
+/********************************************************************************************************************/
+
 // MB2_TAG_BASIC_MEMINFO (4)
 struct mb2_basic_memory_info : mb2_tag
 {
-    uint32_t mem_lower;
-    uint32_t mem_upper;
+    uint32_t mem_lower; // Memory below 1MB
+    uint32_t mem_upper; // Memory above 1MB
 } __attribute__((packed));
+
+/********************************************************************************************************************/
+
+enum class MB2MemoryType : uint32_t
+{
+    /// @brief Memory is available for use
+    Available = 1,
+
+    /// @brief Memory is used for ACPI
+    ACPI = 2,
+
+    /// @brief Memory is ACPI and should be restored on resume from hibernate.
+    ACPIHibernate = 4,
+
+    /// @brief Memory has been marked as bad
+    Defective = 5
+};
 
 // MB2_TAG_MEMORY_MAP (6)
 struct mb2_memory_info : mb2_tag
@@ -64,7 +88,7 @@ struct mb2_memory_info : mb2_tag
     {
         uint64_t base_addr; // Physical address
         uint64_t length;    // Length of memory range
-        uint32_t type;
+        MB2MemoryType type;
         uint32_t reserved;  // Not used, always zero
     };
 

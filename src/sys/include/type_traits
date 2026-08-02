@@ -11,11 +11,8 @@ namespace std
     // Integral needed for almost all other checks.
     #include <cppimpl/type_traits/integral.h>
 
-    template <typename T>
-    struct is_enum : bool_constant<__is_enum(T)> { };
-
-    template <typename T>
-    constexpr bool is_enum_v = is_enum<T>::value;
+    #include <cppimpl/type_traits/void.h>
+    #include <cppimpl/type_traits/enum.h>
 
     template <class T> struct remove_reference            { typedef T type; };
     template <class T> struct remove_reference<T&>        { typedef T type; };
@@ -51,6 +48,15 @@ namespace std
     constexpr bool is_lvalue_reference_v = is_lvalue_reference<T>::value;
 
     #include <cppimpl/type_traits/pointer.h>
+
+    template <class T, class U>
+    struct is_same : std::false_type { };
+
+    template <class T>
+    struct is_same<T, T> : std::true_type { };
+
+    template <class T, class U>
+    constexpr bool is_same_v = is_same<T, U>::value;
 }
 
 /********************************************************************************************************************/

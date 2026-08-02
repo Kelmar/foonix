@@ -53,10 +53,10 @@ namespace
 
         for (auto item : info->GetEntries())
         {
-            if (item.type != MB2_MEMTYPE_AVAILABLE)
+            if (item.type != MB2MemoryType::Available)
                 continue; // Skip anything we can't use for boot up.
 
-            paddr_t base = reinterpret_cast<paddr_t>(item.base_addr);
+            paddr_t base = static_cast<paddr_t>(item.base_addr);
 
             if (!ka->AddMemoryMap(base, item.length))
                 break; // We've run out of space in the memory map tables.

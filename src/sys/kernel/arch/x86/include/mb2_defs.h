@@ -64,12 +64,6 @@
 #define MB2_TAG_EFI_IMG64     20
 #define MB2_TAG_BASELOAD_PTR  21
 
-
-#define MB2_MEMTYPE_AVAILABLE 1     // Regular normal available RAM
-#define MB2_MEMTYPE_ACPI      3     // Usable ACPI memory
-#define MB2_MEMTYPE_HIBERNATE 4     // Memory to preserve on hibernate.
-#define MB2_MEMTYPE_DEFECTIVE 5     // Memory marked as defective.
-
 // All other MEMTYPE values should be considered "reserved"
 
 /********************************************************************************************************************/

@@ -118,14 +118,18 @@ namespace paging
         PageTable(PageTable &&rhs) = delete;
 
     public:
+        static constexpr const size_t PageSIze = 4096;
+
         PageTable();
         
         virtual ~PageTable() { }
 
         bool doIsMapped(paddr_t addr) const;
 
-        Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t flags);
+        Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags);
         Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
+
+        paddr_t doGetPhysicalPageFor(vaddr_t vaddr);
     };
 
     /************************************************************************************************************/
@@ -137,14 +141,18 @@ namespace paging
         BootPageTable(BootPageTable &&rhs) = delete;
 
     public:
+        static constexpr const size_t PageSize = 4096;
+
         constexpr BootPageTable() : PageTableBase() { }
 
         virtual ~BootPageTable() { }
 
         bool doIsMapped(paddr_t addr) const;
 
-        Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t flags);
+        Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags);
         Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
+
+        paddr_t doGetPhysicalPageFor(vaddr_t vaddr);
     };
 
     extern BootPageTable g_bootPageTable;

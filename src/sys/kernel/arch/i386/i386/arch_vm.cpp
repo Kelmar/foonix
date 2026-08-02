@@ -39,7 +39,7 @@ int Multiboot::ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr)
     // Remap the multiboot structure into virtual memory space.
     multiboot_t *multi = reinterpret_cast<multiboot_t *>(PHYS_2_VIRT(multiboot_ptr));
 
-    auto result = paging::g_bootPageTable.MapStruct(multiboot_ptr, multi, 0);
+    auto result = paging::g_bootPageTable.MapStruct(multiboot_ptr, multi);
 
     if (result != Kernel::ErrorCode::NoError)
         kpanic("Unable to map multiboot structure into page table.");
@@ -63,7 +63,7 @@ int Multiboot::ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr)
     mb_memory_map_t *memMap = reinterpret_cast<mb_memory_map_t *>(PHYS_2_VIRT(multi->mmap_addr));
     paddr_t addr = reinterpret_cast<paddr_t>(reinterpret_cast<uintptr_t>(multi->mmap_addr));
 
-    result = paging::g_bootPageTable.MapStruct(addr, memMap, 0);
+    result = paging::g_bootPageTable.MapStruct(addr, memMap);
 
     if (result != Kernel::ErrorCode::NoError)
         kpanic("Unable to map multiboot memory map into page table.");

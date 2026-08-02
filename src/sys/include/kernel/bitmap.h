@@ -10,7 +10,7 @@
 #include <string.h>
 
 /********************************************************************************************************************/
-/*
+/**
  * @brief A fixed sized container containing BITS number of bits that maybe set or cleared.
  */
 template <size_t BITS>

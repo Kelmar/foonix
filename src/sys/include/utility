@@ -47,6 +47,12 @@ namespace std
         x = std::move(y);
         y = std::move(tmp);
     }
+
+    template <typename T>
+    constexpr std::underlying_type_t<T> to_underlying(T e) noexcept
+    {
+        return static_cast<std::underlying_type_t<T>>(e);
+    }
 }
 
 /********************************************************************************************************************/

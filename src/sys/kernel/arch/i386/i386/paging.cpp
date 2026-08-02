@@ -26,6 +26,36 @@ using namespace paging;
 
 namespace
 {
+    /********************************************************************************************************************/
+
+    constexpr uint32_t MapToDirFlags(PageFlags flags)
+    {
+        uint32_t rval = directory_flags::user;
+
+        if (has_flag(flags, PageFlags::Write))
+            rval |= directory_flags::writable;
+
+        if (has_flag(flags, PageFlags::Kernel))
+            rval &= ~directory_flags::user;
+
+        return rval;
+    }
+
+    /********************************************************************************************************************/
+
+    constexpr uint32_t MapToPageFlags(PageFlags flags)
+    {
+        uint32_t rval = page_flags::user;
+
+        if (has_flags(flags, PageFlags::Write))
+            rval |= page_flags::writable;
+
+        if (has_flags(flags, PageFlags::Kernel))
+            rval &= ~page_flags::user;
+
+        return rval;
+    }
+
 #if 0
     /************************************************************************************************************/
     /**
@@ -162,10 +192,13 @@ namespace
      * @param vaddr The virtual address
      * @param flags Flags to be set on the page (The present flag is added automatically.)
      */
-    Kernel::ErrorCode MapPage(paging::page_directory_t dir, paddr_t paddr, vaddr_t vaddr, uint32_t flags)
+    Kernel::ErrorCode MapPage(paging::page_directory_t dir, paddr_t paddr, vaddr_t vaddr, PageFlags flags)
     {
         if (!IsAligned(paddr) || !IsAligned(vaddr))
             return Kernel::ErrorCode::NotAligned;
+
+        //uint32_t dirFlags = MapToDirFlags(flags);
+        uint32_t pageFlags = MapToPageFlags(flags);
 
         //Debug::PrintF("Map %p -> %p\r\n", physEntry, virtEntry);
         
@@ -188,7 +221,7 @@ namespace
             Debug::PrintF("WARNING: Page over writing: %p with %p\r\n", maskedPtr, paddr);
         }
 
-        page = (paddr & page_flags::addr_mask) | flags | page_flags::present;
+        page = (paddr & page_flags::addr_mask) | pageFlags | page_flags::present;
 
         return Kernel::ErrorCode::NoError;
     }
@@ -222,6 +255,28 @@ namespace
         page &= ~page_flags::present;
 
         return Kernel::ErrorCode::NoError;
+    }
+
+    /************************************************************************************************************/
+
+    paddr_t GetPhysicalPageFor(paging::page_directory_t dir, vaddr_t vaddr)
+    {
+        int pgtIndex = (vaddr >> 12) & 0x03FF;
+        int dirIndex = (vaddr >> 22) & 0x03FF;
+
+        page_directory_entry_t &pde = dir[dirIndex];
+
+        // Assert these entries are correct!
+        if ((pde & directory_flags::present) == 0)
+            return 0; // Not mapped
+
+        page_entry_t *pageTable = GetPageTable(pde);
+        page_entry_t &page = pageTable[pgtIndex];
+        
+        if ((page & page_flags::present) == 0)
+            return 0; // Not mapped
+
+        return reinterpret_cast<paddr_t>(page & page_flags::addr_mask);
     }
 }
 
@@ -291,7 +346,7 @@ bool PageTable::doIsMapped(paddr_t paddr) const
 
 /********************************************************************************************************************/
 
-Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t flags)
+Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
     return ::MapPage(m_dir, paddr, vaddr, flags);
 }
@@ -304,6 +359,13 @@ Kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
 }
 
 /********************************************************************************************************************/
+
+paddr_t PageTable::doGetPhysicalPageFor(vaddr_t addr)
+{
+    return ::GetPhysicalPageFor(m_dir, addr);
+}
+
+/********************************************************************************************************************/
 /********************************************************************************************************************/
 
 bool BootPageTable::doIsMapped(paddr_t paddr) const
@@ -313,7 +375,7 @@ bool BootPageTable::doIsMapped(paddr_t paddr) const
 
 /********************************************************************************************************************/
 
-Kernel::ErrorCode BootPageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_t flags)
+Kernel::ErrorCode BootPageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
     return ::MapPage(boot_page_directory, paddr, vaddr, flags);
 }
@@ -323,6 +385,13 @@ Kernel::ErrorCode BootPageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, uint32_
 Kernel::ErrorCode BootPageTable::doUnmapPage(vaddr_t vaddr)
 {
     return ::UnmapPage(boot_page_directory, vaddr);
+}
+
+/********************************************************************************************************************/
+
+paddr_t BootPageTable::doGetPhysicalPageFor(vaddr_t addr)
+{
+    return ::GetPhysicalPageFor(boot_page_directory, addr);
 }
 
 /********************************************************************************************************************/
