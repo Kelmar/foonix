@@ -45,7 +45,6 @@ include_directories(
 
 add_custom_command(
     OUTPUT sysroot
-    PRE_BUILD
     COMMAND bash ${CMAKE_SOURCE_DIR}/scripts/sysroot_init.sh
     COMMENT "Generating system file structure"
 )
@@ -57,9 +56,9 @@ add_subdirectory(grub)
 
 add_dependencies(foonix kernel)
 
-#install(
-#    CODE "execute_process(COMMAND grub-mkrescue -o boot.iso sysroot)"
-#)
+install(
+    CODE "execute_process(COMMAND grub-mkrescue -o boot.iso sysroot)"
+)
 
 set_property(
     TARGET foonix

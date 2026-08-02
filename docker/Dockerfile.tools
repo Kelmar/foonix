@@ -3,7 +3,7 @@ FROM silkeh/clang AS base
 RUN apt update
 RUN apt upgrade -y
 
-RUN apt install -y cmake
+RUN apt install -y cmake git
 RUN apt install -y grub-pc-bin grub-common xorriso
 
 

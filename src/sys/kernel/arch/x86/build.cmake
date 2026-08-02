@@ -3,7 +3,8 @@
 # =========================================================================
 
 # The files in this directory are for common functionality between 32-bit
-# and 64-bit platforms.
+# and 64-bit platforms.  There is no direct config.json for this file, as
+# it would not build a complete system on it's own.
 
 # You should be buliding for either i386 or for x86_64
 

@@ -22,15 +22,30 @@ Other scripts at the repo root:
 
 ### Building without Docker
 
-If you'd rather build directly against a host toolchain (`clang`/`clang++`, `cmake`, and
-`grub-mkrescue` via `grub-pc-bin`/`grub-common`/`xorriso`), `src/` is a self-contained CMake
-project and supports out-of-tree builds:
+It is possible to build outside of the docker container.  To do so you will need to have
+the following tools installed:
+- `clang`
+- `cmake`
+- `grub-mkrescue`
+- `grub-pc-bin`
+- `xorriso` (needed by grub) 
+- `ninja` (optional, you can use `make` if you want.)
 
+Here is the basic command structure for doing a build:
 ```bash
-mkdir build-foonix && cd build-foonix
-cmake -DCONFIG=x86_64 -G Ninja ../src
-ninja
+mkdir -p build-foonix && cd build-foonix
+cmake -DCONFIG=x86_64 -G Ninja ../foonix/src
+cmake --build .
+cmake --install .
 ```
+
+You can select a different platform with the `-DCONFIG=<platform>` option.
+
+This will get a basic sysroot directory structure, to get the final iso:
+```bash
+grub-mkrescue -o boot.iso sysroot
+```
+
 ### Running Tests
 
 Host-side unit tests (currently covering `libk` and `KernelArgs`) build and run natively,
@@ -80,3 +95,17 @@ ctest --test-dir build/tests --output-on-failure
 ## C/C++ Library
 - [ ] Use a premade libc and libc++ (at least for user space)
 
+# Adding platforms
+The code is structured so that new platforms can be added without a lot of fuss (hopefully).
+
+To do so you will need a new configuration file in `src/config`.  These control some build
+options and make it a bit easier to select which build is desired without having to edit
+a lot of stuff in the main build system files.  See the `lint.json` file some details on
+how these files are constructed.
+
+After that you need a new folder in the `src/kernel/arch` with the name of the platform as
+listed in the `config.json` file above.  This folder at a bare minimum should have a `build.cmake`
+file in it that provides all the needed over rides and additions to include the files needed
+for that platform.
+
+You can look at the `src/kernel/arch/i386/build.cmake` for example.

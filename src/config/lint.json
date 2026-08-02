@@ -1,6 +1,6 @@
 {
-    "name": "Lint",
-    "isLint": true,
-    "useBochs": false,
-    "platform": "i686"
+    "name": "Lint",     /* Human readable name for the configuration. */
+    "isLint": true,     /* Set to false for most builds, here to reject this specific file. */
+    "useBochs": false,  /* Used to enable bochs specific device driver support. */
+    "platform": "i686"  /* Machine name of the platform (used to find project files) */
 }

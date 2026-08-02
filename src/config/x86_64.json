@@ -1,5 +1,5 @@
 {
-    "name": "x86_65",
+    "name": "x86_64",
     "isLint": false,
     "useBochs": false,
     "platform": "x86_64"
