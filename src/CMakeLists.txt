@@ -22,7 +22,7 @@ set(CMAKE_INSTALL_PREFIX ${SYSROOT})
 
 # We also don't want includes from our host OS!
 
-set(COMMON_FLAGS "--sysroot=${SYSROOT} -nostdinc -nostdlib -Wall -Wpedantic -Wno-unused-command-line-argument -Werror")
+set(COMMON_FLAGS "--sysroot=${SYSROOT} -nostdinc -nostdlib -Wall -Wpedantic -Wno-unused-command-line-argument -Wno-unused-const-variable -Werror")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -nostdinc++")

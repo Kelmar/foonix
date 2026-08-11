@@ -26,34 +26,110 @@ using namespace paging;
 
 namespace
 {
-    /********************************************************************************************************************/
+    /************************************************************************************************************/
+
+    /// @brief Flags for page directory entries.
+    namespace DirEntryFlags
+    {
+        constexpr const uint32_t
+            Present        = 0x00000001, // Set if this page is present.
+            Writable       = 0x00000002, // Set if this is a writable page.
+            User           = 0x00000004, // Set if this is a user space page.
+            WriteThruCache = 0x00000008,
+            DisableCache   = 0x00000010, // Set if cache is disabled
+            Accessed       = 0x00000020, // Set by CPU if page has been accessed.
+            Reserved       = 0x00000040, // Always set to zero!
+            LargeEntry     = 0x00000080, // 0 for 4 KiB pages, 1 for 4 MB pages
+            Global         = 0x00000100, // Ignored, set to zero (used for 4MB pages)
+
+            SystemBit1     = 0x00000200, // For use by OS
+            SystemBit2     = 0x00000400, // For use by OS
+            SystemBit3     = 0x00000800, // For use by OS
+
+            AddressMask    = 0xFFFFF000  // Page table address (shifted right 12 bits)
+        ;
+    }
+
+    /************************************************************************************************************/
+
+    /// @brief Flags for page directorys entries in 4MB mode.
+    namespace DirEntryFlags_4MB
+    {
+        constexpr const uint32_t
+            Present        = 0x00000001, // Set if this page is present.
+            Writable       = 0x00000002, // Set if this is a writable page.
+            User           = 0x00000004, // Set if this is a user space page.
+            WriteThruCache = 0x00000008,
+            DisableCache   = 0x00000010, // Set if cache is disabled
+            Accessed       = 0x00000020, // Set by CPU if page has been accessed.
+            Reserved0      = 0x00000040, // Always set to zero!
+            LargeEntry     = 0x00000080, // 0 for 4 KiB pages, 1 for 4 MiB pages
+            Global         = 0x00000100, // Prevents TLB invalidation
+
+            SystemBit1     = 0x00000200, // For use by OS
+            SystemBit2     = 0x00000400, // For use by OS
+            SystemBit3     = 0x00000800, // For use by OS
+
+            AddressMaskHi  = 0x00000000, // Address bits 32-39 
+
+            Reserved1      = 0x00200000, // Reserved, set to zero
+
+            AddressMaskLo  = 0xFFFFF000  // Address bits 22-31
+        ;
+    }
+
+    /************************************************************************************************************/
+    
+    /// @brief Flags for page table entries.
+    namespace PageEntryFlags
+    {
+        constexpr const uint32_t
+            Present        = 0x00000001, // Set if this page is present.
+            Writable       = 0x00000002, // Set if this is a writable page.
+            User           = 0x00000004, // Set if this is a user space page.
+            WriteThruCache = 0x00000008,
+            DisableCache   = 0x00000010, // Set if cache is disabled
+            Accessed       = 0x00000020, // Set by CPU if page has been accessed.
+            Dirty          = 0x00000040, // Set by CPU if page has been written to.
+            Reserved       = 0x00000080, // Always set to zero!
+            Global         = 0x00000100,
+
+            SystemBit1     = 0x00000200, // For use by OS
+            SystemBit2     = 0x00000400, // For use by OS
+            SystemBit3     = 0x00000800, // For use by OS
+
+            AddressMask    = 0xFFFFF000  // Physical address (shifted right 12 bits)
+        ;
+    }
+
+    /************************************************************************************************************/
 
 #if 0
     constexpr uint32_t MapToDirFlags(PageFlags flags)
     {
-        uint32_t rval = directory_flags::user;
+        uint32_t rval = DirEntryFlags::User;
 
         if (has_flags(flags, PageFlags::Write))
-            rval |= directory_flags::writable;
+            rval |= DirEntryFlags::Writable;
 
         if (has_flags(flags, PageFlags::Kernel))
-            rval &= ~directory_flags::user;
+            rval &= ~DirEntryFlags::User;
 
         return rval;
     }
 #endif
 
-    /********************************************************************************************************************/
+    /************************************************************************************************************/
 
     constexpr uint32_t MapToPageFlags(PageFlags flags)
     {
-        uint32_t rval = page_flags::user;
+        uint32_t rval = PageEntryFlags::User;
 
         if (has_flags(flags, PageFlags::Write))
-            rval |= page_flags::writable;
+            rval |= PageEntryFlags::Writable;
 
         if (has_flags(flags, PageFlags::Kernel))
-            rval &= ~page_flags::user;
+            rval &= ~PageEntryFlags::User;
 
         return rval;
     }
@@ -71,7 +147,7 @@ namespace
         {
             page_entry_t *entry = &pageTable->table[i];
 
-            if (!entry->present)
+            if (!entry->Present)
                 ++rval;
         }
 
@@ -93,7 +169,7 @@ namespace
 
         for (; start >= 0 && start < PAGING_TABLE_SIZE; start += dir)
         {
-            if (!pageTable->table[start].present)
+            if (!pageTable->table[start].Present)
                 return start;
         }
 
@@ -116,7 +192,7 @@ namespace
 
         for (;dirIndex < PAGING_TABLE_SIZE; dirIndex += dir)
         {
-            if (!pageDir->tables[dirIndex].present)
+            if (!pageDir->tables[dirIndex].Present)
                 continue;
 
             int val = pageDir->tables[dirIndex].page_table;
@@ -144,7 +220,7 @@ namespace
 
         for (; rval >= 0 && rval < PAGING_TABLE_SIZE; rval += dir)
         {
-            if (!pageDir->tables[rval].present)
+            if (!pageDir->tables[rval].Present)
                 return rval;
         }
 
@@ -168,21 +244,8 @@ namespace
          * Right now we have it hard coded to our PHYS_2_VIRT macro.
          */
 
-        uintptr_t ptr = pde & directory_flags::addr_mask;
+        uintptr_t ptr = pde & DirEntryFlags::AddressMask;
         return reinterpret_cast<page_entry_t *>(PHYS_2_VIRT(ptr));
-    }
-
-    /************************************************************************************************************/
-
-    /**
-     * @brief Check if a physical address is mapped in a page_directory_t.
-     */
-    bool IsMapped(const paging::page_directory_t dir, paddr_t paddr)
-    {
-        (void)(dir);
-        (void)(paddr);
-
-        return false;
     }
 
     /************************************************************************************************************/
@@ -192,7 +255,7 @@ namespace
      * @param dir Directory to map the page in.
      * @param paddr The phyiscal address to be mapped
      * @param vaddr The virtual address
-     * @param flags Flags to be set on the page (The present flag is added automatically.)
+     * @param flags Flags to be set on the page (The Present flag is added automatically.)
      */
     Kernel::ErrorCode MapPage(paging::page_directory_t dir, paddr_t paddr, vaddr_t vaddr, PageFlags flags)
     {
@@ -202,7 +265,7 @@ namespace
         //uint32_t dirFlags = MapToDirFlags(flags);
         uint32_t pageFlags = MapToPageFlags(flags);
 
-        //Debug::PrintF("Map %p -> %p\r\n", physEntry, virtEntry);
+        //Debug::PrintF("Map %p -> %p\r\n", paddr, vaddr);
         
         int pgtIndex = (vaddr >> 12) & 0x03FF;
         int dirIndex = (vaddr >> 22) & 0x03FF;
@@ -210,20 +273,18 @@ namespace
         page_directory_entry_t &pde = dir[dirIndex];
 
         // Assert these entries are correct!
-        if ((pde & directory_flags::present) == 0)
+        if ((pde & DirEntryFlags::Present) == 0)
             kpanic("Request to map to non present page entry!");
+
+        page_entry_t entry = (paddr & PageEntryFlags::AddressMask) | pageFlags | PageEntryFlags::Present;
 
         page_entry_t *pageTable = GetPageTable(pde);
         page_entry_t &page = pageTable[pgtIndex];
 
-        if ((page & page_flags::present) != 0)
-        {
-            auto maskedPtr = page & page_flags::addr_mask;
+        if ((page & PageEntryFlags::Present) != 0 && (entry != page))
+            Debug::PrintF("WARNING: Page over writing: %p with %p\r\n", page, entry);
 
-            Debug::PrintF("WARNING: Page over writing: %p with %p\r\n", maskedPtr, paddr);
-        }
-
-        page = (paddr & page_flags::addr_mask) | pageFlags | page_flags::present;
+        page = entry;
 
         return Kernel::ErrorCode::NoError;
     }
@@ -245,40 +306,49 @@ namespace
         page_directory_entry_t &pde = dir[dirIndex];
 
         // Assert these entries are correct!
-        if ((pde & directory_flags::present) == 0)
+        if ((pde & DirEntryFlags::Present) == 0)
             return Kernel::ErrorCode::NoError; // Nothing to do
 
         page_entry_t *pageTable = GetPageTable(pde);
         page_entry_t &page = pageTable[pgtIndex];
 
-        if ((page & page_flags::present) == 0)
+        if ((page & PageEntryFlags::Present) == 0)
             return Kernel::ErrorCode::NoError; // Nothing to do
 
-        page &= ~page_flags::present;
+        page &= ~PageEntryFlags::Present;
 
         return Kernel::ErrorCode::NoError;
     }
 
     /************************************************************************************************************/
-
-    paddr_t GetPhysicalPageFor(paging::page_directory_t dir, vaddr_t vaddr)
+    /**
+     * @brief Get the physical page for the supplied virtual address.
+     *
+     * @param dir The page directory to look for the virtual address in.
+     * @param vaddr The virtual address to lookup.
+     *
+     * @remarks The virtual address does not need to be aligned, but an aligned address will always be returned.
+     *
+     * @return An aligned physical address that is holds the supplied virtual address.  Or nullptr (zero) if not mapped.
+     */
+    paddr_t GetPhysicalPageFor(const paging::page_directory_t dir, vaddr_t vaddr)
     {
         int pgtIndex = (vaddr >> 12) & 0x03FF;
         int dirIndex = (vaddr >> 22) & 0x03FF;
 
-        page_directory_entry_t &pde = dir[dirIndex];
+        const page_directory_entry_t &pde = dir[dirIndex];
 
         // Assert these entries are correct!
-        if ((pde & directory_flags::present) == 0)
+        if ((pde & DirEntryFlags::Present) == 0)
             return 0; // Not mapped
 
-        page_entry_t *pageTable = GetPageTable(pde);
-        page_entry_t &page = pageTable[pgtIndex];
+        const page_entry_t *pageTable = GetPageTable(pde);
+        const page_entry_t &page = pageTable[pgtIndex];
         
-        if ((page & page_flags::present) == 0)
+        if ((page & PageEntryFlags::Present) == 0)
             return 0; // Not mapped
 
-        return reinterpret_cast<paddr_t>(page & page_flags::addr_mask);
+        return reinterpret_cast<paddr_t>(page & PageEntryFlags::AddressMask);
     }
 }
 
@@ -303,7 +373,7 @@ Kernel::ErrorCode paging::InitPaging(KernelArgs *ka)
 
     for (; dirIndex < PAGING_TABLE_SIZE; ++dirIndex)
     {
-        if (bootDir->tables[dirIndex].present)
+        if (bootDir->tables[dirIndex].Present)
         {
             page_index_t page = 0;
             tableIndex = GetFreePageTableEntry()
@@ -318,7 +388,7 @@ Kernel::ErrorCode paging::InitPaging(KernelArgs *ka)
     }
     
     // Allocate a new page
-    page_index_t newPage = VM::AllocRawPage();
+    page_index_t newPage = vmm::AllocRawPage();
 
     if (newPage == 0)
         return Kernel::ErrorCode::OutOfMemory;
@@ -341,13 +411,6 @@ PageTable::PageTable()
 
 /********************************************************************************************************************/
 
-bool PageTable::doIsMapped(paddr_t paddr) const
-{
-    return ::IsMapped(m_dir, paddr);
-}
-
-/********************************************************************************************************************/
-
 Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
     return ::MapPage(m_dir, paddr, vaddr, flags);
@@ -362,17 +425,9 @@ Kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
 
 /********************************************************************************************************************/
 
-paddr_t PageTable::doGetPhysicalPageFor(vaddr_t addr)
+paddr_t PageTable::doGetPhysicalPageFor(vaddr_t addr) const
 {
     return ::GetPhysicalPageFor(m_dir, addr);
-}
-
-/********************************************************************************************************************/
-/********************************************************************************************************************/
-
-bool BootPageTable::doIsMapped(paddr_t paddr) const
-{
-    return ::IsMapped(boot_page_directory, paddr);
 }
 
 /********************************************************************************************************************/

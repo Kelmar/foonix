@@ -6,6 +6,8 @@
 
 /********************************************************************************************************************/
 
+// Dependent on remove_reference
+
 template <class T>
 struct is_pointer : public false_type { };
 

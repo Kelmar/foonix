@@ -50,7 +50,7 @@ void preinit(void)
 
     arch::Init(&g_KernelArguments);
 
-    VM::Init();
+    vmm::Init();
 
     Debug::PrintF("EXIT: preinit()\r\n");
 }

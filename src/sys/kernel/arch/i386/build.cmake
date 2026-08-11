@@ -34,7 +34,9 @@ execute_process(
 
 include_directories("${HOST_DIR}/include")
 
-list(APPEND LINK_EXTRA "-T${HOST_DIR}/linker.ld")
+list(APPEND COMPILER_EXTRA "-fno-pie")
+
+list(APPEND LINK_EXTRA "-T${HOST_DIR}/linker.ld" -no-pie)
 list(APPEND LINK_LIBS "${RT_PATH}")
 
 # =========================================================================

@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <type_traits>
+
 #include <kernel/kernel.h>
 #include <kernel/utilities.h>
 
@@ -22,27 +24,6 @@ namespace paging
 
     /************************************************************************************************************/
 
-    /// @brief Flags for page table entries.
-    namespace page_flags
-    {
-        constexpr const uint32_t
-            present   = 0x00000001, // Set if this page is present.
-            writable  = 0x00000002, // Set if this is a writable page.
-            user      = 0x00000004, // Set if this is a user space page.
-            writethru = 0x00000008,
-            nocache   = 0x00000010, // Set if cache is disabled
-            accessed  = 0x00000020, // Set by CPU if page has been accessed.
-            dirty     = 0x00000040, // Set by CPU if page has been written to.
-            reserved  = 0x00000080, // Always set to zero!
-            global    = 0x00000100,
-            sys_bit1  = 0x00000200, // For use by OS
-            sys_bit2  = 0x00000400, // For use by OS
-            sys_bit3  = 0x00000800, // For use by OS
-
-            addr_mask = 0xFFFFF000  // Physical address (shifted right 12 bits)
-        ;
-    }
-
     /// @brief Single entry in the page table
     typedef uint32_t page_entry_t;
 
@@ -50,27 +31,6 @@ namespace paging
     typedef page_entry_t page_table_t[PAGING_TABLE_SIZE];
 
     /************************************************************************************************************/
-
-    /// @brief Flags for page directorys.
-    namespace directory_flags
-    {
-        constexpr const uint32_t
-            present    = 0x00000001, // Set if this page is present.
-            writable   = 0x00000002, // Set if this is a writable page.
-            user       = 0x00000004, // Set if this is a user space page.
-            writethru  = 0x00000008,
-            no_cache   = 0x00000010, // Set if cache is disabled
-            accessed   = 0x00000020, // Set by CPU if page has been accessed.
-            reserved   = 0x00000040, // Always set to zero!
-            large_page = 0x00000080, // 0 for 4 KiB pages, 1 for 4 MiB pages
-            global     = 0x00000100, // Ignored, set to zero
-            sys_bit1   = 0x00000200, // For use by OS
-            sys_bit2   = 0x00000400, // For use by OS
-            sys_bit3   = 0x00000800, // For use by OS
-
-            addr_mask  = 0xFFFFF000  // Page table address (shifted right 12 bits)
-        ;
-    }
 
     /// @brief Single entry in the page directory
     typedef uint32_t page_directory_entry_t;
@@ -129,7 +89,7 @@ namespace paging
         Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags);
         Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
 
-        paddr_t doGetPhysicalPageFor(vaddr_t vaddr);
+        paddr_t doGetPhysicalPageFor(vaddr_t vaddr) const;
     };
 
     /************************************************************************************************************/

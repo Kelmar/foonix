@@ -23,11 +23,11 @@ extern KernelArgs g_KernelArguments;
 
 PageBlock NullBlock(0, 0);
 
-using namespace VM;
+using namespace vmm;
 
 /********************************************************************************************************************/
 
-void VM::Init()
+void vmm::Init()
 {
     g_KernelArguments.ShowAvailableMemory();
 

@@ -12,25 +12,38 @@
 #include <kernel/utilities.h>
 
 #include <kernel/arch.h>
-/********************************************************************************************************************/
 
+/********************************************************************************************************************/
+/**
+ * @brief Flags for pages.
+ */
 enum class PageFlags
 {
+    /// @brief No special flags mapped for this page.
     None = 0,
 
+    /// @brief Page should be readable.
     Read = 0,
+
+    /// @brief User access allowed for page.
     User = 0,
     
-    Write = 1 << 0,
+    /// @brief Writing to the page should be enabled.
+    Write   = 1 << 0,
+
+    /// @brief The page should be allowed to execute code from the page.
     Execute = 1 << 1,
 
-    Kernel = 1 << 7
+    /// @brief The page is for Kernel access only, prevent access to User level code.
+    Kernel  = 1 << 7
 };
 
 as_flags(PageFlags);
 
 /********************************************************************************************************************/
-
+/**
+ * @brief Concept to enforce interface to architecture items.
+ */
 template <typename T>
 concept IsPageTable = requires(T pt, paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
@@ -41,7 +54,9 @@ concept IsPageTable = requires(T pt, paddr_t paddr, vaddr_t vaddr, PageFlags fla
 };
 
 /********************************************************************************************************************/
-
+/**
+ * @brief Base implementation for page tables.
+ */
 template <typename T>
 class PageTableBase
 {
@@ -62,12 +77,6 @@ protected:
 
 public:
     virtual ~PageTableBase() { }
-
-    /// @brief Check if the supplied aligned address is mapped or not.
-    bool IsMapped(paddr_t paddr) const
-    {
-        return self()->doIsMapped(paddr);
-    }
 
     /// @brief Map a aligned physical page to an aligned virtual page.
     Kernel::ErrorCode MapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags = PageFlags::None)
@@ -114,11 +123,13 @@ public:
         paddr_t p_aligned = util::AlignFloor<table_type::PageSize>(paddr);
         paddr_t v_aligned = util::AlignFloor<table_type::PageSize>(vaddr);
 
-        size_t pages = (length % table_type::PageSize);
-        length -= pages * table_type::PageSize;
+        size_t pages = (length / table_type::PageSize);
+        size_t extra = (length % table_type::PageSize);
 
-        if (length > 0)
+        if (extra > 0)
             ++pages;
+
+        //Debug::PrintF("Request to map %d bytes == %d page(s)\r\n", length, pages);
 
         for (size_t i = 0; i < pages; ++i)
         {
@@ -134,6 +145,20 @@ public:
         return Kernel::ErrorCode::NoError;
     }
 
+    /**
+     * @brief Maps a structure to a physical page.
+     *
+     * @param paddr  - The physical address of the structure.
+     * @param mapped - The desired virtual address of the structure.
+     * @param flags  - Access and other modifier flags for the structure.
+     *
+     * @remarks This is a convenience function to MapUnaligned() that also does any needed casting
+     * to get pointer into a valid vaddr_t type to the MapUnaligned() call.
+     *
+     * Note that this function will automatically add the PageFlags::Write flag.
+     *
+     * @return Returns a status code indicating the success or failure of the mapping.
+     */
     template <typename TMapped>
     Kernel::ErrorCode MapStruct(paddr_t paddr, TMapped *mapped, PageFlags flags = PageFlags::None)
     {
@@ -143,6 +168,20 @@ public:
         return MapUnaligned(paddr, vaddr, sizeof(TMapped), flags);
     }
 
+    /**
+     * @brief Maps a structure to a physical page.
+     *
+     * @param paddr  - The physical address of the structure.
+     * @param mapped - The desired virtual address of the structure.
+     * @param flags  - Access and other modifier flags for the structure.
+     *
+     * @remarks This is a convenience function to MapUnaligned() that also does any needed casting
+     * to get pointer into a valid vaddr_t type to the MapUnaligned() call.
+     *
+     * This version of the function will NOT add the PageFlags::Write flag.
+     *
+     * @return Returns a status code indicating the success or failure of the mapping.
+     */
     template <typename TMapped>
     Kernel::ErrorCode MapStruct(paddr_t paddr, const TMapped *mapped, PageFlags flags = PageFlags::None)
     {

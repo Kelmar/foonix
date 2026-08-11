@@ -16,7 +16,7 @@ namespace util
 {
     // Similar to std::span, but not exactly the same...
 
-    constexpr size_t dynamic_stride = (size_t)(-1);
+    constexpr size_t default_stride = (size_t)(-1);
 
     template <typename T>
     class span
@@ -114,10 +114,10 @@ namespace util
         {
         }
 
-        span(pointer first, size_t count, size_t stride = dynamic_stride)
+        span(pointer first, size_t count, size_t stride = default_stride)
             : m_data(first)
             , m_size(count)
-            , m_stride(stride == dynamic_stride ? sizeof(T) : stride)
+            , m_stride(stride == default_stride ? sizeof(T) : stride)
         {
         }
 
@@ -136,7 +136,7 @@ namespace util
         /**
          * @brief Fetches the size of the span in bytes.
          *
-         * @remarks This may be greater than size() * sizeof(T) if the stride is set to a larger size than the element sizes.
+         * @remarks This may be different than size() * sizeof(T) if the stride is set to a larger size than the element sizes.
          */
         constexpr size_type size_bytes() const { return m_size * m_stride; }
 
