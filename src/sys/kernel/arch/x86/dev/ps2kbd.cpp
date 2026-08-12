@@ -190,6 +190,16 @@ namespace
 
     /************************************************************************************************************/
 
+    char s_numMap[13] =
+    {
+        '7', '8', '9', '-', 
+        '4', '5', '6', '+', 
+        '1', '2', '3', '0',
+        '.'
+    };
+
+    /************************************************************************************************************/
+
     /// @brief Process a scan code for a shift key.
     int ProcessShift(int scanCode, bool isBreak)
     {
@@ -249,10 +259,25 @@ namespace
 
     /************************************************************************************************************/
 
+    int ProcessPad(int scanCode, bool isBreak)
+    {
+        if (isBreak || !has_flags(s_shift, ShiftFlags::Num))
+            return -1; // For now ignore.
+
+        size_t index = scanCode - 0x47;
+
+        if (index > sizeof(s_numMap))
+            return -1;
+
+        return s_numMap[index];
+    }
+
+    /************************************************************************************************************/
+
     /// @brief Process a scan code for a regular key.
     int ProcessRegular(int scanCode)
     {
-        if (has_any(s_shift, ShiftFlags::Alt & ShiftFlags::Ctrl))
+        if (has_any(s_shift, ShiftFlags::Alt | ShiftFlags::Ctrl))
         //if (((s_shift & ShiftFlags::Alt) != 0) || ((s_shift & ShiftFlags::Ctrl) != 0))
             return -1;
 
@@ -287,9 +312,16 @@ recheck:
         case KeyAction::Regular:
             if (has_flags(s_shift, ShiftFlags::Extend))
             {
-                // Ignoring extended keys for now.
                 s_lastCode = 0;
                 s_shift -= ShiftFlags::Extend;
+
+                if (scanCode == 0x1C && !isBreak)
+                {
+                    // Numeric keypad enter
+                    return '\n';
+                }
+
+                // Ignoring all other extended keys for now.
                 return -1;
             }
 
@@ -299,11 +331,10 @@ recheck:
             return ProcessRegular(scanCode);
 
         case KeyAction::Pad:
-            //return ProcessPad(scanCode);
-            return -1;
+            return ProcessPad(scanCode, isBreak);
 
         case KeyAction::Control:
-            //return processControl(scanCode);
+            //return ProcessControl(scanCode);
             return -1;
 
         case KeyAction::Shift:
