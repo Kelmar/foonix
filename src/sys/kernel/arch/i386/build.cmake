@@ -11,7 +11,7 @@ include ("${KERNEL_SRC_DIR}/arch/x86/build.cmake")
 list(APPEND i386_sources
     boot.S cpu.S isr.S memsetw.S vectors.s
     bus.cpp gdt.cpp idt.cpp paging.cpp preinit.cpp
-    arch_vm.cpp
+    realmem.cpp
 )
 
 list(TRANSFORM i386_sources PREPEND "${HOST_DIR}/i386/")

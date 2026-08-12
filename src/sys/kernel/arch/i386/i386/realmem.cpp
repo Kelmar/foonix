@@ -25,12 +25,6 @@
 #include "page.h"
 
 /********************************************************************************************************************/
-
-// The assembly code will initialize these values for us.
-uint32_t g_BootMagic; /* Value from EAX register */
-uint32_t g_Multiboot; /* Value from EBX register */
-
-/********************************************************************************************************************/
 /*
  * These are defined in the linker script.
  */
@@ -133,42 +127,3 @@ void Arch::VM::ReleaseRealMemory(paddr_t addr)
 }
 
 /********************************************************************************************************************/
-
-void arch::Init(KernelArgs *ka)
-{
-    Debug::PrintF("ENTER: Arch::Init()\r\n");
-
-    Debug::PrintF("Boot Magic: 0x%08X\r\n", g_BootMagic);
-
-    // Figure out where we live in physical memory.
-    ka->KernelCode.Base = reinterpret_cast<uintptr_t>(&kernel_start);
-    uintptr_t kend = VIRT_2_PHYS(reinterpret_cast<uintptr_t>(&kernel_end));
-
-    ka->KernelCode.Length = kend - ka->KernelCode.Base;
-
-    Debug::PrintF("Kernel: %p %08X\r\n", ka->KernelCode.Base, ka->KernelCode.Length);
-
-    int err;
-
-    switch (g_BootMagic)
-    {
-    case MULTIBOOT_MAGIC:
-        err = Multiboot::ReadInfo(ka, g_Multiboot);
-        break;
-
-    case MB2_MAGIC:
-        err = MB2::ReadInfo(ka, g_Multiboot);
-        break;
-
-    default:
-        // TODO: Fallback to BIOS probe
-        err = -1;
-        break;
-    }
-
-    if (err)
-        Debug::PrintF("WARN: No memory map, guessing.\r\n");
-}
-
-/********************************************************************************************************************/
-

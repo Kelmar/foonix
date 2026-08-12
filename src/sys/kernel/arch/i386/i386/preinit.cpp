@@ -12,7 +12,7 @@
 
 /********************************************************************************************************************/
 
-void init_gdt(void);
+//void init_gdt(void);
 void init_idt(void);
 void init_timer(void);
 void* init_paging(void);

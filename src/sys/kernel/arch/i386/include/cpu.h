@@ -150,7 +150,7 @@ uint32_t read_rtc_second(void);
 uint32_t read_rtc_time(void);
 
 /*
- * A short software delay, the lenght of time this delays for is
+ * A short software delay, the length of time this delays for is
  * highly dependent on the speed of the CPU.
  *
  * Intended for brief pauses when we need to wait for hardware

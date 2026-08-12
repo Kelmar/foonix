@@ -37,6 +37,24 @@ stack_top:
 
 /********************************************************************************************************************/
 
+.section .data
+    /* System x64 global descriptor table */
+    .align 8
+LABEL(g_gdtEntries)
+    .quad 0x0000000000000000 /* NULL descriptor */
+    .quad 0x00CF9A000000FFFF /* Code segment (Kernel) */
+    .quad 0x00CF92000000FFFF /* Data segment (Kernel) */
+    .quad 0x00CFFA000000FFFF /* Code segment (User) */
+    .quad 0x00CFF2000000FFFF /* Data segment (User) */
+    .quad 0x0000000000000000 /* TSS */
+
+    .align 4
+LABEL(g_gdtPtr)
+    .word . - g_gdtEntries - 1
+    .long g_gdtEntries
+
+/********************************************************************************************************************/
+
 .section .text
 
 .extern _kernel_phys_start
@@ -149,9 +167,11 @@ paging_init:
     orl  $0x80010000, %ecx
     movl %ecx, %cr0
 
+    /* Load a GDT that we know the location of. */
+    lgdt g_gdtPtr
+
     /* Long jump into our _paged_start function in boot.S */
-    lea _paged_start, %ecx
-    jmp *%ecx
+    ljmp $(1 << 3), $_paged_start /* Load CS register and switch to paged mode */
 
 /********************************************************************************************************************/
 /*
@@ -162,13 +182,24 @@ paging_init:
 .global _paged_start
 .type _paged_start, @function
 _paged_start:
+    /* Load values for kernel selectors */
+    movw $(2 << 3), %ax
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %ss
+
+    /* Blank fs and gs selectors */
+    xorw %ax, %ax
+    movw %ax, %fs
+    movw %ax, %gs
+
     /* Setup temporary stack (using virtual addresses) */
     movl $stack_top, %esp
     movl $stack_top, %ebp
 
     /* Setup boot info for our preinit call */
-    movl %eax, g_BootMagic
-    movl %ebx, g_Multiboot
+    movl %eax, g_bootMagic
+    movl %ebx, g_bootInfoPtr
 
     call  preinit /* Initialize CPU & VM first */
 

@@ -20,8 +20,8 @@
 /********************************************************************************************************************/
 
 // The assembly code will initialize these values for us.
-uint32_t g_BootMagic; /* Value from EAX register */
-uint32_t g_Multiboot; /* Value from EBX register */
+uint32_t g_bootMagic;   /* Value from EAX register */
+uint32_t g_bootInfoPtr; /* Value from EBX register */
 
 /********************************************************************************************************************/
 /*
@@ -44,7 +44,7 @@ void arch::Init(KernelArgs *ka)
 {
     Debug::PrintF("ENTER: Arch::Init()\r\n");
 
-    Debug::PrintF("Boot Magic: 0x%08X\r\n", g_BootMagic);
+    Debug::PrintF("Boot Magic: 0x%08X\r\n", g_bootMagic);
     
     // Figure out where we live in physical memory.
     ka->KernelCode.Base = reinterpret_cast<uintptr_t>(&kernel_start);
@@ -56,14 +56,14 @@ void arch::Init(KernelArgs *ka)
 
     int err;
 
-    switch (g_BootMagic)
+    switch (g_bootMagic)
     {
     case MULTIBOOT_MAGIC:
-        err = Multiboot::ReadInfo(ka, g_Multiboot);
+        err = Multiboot::ReadInfo(ka, g_bootInfoPtr);
         break;
 
     case MB2_MAGIC:
-        err = MB2::ReadInfo(ka, g_Multiboot);
+        err = MB2::ReadInfo(ka, g_bootInfoPtr);
         break;
 
     default:

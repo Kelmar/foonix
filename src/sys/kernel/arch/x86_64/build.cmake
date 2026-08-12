@@ -20,7 +20,6 @@ include_directories("${HOST_DIR}/include")
 
 list(APPEND x64_sources
     start.S boot.S cpu.S
-    arch_vm.cpp
 )
 
 list(TRANSFORM x64_sources PREPEND "${HOST_DIR}/src/")

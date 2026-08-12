@@ -15,7 +15,7 @@ endif()
 # =========================================================================
 
 list(APPEND x86_sources
-    multiboot.S
+    multiboot.S arch_vm.cpp
     dconsole.cpp mb1.cpp mb2.cpp
 )
 

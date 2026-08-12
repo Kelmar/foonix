@@ -43,6 +43,24 @@
 
 /********************************************************************************************************************/
 
+.section .data
+    /* System x32 global descriptor table */
+    .align 8
+LABEL(g_gdtEntries)
+    .quad 0x0000000000000000 /* NULL descriptor */
+    .quad 0x00209A0000000000 /* Code segment (Kernel) */
+    .quad 0x0020920000000000 /* Data segment (Kernel) */
+    .quad 0x0020FA0000000000 /* Code segment (User) */
+    .quad 0x0020F20000000000 /* Data segment (User) */
+    .quad 0x0000000000000000 /* TSS */
+
+    .align 4
+LABEL(g_gdtPtr)
+    .word . - g_gdtEntries - 1
+    .long g_gdtEntries
+
+/********************************************************************************************************************/
+
 .section .text
 
 .code32
@@ -155,9 +173,9 @@ _start:
     movl %edi, %eax
 
     /* Load the global descriptor table */
-    lgdt bootstrap_gdt_ptr
+    lgdt g_gdtPtr
 
-    ljmp $0x08, $_x64_start
+    ljmp $(1 << 3), $_x64_start /* Set long mode and CS value */
 
 1:  /* CPU Not Supported */
     movl $VGA_MEMORY, %edi
@@ -186,19 +204,5 @@ _start:
 .section .rodata
 
 cpu_not_supported: .asciz "CPU Not Supported"
-
-    /* System global descriptor table */
-    .align 8
-    LABEL(bootstrap_gdt)
-    .quad 0x0000000000000000 /* NULL descriptor */
-    .quad 0x00209A0000000000 /* Code segment (Kernel) */
-    .quad 0x0020920000000000 /* Data segment (Kernel) */
-    .quad 0x0020FA0000000000 /* Code segment (User) */
-    .quad 0x0020F20000000000 /* Data segment (User) */
-
-    .align 4
-    LABEL(bootstrap_gdt_ptr)
-    .word . - bootstrap_gdt - 1
-    .long bootstrap_gdt
 
 /********************************************************************************************************************/
