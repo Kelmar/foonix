@@ -20,7 +20,7 @@ list(APPEND x86_sources
 )
 
 list(APPEND x86_devs
-    tty.cpp ps2kbd.cpp
+    vga.cpp ps2kbd.cpp
 )
 
 list(TRANSFORM x86_sources PREPEND "${KERNEL_SRC_DIR}/arch/x86/src/")

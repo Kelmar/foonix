@@ -6,8 +6,12 @@
 
 /********************************************************************************************************************/
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include <iterator>
 #include <type_traits>
+#include <utility>
 
 #include <kernel/flow.h>
 
@@ -93,7 +97,7 @@ namespace util
 
         constexpr const_pointer fetch(size_type pos) const
         {
-            if (pos > m_size)
+            if (pos >= m_size)
                 kpanic("Attempt to index span outside of max range.");
 
             uintptr_t i = reinterpret_cast<uintptr_t>(m_data);
@@ -103,8 +107,8 @@ namespace util
 
         constexpr pointer fetch(size_type pos)
         {
-            const_pointer p = fetch(pos);
-            return reinterpret_cast<pointer>(p);
+            const_pointer p = std::as_const(*this).fetch(pos);
+            return const_cast<pointer>(p);
         }
 
     public:

@@ -49,20 +49,20 @@ namespace DebugConsole
         // We assume that the serial port is compatible with a 16550.
 
         // Disable interrupts, we're just going to manually poll.
-        outb(SERIAL_INT_CTL, 0);
+        cpu::outb(SERIAL_INT_CTL, 0);
 
         // Enable and reset the FIFO
-        outb(SERIAL_FIFO_CTL, 0x05);
+        cpu::outb(SERIAL_FIFO_CTL, 0x05);
 
         // Setup bit pattern, and enable writing ot the divisor latches
-        outb(SERIAL_LINE_CTL, SERIAL_CONTROL_FLAGS | SERIAL_DLA_BIT);
+        cpu::outb(SERIAL_LINE_CTL, SERIAL_CONTROL_FLAGS | SERIAL_DLA_BIT);
 
         // Set up for 19200 baud
-        outb(SERIAL_DLA_MSB, 0);
-        outb(SERIAL_DLA_LSB, 6);
+        cpu::outb(SERIAL_DLA_MSB, 0);
+        cpu::outb(SERIAL_DLA_LSB, 6);
 
         // Now clear the DLA bit so we can read/write data
-        outb(SERIAL_LINE_CTL, SERIAL_CONTROL_FLAGS);
+        cpu::outb(SERIAL_LINE_CTL, SERIAL_CONTROL_FLAGS);
 
         // Announce ourselves
         const char msg[] = "FooNIX Ready!\r\n";
@@ -83,14 +83,14 @@ namespace DebugConsole
     int ReadChar(void)
     {
 #ifdef _USE_BOCHS
-        return inb(BOCHS_DEBUG_PORT);
+        return cpu::inb(BOCHS_DEBUG_PORT);
 #endif
 
         // Remember this is a nonblocking method.
-        if ((inb(SERIAL_LINE_STAT) & 0x01) == 0)
+        if ((cpu::inb(SERIAL_LINE_STAT) & 0x01) == 0)
             return -1;
 
-        return inb(SERIAL_TRX);
+        return cpu::inb(SERIAL_TRX);
     }
 
     /************************************************************************************************************/
@@ -98,13 +98,13 @@ namespace DebugConsole
     int PutChar(char c)
     {
 #ifdef _USE_BOCHS
-        outb(BOCHS_DEBUG_PORT, c);
+        cpu::outb(BOCHS_DEBUG_PORT, c);
 #endif
 
-        while ((inb(SERIAL_LINE_STAT) & 0x20) == 0)
+        while ((cpu::inb(SERIAL_LINE_STAT) & 0x20) == 0)
             ;
 
-        outb(SERIAL_TRX, c);
+        cpu::outb(SERIAL_TRX, c);
 
         return 0;
     }

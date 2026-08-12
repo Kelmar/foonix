@@ -16,7 +16,7 @@ include("${HOST_DIR}/build.cmake")
 # =========================================================================
 
 list(APPEND KERN_SOURCES
-    src/debug.cpp src/kernel_args.cpp src/main.cpp
+    src/debug.cpp src/kernel_args.cpp src/main.cpp src/console.cpp
     src/allocator.cpp src/vm/vm_page.cpp src/vm/vm.cpp
 )
 

@@ -53,6 +53,12 @@ namespace std
     {
         return static_cast<std::underlying_type_t<T>>(e);
     }
+
+    template <class T>
+    constexpr std::add_const_t<T> &as_const(T& t) noexcept
+    {
+        return t;
+    }
 }
 
 /********************************************************************************************************************/

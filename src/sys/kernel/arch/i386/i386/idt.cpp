@@ -175,7 +175,7 @@ void init_idt(void)
 
     load_idt(&s_idtp);
 
-    start_interrupts();
+    cpu::start_interrupts();
 }
 
 /********************************************************************************************************************/
@@ -269,7 +269,7 @@ extern "C" void handle_isr(regs* r)
 
         if (irq_no == 1)
         {
-            uint8_t scan = inb((uint16_t)0x60);
+            uint8_t scan = cpu::inb((uint16_t)0x60);
             (void)(scan);
         }
 
@@ -278,12 +278,12 @@ extern "C" void handle_isr(regs* r)
         {
             //bus slave_pic((void*)0x00A0, 2);
             //slave_pic.byte(0, 0x20);
-            outb((uint16_t)0x00A0, 0x20);
+            cpu::outb((uint16_t)0x00A0, 0x20);
         }
 
         // In all cases we need to send an EOI to the master controller.
         //master_pic.byte(0, 0x20);
-        outb((uint16_t)0x0020, 0x20);
+        cpu::outb((uint16_t)0x0020, 0x20);
     }
 
     --s_exception_depth;

@@ -73,7 +73,7 @@ namespace
         divis = (TIMER_PHYSFREQ << 1) / freq;
         divis = (divis >> 1) + (divis & 1);
 
-        stop_interrupts();
+        cpu::stop_interrupts();
 
         bus pit(TIMER_PORTBASE, 4);
 
@@ -85,7 +85,7 @@ namespace
         //s_freq = freq;
         //s_freq_cnt = divis ? divis : 0xFFFF;
 
-        start_interrupts();
+        cpu::start_interrupts();
     }
 }
 

@@ -60,15 +60,15 @@ namespace
     inline
     uint8_t GetCRTRegister(int reg)
     {
-        outb(CRT_PORT, reg);
-        return inb(CRT_PORT + 1);
+        cpu::outb(CRT_PORT, reg);
+        return cpu::inb(CRT_PORT + 1);
     }
 
     inline
     void SetCRTRegister(int reg, uint8_t value)
     {
-        outb(CRT_PORT, reg);
-        outb(CRT_PORT + 1, value);
+        cpu::outb(CRT_PORT, reg);
+        cpu::outb(CRT_PORT + 1, value);
     }
 
     /************************************************************************************************************/

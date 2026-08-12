@@ -169,77 +169,84 @@ __END_EXTERN_C
 
 /********************************************************************************************************************/
 
-static inline FORCE_INLINE uint8_t
-inb(uint16_t port)
+namespace x86
 {
-    uint8_t data;
-    __asm ("inb %1,%0" : "=a" (data) : "d" (port));
-    return data;
-}
+    // Instructions specific to the x86 family.
 
-static inline FORCE_INLINE void
-outb(uint16_t port, uint8_t data)
-{
-    __asm ("outb %0,%1" : : "a" (data), "d" (port));
-}
-
-static inline FORCE_INLINE uint16_t
-inw(uint16_t port)
-{
-    uint16_t data;
-    __asm ("inw %1,%0" : "=a" (data) : "d" (port));
-    return data;
-}
-
-static inline FORCE_INLINE void
-outw(uint16_t port, uint16_t data)
-{
-    __asm ("outw %0,%1" : : "a" (data), "d" (port));
-}
-
-static inline FORCE_INLINE uint32_t
-inl(uint16_t port)
-{
-    uint32_t data;
-    __asm__("inl %1,%0" : "=a" (data) : "d" (port));
-    return data;
-}
-
-static inline FORCE_INLINE void
-outl(uint16_t port, uint32_t data)
-{
-    __asm__("outl %0,%1" : : "a" (data), "d" (port));
+    static inline
+    void cpuid(uint32_t level, uint32_t& ax, uint32_t& bx, uint32_t& cx, uint32_t& dx)
+    {
+        __asm__(
+            "cpuid\n\t"
+            : "=a"(ax), "=b"(bx), "=c"(cx), "=d"(dx)
+            : "0"(level)
+        );
+    }
 }
 
 /********************************************************************************************************************/
 
-static inline FORCE_INLINE void
-stop_interrupts(void)
+namespace cpu
 {
-    __asm__("cli");
-}
+    static inline FORCE_INLINE
+    void pause() { __asm __volatile("pause"); }
 
-static inline FORCE_INLINE void
-start_interrupts(void)
-{
-    __asm__("sti");
-}
+    static inline FORCE_INLINE
+    void stop_interrupts(void)
+    {
+        __asm__("cli");
+    }
 
-#if defined(NDEBUG) || !defined(_USE_BOCHS)
-# define bochs_breakpoint()
-#else
-# define bochs_breakpoint() __asm__("xchgw %bx,%bx")
-#endif 
+    static inline FORCE_INLINE
+    void start_interrupts(void)
+    {
+        __asm__("sti");
+    }
 
-/********************************************************************************************************************/
+    // Raw bus functions
+        
+    static inline FORCE_INLINE
+    uint8_t inb(uint16_t port)
+    {
+        uint8_t data;
+        __asm ("inb %1,%0" : "=a" (data) : "d" (port));
+        return data;
+    }
 
-static inline void cpuid(uint32_t level, uint32_t& ax, uint32_t& bx, uint32_t& cx, uint32_t& dx)
-{
-    __asm__(
-        "cpuid\n\t"
-        : "=a"(ax), "=b"(bx), "=c"(cx), "=d"(dx)
-        : "0"(level)
-    );
+    static inline FORCE_INLINE
+    void outb(uint16_t port, uint8_t data)
+    {
+        __asm ("outb %0,%1" : : "a" (data), "d" (port));
+    }
+
+    static inline FORCE_INLINE
+    uint16_t inw(uint16_t port)
+    {
+        uint16_t data;
+        __asm ("inw %1,%0" : "=a" (data) : "d" (port));
+        return data;
+    }
+
+    static inline FORCE_INLINE
+    void outw(uint16_t port, uint16_t data)
+    {
+        __asm ("outw %0,%1" : : "a" (data), "d" (port));
+    }
+
+    static inline FORCE_INLINE
+    uint32_t inl(uint16_t port)
+    {
+        uint32_t data;
+        __asm__("inl %1,%0" : "=a" (data) : "d" (port));
+        return data;
+    }
+
+    static inline FORCE_INLINE
+    void outl(uint16_t port, uint32_t data)
+    {
+        __asm__("outl %0,%1" : : "a" (data), "d" (port));
+    }
+
 }
 
 /********************************************************************************************************************/

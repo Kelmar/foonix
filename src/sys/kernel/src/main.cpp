@@ -9,8 +9,10 @@
 #include "cpu.h"
 
 #include <kernel/kernel_args.h>
+
 #include <kernel/arch/dconsole.h>
 #include <kernel/debug.h>
+#include <kernel/console.h>
 
 #include <kernel/vm.h>
 
@@ -129,26 +131,23 @@ extern "C" void kmain(void)
 
     const char msg[64] = "Hello world from kernel space!\r\n";
 
-    terminal_init();
+    console::init();
     
     size_t len = strnlen(msg, sizeof(msg));
     
     terminal_write(msg, len);
 
+    char buf[512];
+
     for (;;)
     {
-        __asm __volatile("pause");
-        int c = terminal_getchar();
+        size_t cnt = console::get_line(buf, sizeof(buf));
 
-        if (c != -1)
+        if (cnt > 0)
         {
-            if (c == '\n')
-                terminal_putchar('\r');
-
-            terminal_putchar(c);
-
-            if (c == '\r')
-                terminal_putchar('\n');
+            terminal_writestr("Got buffer: ");
+            terminal_writestr(buf);
+            terminal_writestr("\r\n");
         }
     }
 
