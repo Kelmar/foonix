@@ -23,7 +23,7 @@
 #include "bootinfo.h"
 
 //#include "page_table.h" // x64 version
-#include "page.h"
+//#include "page.h"
 
 /********************************************************************************************************************/
 
@@ -38,16 +38,7 @@ namespace
         if ((multi->flags & MB_FLAG_CMDLINE) == 0)
             return; // No command line.
 
-        vaddr_t cmd_vaddr = PHYS_2_VIRT(multi->cmdline);
-        const char *cmd = reinterpret_cast<const char *>(cmd_vaddr);
-
-        Kernel::ErrorCode result = paging::g_bootPageTable.MapUnaligned(multi->cmdline, cmd_vaddr, MAX_CMD_LINE);
-
-        if (result != Kernel::ErrorCode::NoError)
-        {
-            kpanic("WARNING: Unable to map multiboot command line.");
-            return;
-        }
+        const char *cmd = reinterpret_cast<const char *>(multi->cmdline);
         
         ka->SetCommandLine(cmd, MAX_CMD_LINE);
     }
@@ -78,19 +69,12 @@ namespace
         size_t recordCnt = multi->mmap_length / sizeof(mb_memory_map_t);
         bool processing = true;
 
-        mb_memory_map_t *memMap = reinterpret_cast<mb_memory_map_t *>(PHYS_2_VIRT(multi->mmap_addr));
-        paddr_t addr = reinterpret_cast<paddr_t>(reinterpret_cast<uintptr_t>(multi->mmap_addr));
-
-        Kernel::ErrorCode result = paging::g_bootPageTable.MapStruct(addr, memMap);
-
-        if (result != Kernel::ErrorCode::NoError)
-            kpanic("Unable to map multiboot memory map into page table.");
+        mb_memory_map_t *memMap = reinterpret_cast<mb_memory_map_t *>(multi->mmap_addr);
 
         Debug::PrintF("Checking %d memory record(s) from multiboot.\r\n", recordCnt);
         
         for (uint32_t i = 0; processing && i < recordCnt; ++i)
         {
-            //mb_memory_map_t *record = &multi->mmap_addr[i];
             mb_memory_map_t *record = &memMap[i];
 
             if (record->type != BiosMemoryType::Available)
@@ -99,11 +83,13 @@ namespace
                 continue;
             }
 
+#if 0
             if (record->base_addr > MAX_32_ADDR)
             {
                 // Don't think records will show up out of order, but we keep going, just in case.
                 continue; 
             }
+#endif 
 
             processing &= ka->AddMemoryMap(record->base_addr, record->length);
         }
@@ -123,15 +109,7 @@ namespace
 
 int Multiboot::ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr)
 {
-    // We need to come up with some sort of memory map....
-   
-    // Remap the multiboot structure into virtual memory space.
-    multiboot_t *multi = reinterpret_cast<multiboot_t *>(PHYS_2_VIRT(multiboot_ptr));
-
-    auto result = paging::g_bootPageTable.MapStruct(multiboot_ptr, multi);
-
-    if (result != Kernel::ErrorCode::NoError)
-        kpanic("Unable to map multiboot structure into page table.");
+    multiboot_t *multi = reinterpret_cast<multiboot_t *>(multiboot_ptr);
 
     Debug::PrintF("Multiboot Info: %p\r\n", multi);
     

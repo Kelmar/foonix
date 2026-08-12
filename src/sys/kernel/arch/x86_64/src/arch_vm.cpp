@@ -58,11 +58,9 @@ void arch::Init(KernelArgs *ka)
 
     switch (g_BootMagic)
     {
-#if 0
     case MULTIBOOT_MAGIC:
         err = Multiboot::ReadInfo(ka, g_Multiboot);
         break;
-#endif
 
     case MB2_MAGIC:
         err = MB2::ReadInfo(ka, g_Multiboot);

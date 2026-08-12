@@ -23,7 +23,7 @@
 #include "bootinfo.h"
 
 //#include "page_table.h" // x64 version
-#include "page.h"
+//#include "page.h"
 
 /********************************************************************************************************************/
 
@@ -83,34 +83,11 @@ int MB2::ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr)
 {
     Debug::PrintF("Multiboot 2 load detected.\r\n");
 
-    vaddr_t info_vaddr = PHYS_2_VIRT(multiboot_ptr);
-    auto info = reinterpret_cast<mb2_info *>(info_vaddr);
+    auto info = reinterpret_cast<mb2_info *>(multiboot_ptr);
 
-    Debug::PrintF("Multiboot: 0x%08X->0x%08X\r\n", multiboot_ptr, info);
-    
-    // Ensure that we can at least read the total size so we can map the rest of the pages.
-    Kernel::ErrorCode result = paging::g_bootPageTable.MapUnaligned(multiboot_ptr, info_vaddr, paging::BootPageTable::PageSize);
+    Debug::PrintF("MB2 info @%p size: %d\r\n", info, info->total_size);
 
-    if (result != Kernel::ErrorCode::NoError)
-            kpanic("Unable to map multiboot 2 structure for reading!");
-
-    Debug::PrintF("MB2 Info Size: %d\r\n", info->total_size);
-
-    if (info->total_size >= paging::BootPageTable::PageSize)
-    {
-        paddr_t next_phys = multiboot_ptr + paging::BootPageTable::PageSize;
-        vaddr_t next_vert = info_vaddr + paging::BootPageTable::PageSize;
-        size_t remain = info->total_size - paging::BootPageTable::PageSize;
-
-        //Debug::PrintF("Adding %d more bytes to map starting at 0x%08X->0x%08X\r\n", remain, next_phys, next_vert);
-
-        result = paging::g_bootPageTable.MapUnaligned(next_phys, next_vert, remain);
-
-        if (result != Kernel::ErrorCode::NoError)
-            kpanic("Unable to map multiboot 2 structure for reading!");
-    }
-
-    uintptr_t ptr = info_vaddr + sizeof(mb2_info);
+    uintptr_t ptr = multiboot_ptr + sizeof(mb2_info);
 
     size_t sz = sizeof(mb2_info);
     int err = 0;  //Kernel::ErrorCode::NoError;

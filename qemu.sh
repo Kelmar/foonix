@@ -1,6 +1,7 @@
 #!/bin/sh
 
 QEMU="qemu-system-x86_64"
+#QEMU="qemu-system-i386"
 
 PLATFORM="${1:-x86_64}"
 ISO="out/boot.${PLATFORM}.iso"
@@ -31,5 +32,7 @@ $QEMU \
     -s -S \
     -no-reboot \
     -no-shutdown \
+    -monitor telnet:127.0.0.1:5555,server,nowait \
     -serial mon:stdio \
     -cdrom "$ISO" | tee out/kernel.log
+
