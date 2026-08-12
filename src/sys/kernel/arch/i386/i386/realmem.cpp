@@ -25,21 +25,6 @@
 #include "page.h"
 
 /********************************************************************************************************************/
-/*
- * These are defined in the linker script.
- */
-
-/// @brief Physical memory location of the start of the kernel.
-extern "C" uintptr_t _kernel_phys_start;
-
-/// @brief Physical memory location of the end of the kernel.
-extern "C" uintptr_t _kernel_end;
-
-constexpr void *kernel_start = &_kernel_phys_start;
-
-constexpr void *kernel_end = &_kernel_end; //VIRT_2_PHYS(&_kernel_end);
-
-/********************************************************************************************************************/
 
 namespace
 {

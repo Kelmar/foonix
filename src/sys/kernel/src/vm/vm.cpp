@@ -27,71 +27,51 @@ using namespace vmm;
 
 /********************************************************************************************************************/
 
+namespace
+{
+#if 0
+    // For booting we just use a simple singly linked list of pages.
+    struct BootPage
+    {
+        BootPage *next;
+    };
+
+    BootPage *bootPages = nullptr;
+    size_t bootPageCount = 0;
+
+    void InitBootPages()
+    {
+        for (size_t i = 0; i < g_KernelArguments.MemoryMapEntries; ++i)
+        {
+            MemoryRange &memoryRange = g_KernelArguments.MemoryMap[i];
+
+            for (size_t offset = 0; offset < memoryRange.Length; offset += PAGE_SIZE)
+            {
+                BootPage *page = reinterpret_cast<BootPage *>(memoryRange.Base + offset);
+                page->next = bootPages;
+
+                bootPages = page;
+                ++bootPageCount;
+            }
+        }
+    }
+#endif
+}
+
+/********************************************************************************************************************/
+
 void vmm::Init()
 {
     g_KernelArguments.ShowAvailableMemory();
 
-    //Kernel::ErrorCode errCode = Arch::InitPaging(ka);
-
     /*
-    if (errCode != Kernel::ErrorCode::NoError)
-    {
-        Debug::Panic("ERROR: Unable to initialize paging");
-    }
+    InitBootPages();
+
+    if (bootPageCount == 0)
+        kpanic("Unable to allocate any boot pages\r\n");
+
+    Debug::PrintF("%d boot page(s) free.\r\n", bootPageCount);
     */
 }
-
-/********************************************************************************************************************/
-/**
- * @brief Our boot up allocator for the page frame allocator.
- */
-class BootPageAllocator : public PageAllocator
-{
-public:
-    /* constructor */ BootPageAllocator()
-    { 
-        // Don't do anything here, initialization happens before global initializers.
-    }
-
-    // We just "allocate" frames out of the g_KernelArguments structure.
-    virtual PageBlock NewBlock(size_t count)
-    {
-        size_t byteSize = count * PAGE_SIZE;
-
-        // Start at the bottom of memory and work our way down
-        for (size_t index = g_KernelArguments.MemoryMapEntries - 1; index < g_KernelArguments.MemoryMapEntries; --index)
-        {
-            MemoryRange &memoryMap = g_KernelArguments.MemoryMap[index];
-
-            if (memoryMap.Length >= byteSize)
-            {
-                // Okay we have our frames
-                /*
-                paddr_t addr =
-                    (paddr_t)(memoryMap.End() - byteSize);
-                */
-                
-                // Add them to the boot page table
-                paddr_t blockAddr = 0; //Arch::AddBootFrames(addr, count);
-
-                PageBlock p(blockAddr, count);
-
-                memoryMap.Length -= byteSize;
-
-                if (memoryMap.Length == 0)
-                    --g_KernelArguments.MemoryMapEntries;
-
-                return p;
-            }
-        }
-
-        return NullBlock;
-    }
-
-    virtual void FreeBlock(PageBlock &block)
-    {
-        (void)block;
-    }
-} g_BootPageAlloc;
 
 /********************************************************************************************************************/

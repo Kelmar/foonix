@@ -122,6 +122,9 @@ namespace
 
 /********************************************************************************************************************/
 
+extern void keyboard_init();
+
+
 void terminal_pre_init(void)
 {
     //crt_bus = nullptr;
@@ -136,6 +139,8 @@ void terminal_pre_init(void)
     terminal_clear();
 
     terminal_buffer[0] = vga_entry('C', vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
+
+    keyboard_init();
 }
 
 /********************************************************************************************************************/

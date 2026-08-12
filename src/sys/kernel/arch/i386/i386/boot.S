@@ -153,13 +153,14 @@ _start:
     orl  $0x03, %eax
     movl %eax, VIRT_2_PHYS(boot_page_directory) + KERNEL_PAGE_OFFSET
 
-    /* Setup directory address in CR3 */
-    movl $VIRT_2_PHYS(boot_page_directory), %ecx
-    movl %ecx, %cr3
-
+break_0001:
     /* Restore the EAX and EBX registers */
     popl %eax
     popl %ebx
+
+    /* Setup directory address in CR3 */
+    movl $VIRT_2_PHYS(boot_page_directory), %ecx
+    movl %ecx, %cr3
 
     /* Turn on paging and write protection */
 paging_init:
@@ -182,6 +183,9 @@ paging_init:
 .global _paged_start
 .type _paged_start, @function
 _paged_start:
+    // Preserve eax for selector setup.
+    movl %eax, %edx
+
     /* Load values for kernel selectors */
     movw $(2 << 3), %ax
     movw %ax, %ds
@@ -192,6 +196,8 @@ _paged_start:
     xorw %ax, %ax
     movw %ax, %fs
     movw %ax, %gs
+
+    movl %edx, %eax
 
     /* Setup temporary stack (using virtual addresses) */
     movl $stack_top, %esp

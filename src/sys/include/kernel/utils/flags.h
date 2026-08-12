@@ -32,6 +32,12 @@ DECLARE_BIT_OP(^)
 #undef DECLARE_BIT_OP
 
 template <BitmaskEnum TEnum>
+constexpr TEnum operator ~(TEnum flag)
+{
+    return static_cast<TEnum>(~std::to_underlying(flag));
+}
+
+template <BitmaskEnum TEnum>
 constexpr TEnum operator +=(TEnum &lhs, TEnum rhs)
 {
     lhs = lhs | rhs;
@@ -46,16 +52,16 @@ constexpr TEnum operator -=(TEnum &lhs, TEnum rhs)
 }
 
 template <BitmaskEnum TEnum>
-constexpr TEnum operator ~(TEnum flag)
-{
-    using T = std::underlying_type<TEnum>;
-    return static_cast<T>(~std::to_underlying(flag));
-}
-
-template <BitmaskEnum TEnum>
 constexpr bool has_flags(TEnum value, TEnum flags)
 {
     return (value & flags) == flags;
+}
+
+template <BitmaskEnum TEnum>
+constexpr bool has_any(TEnum value, TEnum flags)
+{
+    using T = std::underlying_type_t<TEnum>;
+    return static_cast<T>(value & flags) != 0;
 }
 
 /*

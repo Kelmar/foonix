@@ -38,6 +38,8 @@ namespace
         return 0;
     }
 
+    /************************************************************************************************************/
+
     int ParseBasicMemoryInfo(KernelArgs *ka, const mb2_tag *tag)
     {
         const mb2_basic_memory_info *info = reinterpret_cast<const mb2_basic_memory_info *>(tag);
@@ -48,6 +50,8 @@ namespace
 
         return 0;
     }
+
+    /************************************************************************************************************/
 
     int ParseMemoryMap(KernelArgs *ka, const mb2_tag *tag)
     {

@@ -20,6 +20,8 @@ void terminal_writestr(const char *data);
 
 void terminal_write64(uint64_t val);
 
+int terminal_getchar();
+
 __END_EXTERN_C
 
 /********************************************************************************************************************/

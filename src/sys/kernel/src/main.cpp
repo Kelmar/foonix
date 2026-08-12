@@ -136,11 +136,22 @@ extern "C" void kmain(void)
     
     terminal_write(msg, len);
 
-    //terminal_init();
-    //printf("Hello world from kernel space!\n");
-
     for (;;)
+    {
         __asm __volatile("pause");
+        int c = terminal_getchar();
+
+        if (c != -1)
+        {
+            if (c == '\n')
+                terminal_putchar('\r');
+
+            terminal_putchar(c);
+
+            if (c == '\r')
+                terminal_putchar('\n');
+        }
+    }
 
     //khalt();
 }

@@ -33,6 +33,8 @@ namespace
     // Here we pick a (hopefully) sane default.
     constexpr const size_t MAX_CMD_LINE = 256;
 
+    /************************************************************************************************************/
+
     void ParseCommandLine(KernelArgs *ka, multiboot_t *multi)
     {
         if ((multi->flags & MB_FLAG_CMDLINE) == 0)
@@ -42,6 +44,8 @@ namespace
         
         ka->SetCommandLine(cmd, MAX_CMD_LINE);
     }
+
+    /************************************************************************************************************/
 
     void ParseBasicMemoryInfo(KernelArgs *ka, multiboot_t *multi)
     {
@@ -57,6 +61,8 @@ namespace
 
         Debug::PrintF("Multiboot reports %d KBytes available.\r\n", ka->MemorySizeKByte);
     }
+
+    /************************************************************************************************************/
 
     int ParseMemoryMap(KernelArgs *ka, multiboot_t *multi)
     {
