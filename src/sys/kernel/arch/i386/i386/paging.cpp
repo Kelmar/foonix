@@ -109,10 +109,10 @@ namespace
     {
         uint32_t rval = DirEntryFlags::User;
 
-        if (has_flags(flags, PageFlags::Write))
+        if (flags && is_set(PageFlags::Write))
             rval |= DirEntryFlags::Writable;
 
-        if (has_flags(flags, PageFlags::Kernel))
+        if (flags && is_set(PageFlags::Kernel))
             rval &= ~DirEntryFlags::User;
 
         return rval;
@@ -125,10 +125,10 @@ namespace
     {
         uint32_t rval = PageEntryFlags::User;
 
-        if (has_flags(flags, PageFlags::Write))
+        if (flags && is_set(PageFlags::Write))
             rval |= PageEntryFlags::Writable;
 
-        if (has_flags(flags, PageFlags::Kernel))
+        if (flags && is_set(PageFlags::Kernel))
             rval &= ~PageEntryFlags::User;
 
         return rval;

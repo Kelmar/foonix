@@ -51,17 +51,56 @@ constexpr TEnum operator -=(TEnum &lhs, TEnum rhs)
     return lhs;
 }
 
-template <BitmaskEnum TEnum>
-constexpr bool has_flags(TEnum value, TEnum flags)
-{
-    return (value & flags) == flags;
-}
+// TODO: See if there's a way we can do this with concepts and no virtual method call.
 
 template <BitmaskEnum TEnum>
-constexpr bool has_any(TEnum value, TEnum flags)
+struct bitmask_set_t
 {
-    using T = std::underlying_type_t<TEnum>;
-    return static_cast<T>(value & flags) != 0;
+    virtual bool operator()(TEnum other) const = 0;
+};
+
+/// @brief Logical set of any bits required.
+template <BitmaskEnum TEnum>
+struct any_set : bitmask_set_t<TEnum>
+{
+    TEnum values;
+
+    constexpr any_set(TEnum v) : values(v) { }
+
+    bool operator()(TEnum other) const override
+    {
+        auto v = std::to_underlying(values);
+        auto o = std::to_underlying(other);
+
+        return (o & v) != 0;
+    }
+};
+
+/// @brief Logical set of all bits required.
+template <BitmaskEnum TEnum>
+struct all_set : bitmask_set_t<TEnum>
+{
+    TEnum values;
+
+    constexpr all_set(TEnum v) : values(v) { }
+
+    bool operator()(TEnum other) const override
+    {
+        auto v = std::to_underlying(values);
+        auto o = std::to_underlying(other);
+
+        return (o & v) == v;
+    }
+};
+
+/// @brief Alias for all_set
+template <BitmaskEnum TEnum>
+struct is_set : all_set<TEnum> { is_set(TEnum v) : all_set<TEnum>(v) { } };
+
+template <BitmaskEnum TEnum>
+bool operator &&(TEnum lhs, const bitmask_set_t<TEnum> &rhs)
+{
+    return rhs(lhs);
 }
 
 /*
@@ -76,9 +115,14 @@ constexpr bool has_any(TEnum value, TEnum flags)
  * {
  *     MyFlags f = MyFlags::Flag1 | MyFlags::Flag2;
  *
- *     if (has_flags(f, MyFlags::Flag1))
+ *     if (f && is_set(MyFlags::Flag1))
  *     {
- *         // do a thing if Flag1 set
+ *         // Do a thing if Flag1 set
+ *     }
+ *
+ *     if (f && any_set(MyFlags::Flag1 | MyFlags::Flag3))
+ *     {
+ *         // Do a thing if Flag1 or Flag3 are set.
  *     }
  *
  *     f += MyFlags::Flag3; // Add a flag

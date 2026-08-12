@@ -261,7 +261,7 @@ namespace
 
     int ProcessPad(int scanCode, bool isBreak)
     {
-        if (isBreak || !has_flags(s_shift, ShiftFlags::Num))
+        if (isBreak || !(s_shift && is_set(ShiftFlags::Num)))
             return -1; // For now ignore.
 
         size_t index = scanCode - 0x47;
@@ -277,15 +277,15 @@ namespace
     /// @brief Process a scan code for a regular key.
     int ProcessRegular(int scanCode)
     {
-        if (has_any(s_shift, ShiftFlags::Alt | ShiftFlags::Ctrl))
+        if (s_shift && any_set(ShiftFlags::Alt | ShiftFlags::Ctrl))
             return -1;
 
-        bool shifted = has_flags(s_shift, ShiftFlags::Shift);
+        bool shifted = s_shift && is_set(ShiftFlags::Shift);
 
         const char *map = shifted ? s_shiftMap : s_normalMap;
         int rval = map[scanCode];
 
-        if (has_flags(s_shift, ShiftFlags::Caps))
+        if (s_shift && is_set(ShiftFlags::Caps))
         {
             // Magic case conversion (only works for ASCII tho)
             if (rval >= 'A' && rval <= 'Z')
@@ -309,7 +309,7 @@ recheck:
         switch (action)
         {
         case KeyAction::Regular:
-            if (has_flags(s_shift, ShiftFlags::Extend))
+            if (s_shift && is_set(ShiftFlags::Extend))
             {
                 s_lastCode = 0;
                 s_shift -= ShiftFlags::Extend;
