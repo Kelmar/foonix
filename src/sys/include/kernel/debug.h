@@ -20,6 +20,8 @@ namespace Debug
      * @brief Formatted printing to debug console.
      */
     void vPrintF(const char *fmt, va_list args);
+
+    void shell();
 }
 
 /********************************************************************************************************************/

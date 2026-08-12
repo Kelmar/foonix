@@ -71,9 +71,6 @@ void test_stack_trace(void);
 static const uint32_t *start_ebp;
 #endif
 
-void terminal_pre_init(void);
-void terminal_dump(size_t v);
-
 /********************************************************************************************************************/
 /*
  * The kernel's main entry point.
@@ -129,27 +126,7 @@ extern "C" void kmain(void)
 
     Debug::PrintF("ENTER: kmain()\r\n");
 
-    const char msg[64] = "Hello world from kernel space!\r\n";
-
-    console::init();
-    
-    size_t len = strnlen(msg, sizeof(msg));
-    
-    terminal_write(msg, len);
-
-    char buf[512];
-
-    for (;;)
-    {
-        size_t cnt = console::get_line(buf, sizeof(buf));
-
-        if (cnt > 0)
-        {
-            terminal_writestr("Got buffer: ");
-            terminal_writestr(buf);
-            terminal_writestr("\r\n");
-        }
-    }
+    Debug::shell();
 
     //khalt();
 }

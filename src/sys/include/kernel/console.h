@@ -15,11 +15,16 @@
 namespace console
 {
     void init();
+    
+    // Output
     bool set_paged(bool value);
 
     void putchar(char c);
+    void putstr(const char *str);
+
+    // Input
     int getchar();
-        
+
     size_t get_line(util::span<char> &buf);
 
     inline
