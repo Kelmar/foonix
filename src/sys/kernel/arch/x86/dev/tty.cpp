@@ -1,10 +1,7 @@
 /********************************************************************************************************************/
 
-#include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <stdio.h>
 
 #include <kernel/tty.h>
 
@@ -15,108 +12,111 @@
 
 /********************************************************************************************************************/
 
-#define vga_entry(c__, clr__) ((uint16_t)c__ | (uint16_t)(clr__ << 8))
-
 namespace
 {
     /************************************************************************************************************/
+    /*
+     * Constants
+     */
+    uint16_t *CRT_MEM = reinterpret_cast<uint16_t *>(0x000B8000);
 
-    const int VGA_WIDTH = 80;
-    const int VGA_HEIGHT = 25;
-    //uint16_t* const VGA_MEMORY = (uint16_t*)0x000B8000;
-
-    const uint8_t CUR_LOC_HI = 0x0E;
-    const uint8_t CUR_LOC_LO = 0x0F;
-
-    /*const uintptr_t CRT_BASE = 0x03B4;
+    constexpr const uint16_t CRT_PORT = 0x03D4;
     
-    void* const MISC_IO_READ = (void*)0x03CC;
-    void* const MISC_IO_WRIT = (void*)0x03C2;
+    constexpr const uint8_t CRT_CURSOR_HI = 0x0E;
+    constexpr const uint8_t CRT_CURSOR_LO = 0x0F;
 
-    const uint8_t IO_ADDR_SEL = 0x01;*/
+    constexpr const int CRT_WIDTH = 80;
+    constexpr const int CRT_HEIGHT = 25;
 
-    uint16_t terminal_io = 0;
-
-    /************************************************************************************************************/
-
-    int terminal_row;
-    int terminal_column;
-    uint8_t terminal_color;
-    uint16_t* terminal_buffer;
-
-    //bus* crt_bus;
-
-    //uint8_t* crtr_addr;
-    //uint8_t* crtr_data;
+    constexpr const size_t CRT_CELL_COUNT = CRT_WIDTH * CRT_HEIGHT;
 
     /************************************************************************************************************/
     /*
-     * Sets the cursor's current location
+     * Local static variables
      */
-    static void set_loc(int col, int row)
-    {
-        //if (crt_bus)
-        {
-            uint16_t tmp = row * VGA_WIDTH + col;
 
-            //crt_bus->byte(0, CUR_LOC_HI);
-            //crt_bus->byte(1, (uint8_t)((tmp >> 8) & 0xFF));
-
-            //crt_bus->byte(0, CUR_LOC_LO);
-            //crt_bus->byte(1, (uint8_t)(tmp & 0xFF));
-            outb(terminal_io, CUR_LOC_HI);
-            outb(terminal_io + 1, (uint8_t)((tmp >> 8) & 0xFF));
-
-            outb(terminal_io, CUR_LOC_LO);
-            outb(terminal_io + 1, (uint8_t)(tmp & 0xFF));
-        }
-
-        terminal_column = col;
-        terminal_row = row;
-    }
-
-    /************************************************************************************************************/
-#if 0
-/*
- * Get's the current cursor location.
- * (For reference)
- */
-    static uint16_t get_loc()
-    {
-        uint8_t b[2];
-
-        //crt_bus->byte(0, CUR_LOC_LO);
-        //b[0] = crt_bus->byte(1);
-
-        //crt_bus->byte(0, CUR_LOC_HI);
-        //b[1] = crt_bus->byte(1);
-
-        outb(terminal_io, CUR_LOC_LO);
-        b[0] = inb(terminal_io + 1);
-
-        outb(terminal_io, CUR_LOC_HI);
-        b[1] = inb(terminal_io + 1);
-
-
-        return ((uint16_t)(b[1]) << 8 | b[0]);
-    }
-#endif
+    uint32_t s_cursorPos = 0;
 
     /************************************************************************************************************/
     /*
-     * Scrolls the screen upwards one row.
+     * Utility functions
      */
-    static void scroll_up(void)
+    constexpr uint16_t MakeEntry(char chr, uint8_t color)
     {
-        const unsigned int last_line = (VGA_HEIGHT - 1) * VGA_WIDTH;
-        const uint16_t entry = vga_entry(' ', terminal_color);
+        return (chr | (color << 8));
+    }
 
-        memcpy(terminal_buffer, terminal_buffer + VGA_WIDTH, last_line * 2);
+    constexpr uint8_t MakeColor(uint8_t foreground, uint8_t background)
+    {
+        return (background & 0x0F) << 4 | (foreground & 0x0F);
+    }
 
-        /* Fill with term color spaces at the bottom. */
-        //_memsetw(terminal_buffer + last_line, entry, VGA_WIDTH);
-        for (int i = 0; i < VGA_WIDTH; ++i)
-            terminal_buffer[last_line + i] = entry;
+    constexpr uint8_t DEFAULT_COLOR = MakeColor(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+
+    constexpr uint16_t BLANK_ENTRY = MakeEntry(' ', DEFAULT_COLOR);
+
+    /************************************************************************************************************/
+
+    inline
+    uint8_t GetCRTRegister(int reg)
+    {
+        outb(CRT_PORT, reg);
+        return inb(CRT_PORT + 1);
+    }
+
+    inline
+    void SetCRTRegister(int reg, uint8_t value)
+    {
+        outb(CRT_PORT, reg);
+        outb(CRT_PORT + 1, value);
+    }
+
+    /************************************************************************************************************/
+
+    void ReadCursor()
+    {
+        s_cursorPos =
+            GetCRTRegister(CRT_CURSOR_HI) << 8 |
+            GetCRTRegister(CRT_CURSOR_LO);
+
+        if (s_cursorPos >= CRT_CELL_COUNT)
+            s_cursorPos = 0;
+    }
+
+    void UpdateCursor()
+    {
+        SetCRTRegister(CRT_CURSOR_LO, s_cursorPos & 0x0000'00FF);
+        SetCRTRegister(CRT_CURSOR_HI, (s_cursorPos >> 8) & 0x0000'00FF);
+    }
+
+    inline int CursorRow()
+    {
+        return s_cursorPos / CRT_WIDTH;
+    }
+
+    inline int CursorCol()
+    {
+        return s_cursorPos % CRT_WIDTH;
+    }
+
+    /************************************************************************************************************/
+    /**
+     * @brief Scroll the screen by a number of lines.
+     */
+    static void Scroll(int lines)
+    {
+        if (lines == 0)
+            return; // Nothing to do.
+
+        int offset = CRT_WIDTH * lines;
+
+        memcpy(CRT_MEM, CRT_MEM + offset, (CRT_CELL_COUNT - offset) << 1);
+
+        // Fill remainder of screen with blanks
+        uint16_t *blank = CRT_MEM + CRT_CELL_COUNT - offset;
+
+        for (int i = 0; i < (lines * CRT_WIDTH); ++i)
+            blank[i] = BLANK_ENTRY;
     }
 }
 
@@ -124,41 +124,14 @@ namespace
 
 extern void keyboard_init();
 
-
-void terminal_pre_init(void)
-{
-    //crt_bus = nullptr;
-
-    terminal_row = 0;
-    terminal_column = 0;
-    terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-    terminal_buffer = ((uint16_t*)0x000B8000);
-
-    terminal_io = 0x03D4;
-
-    terminal_clear();
-
-    terminal_buffer[0] = vga_entry('C', vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
-
-    keyboard_init();
-}
-
 /********************************************************************************************************************/
 
 extern "C" void terminal_init(void)
 {
-#if 0
-    bus misc_io(MISC_IO_READ, IO_ADDR_SEL);
+    ReadCursor();
+    UpdateCursor();
 
-    uint8_t ioreg = misc_io.read1(0);
-
-    uintptr_t crt_base = CRT_BASE;
-
-    if (ioreg & IO_ADDR_SEL)
-        crt_base += 0x0020;
-
-    crt_bus = new bus((io_port_t)crt_base, 2);
-#endif
+    keyboard_init();
 }
 
 /********************************************************************************************************************/
@@ -167,99 +140,70 @@ extern "C" void terminal_init(void)
  */
 extern "C" void terminal_clear(void)
 {
-    //const uint16_t entry = vga_entry(' ', terminal_color);
-    //(void)entry;
+    s_cursorPos = 0;
 
-    //_memsetw(terminal_buffer, entry, VGA_WIDTH * VGA_HEIGHT);
+    for (size_t i = 0; i < CRT_CELL_COUNT; ++i)
+        CRT_MEM[i] = BLANK_ENTRY;
 
-    //set_loc(0, 0);
-
-    terminal_buffer[0] = vga_entry('B', vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
-}
-
-/********************************************************************************************************************/
-
-void terminal_dump(size_t v)
-{
-    const char *hex = "0123456789ABCDEF";
-
-    int idx = 0;
-
-    do
-    {
-        char c = hex[(v & 0x0F)];
-        terminal_buffer[idx++] = vga_entry(c, 0x07);
-        v >>= 4;
-    } while (v > 0);
+    UpdateCursor();
 }
 
 /********************************************************************************************************************/
 
 extern "C" void terminal_putchar(char c)
 {
-    size_t col = terminal_column;
-    size_t row = terminal_row;
-    int o;
+    int r;
 
     switch (c)
     {
     case '\007': /* Bell */
         break;
 
+    case 8:
+    case 127: // Backspace
+        if (s_cursorPos == 0)
+            return;
+
+        --s_cursorPos;
+        CRT_MEM[s_cursorPos] = BLANK_ENTRY;
+        break;
+
     case '\t': /* Tab */
-        o = col & 7;
-        o = o == 0 ? 8 : o;
+        r = (s_cursorPos % CRT_WIDTH) & 7;
+        r = r == 0 ? 8 : r;
 
-        for (int i = 0; i < o; ++i)
-            terminal_buffer[col + row * VGA_WIDTH] = vga_entry(' ', terminal_color);
+        for (int i = 0; i < r; ++i)
+            CRT_MEM[s_cursorPos + i] = BLANK_ENTRY;
 
-        col += o;
-
+        s_cursorPos += r;
         break;
 
     case '\r': /* CR */
-        col = 0;
+        s_cursorPos = CursorRow() * CRT_WIDTH;
         break;
 
     case '\n': /* LF */
-        ++row;
+        s_cursorPos = (CursorRow() + 1) * CRT_WIDTH + CursorCol();
         break;
 
     default:
-        if (c >= ' ')
-            terminal_buffer[col + row * VGA_WIDTH] = vga_entry(c, terminal_color);
-
-        ++col;
+        CRT_MEM[s_cursorPos] = MakeEntry(c, DEFAULT_COLOR);
+        ++s_cursorPos;
+        break;
     }
 
-    if (col >= VGA_WIDTH)
-    {
-        col -= VGA_WIDTH;
-        ++terminal_row;
-    }
+    // Figure out how much we need to scroll by.
+    for (r = 0; s_cursorPos >= CRT_CELL_COUNT; s_cursorPos -= CRT_WIDTH, ++r)
+        ;
 
-    while (row >= VGA_HEIGHT)
-    {
-        scroll_up();
-        --row;
-    }
-
-    set_loc(col, row);
+    Scroll(r);
+    UpdateCursor();
 }
 
 /********************************************************************************************************************/
 
 extern "C" void terminal_write(const char* data, size_t size)
 {
-    /*
-    size_t i = 0;
-    while (i < size)
-    {
-        terminal_putchar(data[i]);
-        ++i;
-    }
-    */
-
     for (size_t i = 0; i < size; ++i)
         terminal_putchar(data[i]);
 }

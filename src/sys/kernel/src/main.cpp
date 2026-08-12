@@ -129,8 +129,7 @@ extern "C" void kmain(void)
 
     const char msg[64] = "Hello world from kernel space!\r\n";
 
-    terminal_pre_init();
-    //terminal_init();
+    terminal_init();
     
     size_t len = strnlen(msg, sizeof(msg));
     

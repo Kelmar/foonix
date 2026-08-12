@@ -278,7 +278,6 @@ namespace
     int ProcessRegular(int scanCode)
     {
         if (has_any(s_shift, ShiftFlags::Alt | ShiftFlags::Ctrl))
-        //if (((s_shift & ShiftFlags::Alt) != 0) || ((s_shift & ShiftFlags::Ctrl) != 0))
             return -1;
 
         bool shifted = has_flags(s_shift, ShiftFlags::Shift);
