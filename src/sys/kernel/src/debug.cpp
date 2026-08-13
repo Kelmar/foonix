@@ -14,15 +14,11 @@ namespace
 {
     void TestCommand(const util::span<char *> &args)
     {
-        console::putstr("test command\r\n");
-        console::putstr("Args:\r\n");
+        console << "test command\r\n";
+        console << "Args:\r\n";
 
         for (auto arg : args)
-        {
-            console::putstr("  ");
-            console::putstr(arg);
-            console::putstr("\r\n");
-        }
+            console << "  " << arg << "\r\n";
     }
 }
 
@@ -46,14 +42,20 @@ namespace
         DebugFn callback;
     };
 
+    /// @brief Static null terminated list of commands.
     DebugCommand s_commands[] =
     {
         { "test", TestCommand },
-        { 0, 0 }
+        { 0, 0 } // terminator
     };
 
     /************************************************************************************************************/
-
+    /**
+     * @brief Dispatch the command found in s_debugArgs[0].
+     *
+     * If there are no arguments in the s_debugArgs list (i.e. no command... (i.i.e. an empty line)), then the
+     * function does nothing.
+     */
     void dispatch()
     {
         if (s_debugArgCount == 0)
@@ -73,7 +75,19 @@ namespace
     }
 
     /************************************************************************************************************/
-
+    /**
+     * @brief Derpy debug shell parser.
+     *
+     * A simple parser that splits along white spaces.  The arguments will be trimmed of leading and trailing
+     * white space in the g_debugArgs list.
+     *
+     * The first "argument" is the command itself.
+     *
+     * This function operates in place without doing any memory allocations, thus the g_debugArgs all point
+     * into the s_debugCmd buffer.  As a result the s_debugCmd buffer is destroyed during the parsing process.
+     *
+     * This function does not handle any complex parsing; it doesn't deal with quotes or other such things.
+     */
     void parse()
     {
         bool inArg = false;
@@ -96,6 +110,7 @@ namespace
             {
                 if (inArg)
                 {
+                    // First space after non-space character.
                     s_debugCmd[i] = '\0';
                     ++s_debugArgCount;
                     inArg = false;
@@ -106,6 +121,7 @@ namespace
 
             if (!inArg)
             {
+                // First non-space character after space.
                 s_debugArgs[s_debugArgCount] = &s_debugCmd[i];
                 inArg = true;
             }
@@ -143,13 +159,13 @@ void Debug::vPrintF(const char *fmt, va_list args)
 
 void Debug::shell()
 {
-    console::putstr("Welcome to kernel debug land.\r\n");
+    console << "Welcome to kernel debug land.\r\n";
 
     while (true)
     {
-        console::putstr("\nkdbg> ");
+        console << "\nkdbg> ";
 
-        if (!console::get_line(s_debugCmd, sizeof(s_debugCmd)))
+        if (!console.get_line(s_debugCmd, sizeof(s_debugCmd)))
             continue;
 
         parse();

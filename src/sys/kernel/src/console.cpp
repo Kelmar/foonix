@@ -10,51 +10,49 @@
 
 /********************************************************************************************************************/
 
-namespace
+Console console;
+
+/********************************************************************************************************************/
+
+void Console::pause_check()
 {
-    bool s_paged = false;
-    int s_lineCount = 0;
+    if (!m_paged)
+        return;
 
-    void pause_check()
-    {
-        if (!s_paged)
-            return;
+    if (++m_lineCount < 20)
+        return;
 
-        if (++s_lineCount < 20)
-            return;
+    m_lineCount = 0;
+    terminal_writestr("PAUSED\n");
 
-        s_lineCount = 0;
-        terminal_writestr("PAUSED\n");
-
-        while (console::getchar() <= 0)
-            cpu::pause();
-    }
+    while (getchar() <= 0)
+        cpu::pause();
 }
 
 /********************************************************************************************************************/
 
-void console::init()
+void Console::init()
 {
     terminal_init();
 }
 
 /********************************************************************************************************************/
 
-bool console::set_paged(bool value)
+bool Console::set_paged(bool value)
 {
-    bool res = s_paged;
+    bool res = m_paged;
 
-    s_paged = value;
+    m_paged = value;
 
-    if (s_paged)
-        s_lineCount = 0;
+    if (m_paged)
+        m_lineCount = 0;
 
     return res;
 }
 
 /********************************************************************************************************************/
 
-void console::putchar(char c)
+void Console::putchar(char c)
 {
     terminal_putchar(c);
 
@@ -64,21 +62,21 @@ void console::putchar(char c)
 
 /********************************************************************************************************************/
 
-void console::putstr(const char *str)
+void Console::putstr(const char *str)
 {
     terminal_writestr(str);
 }
 
 /********************************************************************************************************************/
 
-int console::getchar()
+int Console::getchar()
 {
     return terminal_getchar();
 }
 
 /********************************************************************************************************************/
 
-size_t console::get_line(util::span<char> &buf)
+size_t Console::get_line(util::span<char> &buf)
 {
     const size_t max = buf.size() - 1;
 

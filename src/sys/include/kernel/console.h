@@ -8,12 +8,33 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <concepts>
+
 #include <kernel/span.h>
 
 /********************************************************************************************************************/
 
-namespace console
+class Console
 {
+private:
+    Console(const Console &) = delete;
+    Console(Console &&) = delete;
+
+private:
+    bool m_paged;
+    int m_lineCount;
+
+    void pause_check();
+
+public:
+    /* constructor */ Console() noexcept
+        : m_paged(false)
+        , m_lineCount(0)
+    {
+    }
+
+    ~Console() noexcept { }
+
     void init();
     
     // Output
@@ -33,6 +54,34 @@ namespace console
         util::span<char> data(buf, size);
         return get_line(data);
     }
+};
+
+extern Console console;
+
+/********************************************************************************************************************/
+// Operators for outputing a basic types.
+
+inline
+Console &operator <<(Console &cons, const char *str)
+{
+    cons.putstr(str);
+    return cons;
+}
+
+/********************************************************************************************************************/
+// Operator for outputing classes that implement to_stream() method.
+
+template <typename T>
+concept serializable = requires(T a, Console c)
+{
+    { a.to_stream(c) } -> std::same_as<Console &>;
+};
+
+template <serializable T>
+inline 
+Console &operator <<(Console &cons, const T &obj)
+{
+    return obj.to_stream(cons);
 }
 
 /********************************************************************************************************************/

@@ -21,6 +21,9 @@ namespace Debug
      */
     void vPrintF(const char *fmt, va_list args);
 
+    /**
+     * @brief Debug shell loop
+     */
     void shell();
 }
 
