@@ -22,7 +22,7 @@ set(stdio_srcs
 set(string_srcs
     _s_strncat.c _s_strncpy.c
     memchr.c memcmp.c memcpy.c memmove.c memset.c
-    strlen.c strncat.c strncpy.c strnlen.c
+    strlen.c strncat.c strncpy.c strnlen.c strncmp.c
 )
 
 list(TRANSFORM stdio_srcs PREPEND "stdio/")

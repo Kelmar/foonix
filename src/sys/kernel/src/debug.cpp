@@ -1,11 +1,30 @@
 /********************************************************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 #include <kernel/arch/dconsole.h>
 #include <kernel/console.h>
 #include <kernel/debug.h>
+
+/********************************************************************************************************************/
+
+namespace
+{
+    void TestCommand(const util::span<char *> &args)
+    {
+        console::putstr("test command\r\n");
+        console::putstr("Args:\r\n");
+
+        for (auto arg : args)
+        {
+            console::putstr("  ");
+            console::putstr(arg);
+            console::putstr("\r\n");
+        }
+    }
+}
 
 /********************************************************************************************************************/
 
@@ -19,6 +38,20 @@ namespace
 
     int s_debugArgCount = 0;
 
+    typedef void (*DebugFn)(const util::span<char *> &);
+
+    struct DebugCommand
+    {
+        const char *text;
+        DebugFn callback;
+    };
+
+    DebugCommand s_commands[] =
+    {
+        { "test", TestCommand },
+        { 0, 0 }
+    };
+
     /************************************************************************************************************/
 
     void dispatch()
@@ -26,9 +59,17 @@ namespace
         if (s_debugArgCount == 0)
             return;
 
-        console::putstr("Command: ");
-        console::putstr(s_debugArgs[0]);
-        console::putstr("\r\n");
+        for (size_t i = 0; s_commands[i].text; ++i)
+        {
+            int res = strncmp(s_debugArgs[0], s_commands[i].text, sizeof(s_debugCmd));
+
+            if (res == 0)
+            {
+                util::span<char *> args(s_debugArgs, s_debugArgCount);
+                s_commands[i].callback(args);
+                break;
+            }
+        }
     }
 
     /************************************************************************************************************/
