@@ -6,10 +6,15 @@
 
 /********************************************************************************************************************/
 
+#include <kernel/kernel.h>
 #include <kernel/types.h>
 
 #include <type_traits>
 #include <concepts>
+#include <expected>
+#include <string_view>
+
+#include <kernel/span.h>
 
 /********************************************************************************************************************/
 
@@ -37,6 +42,8 @@ namespace util
 
     // Add alignment utilities.
     #include <kernel/utils/align.h>
+
+    std::expected<int, Kernel::ErrorCode> parseInt(const std::string_view &);
 }
 
 #include <kernel/utils/flags.h>

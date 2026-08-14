@@ -19,11 +19,11 @@ void Console::pause_check()
     if (!m_paged)
         return;
 
-    if (++m_lineCount < 20)
+    if (++m_lineCount < 35)
         return;
 
     m_lineCount = 0;
-    terminal_writestr("PAUSED\n");
+    terminal_writestr("PAUSED\r\n");
 
     while (getchar() <= 0)
         cpu::pause();
@@ -64,7 +64,65 @@ void Console::putchar(char c)
 
 void Console::putstr(const char *str)
 {
-    terminal_writestr(str);
+    putstr(std::string_view(str));
+}
+
+/********************************************************************************************************************/
+
+void Console::putstr(const std::string_view &v)
+{
+    if (v.empty())
+        return;
+
+    for (auto c : v)
+        putchar(c);
+}
+
+/********************************************************************************************************************/
+
+void Console::putuint(unsigned int value, int radix /* = 10 */, int width /* = 0 */)
+{
+    char buf[32];
+    buf[31] = '\0';
+    int i = 31;
+
+    char pad = ' ';
+
+    if (width < 0)
+    {
+        pad = '0';
+        width = -width;
+    }
+
+    if (value == 0)
+        buf[--i] = '0';
+    else
+    {
+        while ((value > 0) && (i >= 0))
+        {
+            int r = value % radix;
+            value /= radix;
+            buf[--i] = r + ((r < 10) ? 0x30 : 0x37);
+        }
+    }
+
+    while ((width > (31 - i)) && (i >= 0))
+        buf[--i] = pad;
+
+    putstr(buf + i);
+}
+
+/********************************************************************************************************************/
+
+void Console::putint(int value)
+{
+    if (value < 0)
+    {
+        putchar('-');
+        value = -value;
+    }
+
+    putuint(static_cast<unsigned int>(value));
 }
 
 /********************************************************************************************************************/

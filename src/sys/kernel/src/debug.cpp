@@ -4,21 +4,112 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <string_view>
+
 #include <kernel/arch/dconsole.h>
+#include <kernel/kernel_args.h>
 #include <kernel/console.h>
 #include <kernel/debug.h>
+#include <kernel/utilities.h>
 
 /********************************************************************************************************************/
 
 namespace
 {
-    void TestCommand(const util::span<char *> &args)
+    void VarsCommand(size_t, const std::string_view[])
     {
-        console << "test command\r\n";
-        console << "Args:\r\n";
+        console << "kernel_start: 0x" << hex(g_kernelArguments.KernelCode.Base, -8) << "\r\n";
+        console << "kernel_end: 0x" << hex(g_kernelArguments.KernelCode.End(), -8) << "\r\n";
+    }
 
-        for (auto arg : args)
-            console << "  " << arg << "\r\n";
+    void MMapCommand(size_t, const std::string_view[])
+    {
+        console
+            << "Free Memory\r\n"
+            << "    Start      Length\r\n";
+
+        for (uint32_t i = 0; i < g_kernelArguments.MemoryMapEntries; ++i)
+        {
+            const MemoryRange &mem = g_kernelArguments.MemoryMap[i];
+
+            console << "    0x" << hex(mem.Base, -8) << " 0x" << hex(mem.Length, -8) << "\r\n";
+        }
+    }
+
+    void DumpCommand(size_t argCount, const std::string_view args[])
+    {
+        if (argCount < 3)
+        {
+            console
+                << "Not enough arguments." << "\r\n"
+                << "dump <start> <count>\r\n";
+
+            return;
+        }
+
+        auto result = util::parseInt(args[1]);
+
+        if (!result)
+        {
+            console << "Invalid start: " << args[1] << "\r\n";
+            return;
+        }
+
+        paddr_t start = result.value();
+
+        result = util::parseInt(args[2]);
+
+        if (!result)
+        {
+            console << "Invalid length: " << args[2] << "\r\n";
+            return;
+        }
+
+        size_t length = result.value();
+
+        if (length == 0)
+        {
+            console << "Invalid length: " << args[2] << "\r\n";
+            return;
+        }
+
+        console.set_paged(true);
+        console << "Memory Dump 0x" << hex(start, -8) << "-0x" << hex(start + length, -8) << "\r\n";
+
+        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(start);
+
+        char buf[17];
+        int mod;
+
+        buf[16] = '\0';
+
+        for (size_t i = 0; i < length; ++i, ++ptr)
+        {
+            mod = i & 15;
+
+            if (mod == 0)
+            {
+                if (i > 0)
+                    console << "| " << buf << "\r\n";
+
+                console << hex(start + i, -8) << " | ";
+            }
+            else if (mod == 8)
+                console << "- ";
+
+            uint8_t val = *ptr;
+            buf[mod] = ((val >= 32) && (val < 127)) ? val : '.';
+
+            console << hex(val, -2) << " ";
+        }
+
+        if (mod != 0)
+        {
+            buf[mod + 1] = '\0';
+            console << "| " << buf << "\r\n";
+        }
+
+        console.set_paged(false);
     }
 }
 
@@ -30,11 +121,11 @@ namespace
 
     char s_debugCmd[512];
 
-    char *s_debugArgs[ARGS_SZ];
+    std::string_view s_debugArgs[ARGS_SZ];
 
     int s_debugArgCount = 0;
 
-    typedef void (*DebugFn)(const util::span<char *> &);
+    typedef void (*DebugFn)(size_t argCount, const std::string_view args[]);
 
     struct DebugCommand
     {
@@ -45,7 +136,9 @@ namespace
     /// @brief Static null terminated list of commands.
     DebugCommand s_commands[] =
     {
-        { "test", TestCommand },
+        { "dump", DumpCommand },
+        { "mmap", MMapCommand },
+        { "vars", VarsCommand },
         { 0, 0 } // terminator
     };
 
@@ -63,15 +156,16 @@ namespace
 
         for (size_t i = 0; s_commands[i].text; ++i)
         {
-            int res = strncmp(s_debugArgs[0], s_commands[i].text, sizeof(s_debugCmd));
+            int res = s_debugArgs[0].compare(s_commands[i].text);
 
             if (res == 0)
             {
-                util::span<char *> args(s_debugArgs, s_debugArgCount);
-                s_commands[i].callback(args);
-                break;
+                s_commands[i].callback(s_debugArgCount, s_debugArgs);
+                return;
             }
         }
+
+        console << "Unknown command: " << s_debugArgs[0] << "\r\n";
     }
 
     /************************************************************************************************************/
@@ -83,9 +177,6 @@ namespace
      *
      * The first "argument" is the command itself.
      *
-     * This function operates in place without doing any memory allocations, thus the g_debugArgs all point
-     * into the s_debugCmd buffer.  As a result the s_debugCmd buffer is destroyed during the parsing process.
-     *
      * This function does not handle any complex parsing; it doesn't deal with quotes or other such things.
      */
     void parse()
@@ -95,9 +186,9 @@ namespace
         s_debugArgCount = 0;
 
         for (int i = 0; i < ARGS_SZ; ++i)
-            s_debugArgs[i] = nullptr;
+            s_debugArgs[i] = std::string_view();
 
-        size_t i;
+        size_t i, start = 0;
 
         for (i = 0; i < (sizeof(s_debugCmd) - 1) && (s_debugArgCount < ARGS_SZ); ++i)
         {
@@ -111,7 +202,8 @@ namespace
                 if (inArg)
                 {
                     // First space after non-space character.
-                    s_debugCmd[i] = '\0';
+
+                    s_debugArgs[s_debugArgCount] = std::string_view(s_debugCmd + start, i - start);
                     ++s_debugArgCount;
                     inArg = false;
                 }
@@ -122,15 +214,17 @@ namespace
             if (!inArg)
             {
                 // First non-space character after space.
-                s_debugArgs[s_debugArgCount] = &s_debugCmd[i];
+                start = i;
                 inArg = true;
             }
         }
 
         if (inArg)
+        {
+            // End of string, add to list
+            s_debugArgs[s_debugArgCount] = std::string_view(s_debugCmd + start, i - start);
             ++s_debugArgCount;
-
-        s_debugCmd[i] = '\0';
+        }
     }
 }
 
@@ -163,7 +257,7 @@ void Debug::shell()
 
     while (true)
     {
-        console << "\nkdbg> ";
+        console << "\r\nkdbg> ";
 
         if (!console.get_line(s_debugCmd, sizeof(s_debugCmd)))
             continue;

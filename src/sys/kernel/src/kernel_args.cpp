@@ -5,8 +5,6 @@
 #include <kernel/kernel_args.h>
 #include <kernel/debug.h>
 
-#include "cpu.h"
-
 #include <algorithm>
 #include <string.h>
 

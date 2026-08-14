@@ -156,7 +156,6 @@ add_library(kernel_args_under_test STATIC
 
 target_include_directories(kernel_args_under_test PRIVATE
     "${SYS_INCLUDE_DIR}"
-    "${KERNEL_DIR}/arch/i386/include"
 )
 
 target_compile_options(kernel_args_under_test PRIVATE
@@ -178,3 +177,25 @@ target_link_options(kernel_args_tests PRIVATE ${SANITIZE_FLAGS})
 target_link_libraries(kernel_args_tests PRIVATE kernel_args_under_test kernel_args_stubs test_io)
 
 add_test(NAME kernel_args_tests COMMAND kernel_args_tests)
+
+# =========================================================================
+# sys/include/string_view -- header-only, so there's no "under test" source
+# to compile separately: the test file includes the real header directly.
+# It still needs a real memcmp/memchr/strlen/memcpy behind it (not just
+# declarations) and kpanic() for its panic paths, so this links against the
+# same libk_under_test/kstubs used above -- which also means it inherits
+# ASan/UBSan, catching real out-of-bounds reads rather than only wrong
+# answers.
+# =========================================================================
+
+add_executable(string_view_tests
+    test_string_view.cpp
+)
+
+target_include_directories(string_view_tests PRIVATE "${SYS_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_definitions(string_view_tests PRIVATE ${LIBK_SYMBOL_RENAMES})
+target_compile_options(string_view_tests PRIVATE -Wall -Wextra -g ${SANITIZE_FLAGS})
+target_link_options(string_view_tests PRIVATE ${SANITIZE_FLAGS})
+target_link_libraries(string_view_tests PRIVATE libk_under_test kstubs test_io)
+
+add_test(NAME string_view_tests COMMAND string_view_tests)

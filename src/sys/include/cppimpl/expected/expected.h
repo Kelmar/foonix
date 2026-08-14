@@ -6,9 +6,7 @@
 
 /********************************************************************************************************************/
 
-// Not crazy about this being here, but needed for now.
-extern "C"
-void kpanic(const char *message);
+#include <cppimpl/fail.h>
 
 // Not a fully standards compliant version, but should suffice for our needs.
 

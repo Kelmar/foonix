@@ -103,6 +103,8 @@ public:
     void ShowAvailableMemory(void);
 };
 
+extern KernelArgs g_kernelArguments;
+
 /********************************************************************************************************************/
 
 #endif /* __FOONIX_KERNEL_ARGS_H__ */

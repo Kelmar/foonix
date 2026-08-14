@@ -33,7 +33,7 @@
 /**
  * @brief Global kernel arguments structure.
  */
-KernelArgs g_KernelArguments;
+KernelArgs g_kernelArguments;
 
 /********************************************************************************************************************/
 /**
@@ -48,9 +48,11 @@ void preinit(void)
 {
     DebugConsole::Init1(); // Non allocating initialization.
 
+    console.init();
+
     Debug::PrintF("ENTER: preinit()\r\n");
 
-    arch::Init(&g_KernelArguments);
+    arch::Init(&g_kernelArguments);
 
     vmm::Init();
 

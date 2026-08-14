@@ -39,6 +39,9 @@ namespace Kernel
 
         /// @brief A resource of some sort was not found.
         NotFound = 5,
+
+        /// @brief An argument was of an invalid format.
+        InvalidFormat = 6,
     };
 }
 

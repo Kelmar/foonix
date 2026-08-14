@@ -19,8 +19,6 @@
 
 /********************************************************************************************************************/
 
-extern KernelArgs g_KernelArguments;
-
 PageBlock NullBlock(0, 0);
 
 using namespace vmm;
@@ -41,9 +39,9 @@ namespace
 
     void InitBootPages()
     {
-        for (size_t i = 0; i < g_KernelArguments.MemoryMapEntries; ++i)
+        for (size_t i = 0; i < g_kernelArguments.MemoryMapEntries; ++i)
         {
-            MemoryRange &memoryRange = g_KernelArguments.MemoryMap[i];
+            MemoryRange &memoryRange = g_kernelArguments.MemoryMap[i];
 
             for (size_t offset = 0; offset < memoryRange.Length; offset += PAGE_SIZE)
             {
@@ -62,7 +60,7 @@ namespace
 
 void vmm::Init()
 {
-    g_KernelArguments.ShowAvailableMemory();
+    g_kernelArguments.ShowAvailableMemory();
 
     /*
     InitBootPages();

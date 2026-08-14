@@ -1,0 +1,425 @@
+/********************************************************************************************************************/
+/********************************************************************************************************************/
+
+#ifndef _X_STRING_VIEW
+#define _X_STRING_VIEW 1
+
+/********************************************************************************************************************/
+
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <cppimpl/fail.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <type_traits>
+#include <iterator>
+#include <utility>
+
+namespace std
+{
+    template <class TChar> //, class TTraits = std::char_traits<TChar>>
+    class basic_string_view
+    {
+    public:
+        //typedef TTraits      type_traits;
+
+        typedef TChar        value_type;
+        typedef TChar *      pointer;
+        typedef const TChar *const_pointer;
+        typedef TChar &      reference;
+        typedef const TChar &const_reference;
+
+        typedef const_pointer iterator;
+        typedef const_pointer const_iterator;
+
+        typedef std::reverse_iterator<iterator>       reverse_iterator;
+        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+        
+        typedef size_t       size_type;
+        typedef ptrdiff_t    difference_type;
+
+        static constexpr size_type npos = size_type(-1);
+
+    private:
+        const_pointer m_data;
+        size_type     m_length;
+
+        constexpr size_type trim_count(size_type pos, size_type count) const
+        {
+            return (count == npos) ? (m_length - pos) :
+                ((count + pos) >= m_length ? (m_length - pos) : count);
+        }
+
+    public:
+        constexpr basic_string_view() noexcept
+            : m_data(nullptr), m_length(0) { }
+
+        constexpr basic_string_view(const_pointer data, size_type length) noexcept
+            : m_data(data), m_length(length) { }
+
+        constexpr basic_string_view(const_pointer data) noexcept
+            : m_data(data), m_length(strlen(data)) { }
+
+        constexpr basic_string_view(const basic_string_view &rhs) noexcept
+            : m_data(rhs.m_data), m_length(rhs.m_length) { }
+
+#if 0
+        constexpr explicit basic_string_view(basic_string_view &&rhs) noexcept
+            : m_data(nullptr), m_length(0)
+        {
+            std::swap(m_data, rhs.m_data);
+            std::swap(m_length, rhs.m_length);
+        }
+#endif
+
+        basic_string_view(nullptr_t) = delete;
+        
+        constexpr bool empty() const noexcept { return m_length == 0; }
+
+        constexpr size_type size() const noexcept { return m_length; }
+        constexpr size_type length() const noexcept { return m_length; }
+        constexpr size_type max_size() const noexcept { return (npos - 1); }
+
+        constexpr const_iterator  begin() const noexcept { return m_data; }
+        constexpr const_iterator cbegin() const noexcept { return m_data; }
+
+        constexpr const_reverse_iterator  rbegin() const noexcept { return const_reverse_iterator(begin()); }
+        constexpr const_reverse_iterator rcbegin() const noexcept { return const_reverse_iterator(cbegin()); }
+
+        constexpr const_iterator  end() const noexcept { return m_data + m_length; }
+        constexpr const_iterator cend() const noexcept { return m_data + m_length; }
+
+        constexpr const_reverse_iterator  rend() const noexcept { return const_reverse_iterator(end()); }
+        constexpr const_reverse_iterator rcend() const noexcept { return const_reverse_iterator(cend()); }
+
+        const_reference at(size_type index) const
+        {
+            if (index >= m_length)
+                kpanic("Attempt to get at past length of basic_string_view.");
+
+            return m_data[index];
+        }
+
+        constexpr const_pointer data() const noexcept { return m_data; }
+
+        value_type front() const
+        {
+            if (empty())
+                kpanic("Attempt to get front of empty basic_string_view");
+
+            return m_data[0];
+        }
+
+        value_type back() const
+        {
+            if (empty())
+                kpanic("Attempt to get back of empty basic_string_view");
+
+            return m_data[m_length - 1];
+        }
+
+        constexpr void remove_prefix(size_type count)
+        {
+            count = (count > m_length) ? m_length : count;
+            m_data += count;
+            m_length -= count;
+        }
+
+        constexpr void remove_suffix(size_type count)
+        {
+            count = (count > m_length) ? m_length : count;
+            m_length -= count;
+        }
+
+        constexpr void swap(basic_string_view &rhs) noexcept
+        {
+            std::swap(m_data, rhs.m_data);
+            std::swap(m_length, rhs.m_length);
+        }
+
+        size_type copy(pointer dest, size_type count, size_type pos = 0) const
+        {
+            if (pos > m_length)
+                kpanic("Request to copy past end of basic_string_view");
+
+            count = trim_count(pos, count);
+            
+            if (count == 0)
+                return 0;
+
+            memcpy(dest, m_data + pos, count * sizeof(value_type));
+
+            return count;
+        }
+
+        basic_string_view subview(size_type pos = 0, size_type count = npos) const
+        {
+            if (pos > m_length)
+                kpanic("Request to get sub string past end of basic_string_view");
+
+            count = trim_count(pos, count);
+
+            return basic_string_view(m_data + pos, count);
+        }
+
+        basic_string_view substr(size_type pos = 0, size_type count = npos) const
+        {
+            return subview(pos, count);
+        }
+
+        const_reference operator[](size_type index) const { return at(index); }
+
+        basic_string_view &operator =(const basic_string_view &rhs) noexcept
+        {
+            m_data = rhs.m_data;
+            m_length = rhs.m_length;
+
+            return *this;
+        }
+
+        constexpr int compare(const value_type *data, size_type length) const noexcept
+        {
+            if ((m_data == data) && (m_length == length))
+                return 0; // Same view of same memory.
+
+            size_type x = min(m_length, length);
+            int cmp = memcmp(m_data, data, x);
+            return (cmp != 0) ? cmp : (m_length - length);
+        }
+
+        constexpr int compare(const value_type *data) const
+        {
+            if (m_data == data)
+                return 0;
+
+            size_type length = strlen(data);
+            return compare(data, length);
+        }
+
+        constexpr int compare(const basic_string_view &rhs) const noexcept
+        {
+            return compare(rhs.m_data, rhs.m_length);
+        }
+        
+        constexpr bool operator ==(const basic_string_view &rhs) const noexcept { return (compare(rhs) == 0); }
+        constexpr bool operator !=(const basic_string_view &rhs) const noexcept { return (compare(rhs) != 0); }
+        constexpr bool operator < (const basic_string_view &rhs) const noexcept { return (compare(rhs) <  0); }
+        constexpr bool operator <=(const basic_string_view &rhs) const noexcept { return (compare(rhs) <= 0); }
+        constexpr bool operator > (const basic_string_view &rhs) const noexcept { return (compare(rhs) >  0); }
+        constexpr bool operator >=(const basic_string_view &rhs) const noexcept { return (compare(rhs) >= 0); }
+
+        constexpr bool starts_with(value_type ch) const noexcept
+        {
+            if (m_length == 0)
+                return false;
+
+            return m_data[0] == ch;
+        }
+
+        constexpr bool starts_with(basic_string_view v) const noexcept
+        {
+            if ((m_length == 0) || (m_length < v.m_length))
+                return m_length == v.m_length;
+
+            return memcmp(m_data, v.m_data, v.m_length) == 0;
+        }
+
+        constexpr bool starts_with(const value_type *s) const
+        {
+            return starts_with(basic_string_view(s));
+        }
+
+        // Non-standard extension.
+        constexpr bool starts_with(const value_type *s, size_type length) const noexcept
+        {
+            if ((m_length == 0) || (m_length < length))
+                return m_length == length;
+
+            return starts_with(basic_string_view(s, length));
+        }
+
+        constexpr bool ends_with(value_type ch) const noexcept
+        {
+            if (m_length == 0)
+                return false;
+
+            return m_data[m_length - 1] == ch;
+        }
+
+        constexpr bool ends_with(basic_string_view v) const noexcept
+        {
+            if ((m_length == 0) || (m_length < v.m_length))
+                return m_length == v.m_length;
+
+            size_type i = m_length - v.m_length;
+            return memcmp(m_data + i, v.m_data, v.m_length) == 0;
+        }
+
+        constexpr bool ends_with(const value_type *s) const
+        {
+            // There's probably a more efficient way to do this, this will have an O(n * 2) complexity.
+            return ends_with(basic_string_view(s));
+        }
+
+        // Non-standard extension
+        constexpr bool ends_with(const value_type *s, size_type length) const noexcept
+        {
+            if ((m_length == 0) || (m_length < length))
+                return false;
+
+            return ends_with(basic_string_view(s, length));
+        }
+
+        constexpr size_type find(value_type ch, size_type pos = 0) const noexcept
+        {
+            if (pos >= m_length)
+                return npos;
+
+            const_pointer p = reinterpret_cast<const_pointer>(memchr(m_data + pos, ch, m_length - pos));
+            return !p ? npos : static_cast<size_type>(p - m_data);
+        }
+
+        constexpr size_type find(basic_string_view v, size_type pos = 0) const noexcept
+        {
+            if ((pos >= m_length) || v.empty())
+                return npos;
+
+            for (size_type i = pos; (i + v.size()) <= m_length; ++i)
+            {
+                int cmp = memcmp(m_data + i, v.m_data, v.size());
+
+                if (cmp == 0)
+                    return i;
+            }
+
+            return npos;
+        }
+
+        constexpr size_type find(const_pointer s, size_type pos, size_type count) const
+        {
+            return find(basic_string_view(s, count), pos);
+        }
+
+        constexpr size_type find(const_pointer s, size_type pos = 0) const
+        {
+            return find(basic_string_view(s), pos);
+        }
+
+        constexpr size_type rfind(value_type ch, size_type pos = npos) const noexcept
+        {
+            pos = pos == npos ? (m_length - 1) : pos;
+
+            if (pos >= m_length)
+                return npos;
+
+            for (size_type i = pos; i < m_length; --i)
+            {
+                if (m_data[i] == ch)
+                    return i;
+            }
+            
+            return npos;
+        }
+
+        constexpr size_type rfind(basic_string_view v, size_type pos = npos) const noexcept
+        {
+            pos = pos == npos ? (m_length - v.m_length) : pos;
+
+            if (pos >= m_length)
+                return npos;
+
+            for (size_type i = pos; i < m_length; --i)
+            {
+                if ((i + v.m_length) > m_length)
+                    continue; // Can't match.
+
+                int cmp = memcmp(m_data + i, v.m_data, v.size());
+
+                if (cmp == 0)
+                    return i;
+            }
+
+            return npos;
+        }
+
+        constexpr size_type rfind(const value_type *s, size_type pos, size_type count) const
+        {
+            return rfind(basic_string_view(s, count), pos);
+        }
+
+        constexpr size_type rfind(const value_type *s, size_type pos = npos) const
+        {
+            return rfind(basic_string_view(s), pos);
+        }
+
+        constexpr size_type find_first_of(value_type ch, size_type pos = 0) const noexcept { return find(ch, pos); }
+        constexpr size_type find_last_of(value_type ch, size_type pos = npos) const noexcept { return rfind(ch, pos); }
+
+        constexpr size_type find_first_of(basic_string_view v, size_type pos = 0) const noexcept
+        {
+            if ((pos >= m_length) || v.empty())
+                return npos;
+
+            for (size_type i = pos; i < m_length; ++i)
+            {
+                for (size_type j = 0; j < v.m_length; ++j)
+                {
+                    if (m_data[i] == v.m_data[j])
+                        return i;
+                }
+            }
+
+            return npos;
+        }
+
+        constexpr size_type find_first_of(const value_type *s, size_type pos, size_type count) const
+        {
+            return find_first_of(basic_string_view(s, count), pos);
+        }
+
+        constexpr size_type find_first_of(const value_type *s, size_type pos = 0) const
+        {
+            return find_first_of(basic_string_view(s), pos); 
+        }
+        
+        constexpr size_type find_last_of(basic_string_view v, size_type pos = npos) const noexcept
+        {
+            pos = pos == npos ? (m_length - 1) : pos;
+
+            if (pos >= m_length)
+                return npos;
+
+            for (size_type i = pos; i < m_length; --i)
+            {
+                for (size_type j = 0; j < v.m_length; ++j)
+                {
+                    if (m_data[i] == v.m_data[j])
+                        return i;
+                }
+            }
+
+            return npos;
+        }
+
+        constexpr size_type find_last_of(const value_type *s, size_type pos, size_type count) const
+        {
+            return find_last_of(basic_string_view(s, count), pos);
+        }
+
+        constexpr size_type find_last_of(const value_type *s, size_type pos = npos) const
+        {
+            return find_last_of(basic_string_view(s), pos);
+        }
+    };
+
+    typedef basic_string_view<char> string_view;
+}
+
+/********************************************************************************************************************/
+
+#endif /* _X_STRING_VIEW  */
+
+/********************************************************************************************************************/

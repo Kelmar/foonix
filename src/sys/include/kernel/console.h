@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include <concepts>
+#include <string_view>
 
 #include <kernel/span.h>
 
@@ -42,7 +43,11 @@ public:
 
     void putchar(char c);
     void putstr(const char *str);
+    void putstr(const std::string_view &v);
 
+    void putuint(unsigned int value, int radix = 10, int width = 0);
+    void putint(int value);
+    
     // Input
     int getchar();
 
@@ -68,6 +73,27 @@ Console &operator <<(Console &cons, const char *str)
     return cons;
 }
 
+inline
+Console &operator <<(Console &cons, unsigned int value)
+{
+    cons.putuint(value);
+    return cons;
+}
+
+inline
+Console &operator <<(Console &cons, int value)
+{
+    cons.putint(value);
+    return cons;
+}
+
+inline
+Console &operator <<(Console &cons, const std::string_view &str)
+{
+    cons.putstr(str);
+    return cons;
+}
+
 /********************************************************************************************************************/
 // Operator for outputing classes that implement to_stream() method.
 
@@ -83,6 +109,20 @@ Console &operator <<(Console &cons, const T &obj)
 {
     return obj.to_stream(cons);
 }
+
+struct hex
+{
+    unsigned int value;
+    int width;
+
+    hex(unsigned int v, int w = 0) : value(v), width(w) { }
+
+    Console &to_stream(Console &c) const
+    {
+        c.putuint(value, 16, width);
+        return c;
+    }
+};
 
 /********************************************************************************************************************/
 
