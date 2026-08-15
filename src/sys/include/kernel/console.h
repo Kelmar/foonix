@@ -42,7 +42,6 @@ public:
     bool set_paged(bool value);
 
     void putchar(char c);
-    void putstr(const char *str);
     void putstr(const std::string_view &v);
 
     void putuint(uint64_t value, int radix = 10, int width = 0);
@@ -65,13 +64,6 @@ extern Console console;
 
 /********************************************************************************************************************/
 // Operators for outputing a basic types.
-
-inline
-Console &operator <<(Console &cons, const char *str)
-{
-    cons.putstr(str);
-    return cons;
-}
 
 inline
 Console &operator <<(Console &cons, uint64_t value)
