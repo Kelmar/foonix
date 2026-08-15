@@ -12,14 +12,25 @@
 #include <kernel/debug.h>
 #include <kernel/utilities.h>
 
+#include "paging.h"
+
 /********************************************************************************************************************/
 
 namespace
 {
     void VarsCommand(size_t, const std::string_view[])
     {
-        console << "kernel_start: 0x" << hex(g_kernelArguments.KernelCode.Base, -8) << "\r\n";
-        console << "kernel_end: 0x" << hex(g_kernelArguments.KernelCode.End(), -8) << "\r\n";
+        paddr_t kstart = paging::AlignFloor(g_kernelArguments.KernelCode.Base);
+        paddr_t kend = paging::AlignCeiling(g_kernelArguments.KernelCode.End());
+
+        console
+            << "kernel_start: 0x" << hex(g_kernelArguments.KernelCode.Base, -8)
+            << " aligned: " << hex(kstart, -8)
+            << "\r\n";
+        console
+            << "kernel_end: 0x" << hex(g_kernelArguments.KernelCode.End(), -8)
+            << " aligned: " << hex(kend, -8)
+            << "\r\n";
     }
 
     void MMapCommand(size_t, const std::string_view[])

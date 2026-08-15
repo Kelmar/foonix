@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <string.h>
 
+#include "paging.h"
+
 /********************************************************************************************************************/
 
 void KernelArgs::SetCommandLine(const char *data, size_t sn)
@@ -168,7 +170,9 @@ bool KernelArgs::AddMemoryMap(paddr_t addr, size_t length)
  */
 void KernelArgs::KnockoutUsedMemory()
 {
-    paddr_t kernelEnd = KernelCode.End();
+    // Get page aligned start/end
+    paddr_t kernelStart = paging::AlignFloor(KernelCode.Base);
+    paddr_t kernelEnd = paging::AlignCeiling(KernelCode.End()) - 1;
 
     SortMappings();
 
@@ -177,13 +181,13 @@ void KernelArgs::KnockoutUsedMemory()
         MemoryRange &mapping = MemoryMap[i];
         paddr_t mapEnd = mapping.End();
 
-        if (mapEnd < KernelCode.Base)
+        if (mapEnd < kernelStart)
             continue; // Haven't reached kernel yet.
 
         if (mapping.Base > kernelEnd)
             break; // We're past the end of the kernel; no need to check other sorted mappings.
 
-        bool hasStartGap = KernelCode.Base > mapping.Base;
+        bool hasStartGap = kernelStart > mapping.Base;
         bool hasEndGap = kernelEnd < mapEnd;
 
         if (!hasStartGap && !hasEndGap)
@@ -197,7 +201,7 @@ void KernelArgs::KnockoutUsedMemory()
         if (hasStartGap)
         {
             // Adjust current entry for start gap.
-            mapping.Length = KernelCode.Base - mapping.Base;
+            mapping.Length = kernelStart - mapping.Base;
         }
         
         if (hasEndGap)

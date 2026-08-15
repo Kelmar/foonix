@@ -18,7 +18,7 @@
 #include "cpudefs.h"
 #include "multiboot.h"
 #include "arch_vm.h"
-#include "page.h"
+#include "paging.h"
 
 /********************************************************************************************************************/
 

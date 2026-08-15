@@ -3,7 +3,7 @@
 
 #include <kernel/kernel.h>
 
-#include "page_table.h"
+#include "paging.h"
 
 using namespace paging;
 

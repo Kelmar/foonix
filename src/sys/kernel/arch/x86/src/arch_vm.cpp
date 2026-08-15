@@ -10,6 +10,7 @@
 #include <kernel/debug.h>
 #include <kernel/vm.h>
 
+#include "asm.h"
 #include "cpu.h"
 
 #include "multiboot.h"
@@ -47,8 +48,8 @@ void arch::Init(KernelArgs *ka)
     Debug::PrintF("Boot Magic: 0x%08X\r\n", g_bootMagic);
     
     // Figure out where we live in physical memory.
-    ka->KernelCode.Base = reinterpret_cast<uintptr_t>(&kernel_start);
-    uintptr_t kend = reinterpret_cast<uintptr_t>(&kernel_end);
+    ka->KernelCode.Base  = reinterpret_cast<uintptr_t>(VIRT_2_PHYS(&kernel_start));
+    uintptr_t kend = reinterpret_cast<uintptr_t>(VIRT_2_PHYS(&kernel_end));
 
     ka->KernelCode.Length = kend - ka->KernelCode.Base;
 
