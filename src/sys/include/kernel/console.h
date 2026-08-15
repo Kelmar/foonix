@@ -45,8 +45,8 @@ public:
     void putstr(const char *str);
     void putstr(const std::string_view &v);
 
-    void putuint(unsigned int value, int radix = 10, int width = 0);
-    void putint(int value);
+    void putuint(uint64_t value, int radix = 10, int width = 0);
+    void putint(int64_t value);
     
     // Input
     int getchar();
@@ -74,18 +74,27 @@ Console &operator <<(Console &cons, const char *str)
 }
 
 inline
-Console &operator <<(Console &cons, unsigned int value)
+Console &operator <<(Console &cons, uint64_t value)
 {
     cons.putuint(value);
     return cons;
 }
 
 inline
-Console &operator <<(Console &cons, int value)
+Console &operator <<(Console &cons, int64_t value)
 {
     cons.putint(value);
     return cons;
 }
+
+inline Console &operator <<(Console &cons, uint32_t value) { return operator <<(cons, static_cast<uint64_t>(value)); }
+inline Console &operator <<(Console &cons,  int32_t value) { return operator <<(cons, static_cast<int64_t> (value)); }
+
+inline Console &operator <<(Console &cons, uint16_t value) { return operator <<(cons, static_cast<uint64_t>(value)); }
+inline Console &operator <<(Console &cons,  int16_t value) { return operator <<(cons, static_cast<int64_t> (value)); }
+
+inline Console &operator <<(Console &cons, uint8_t value) { return operator <<(cons, static_cast<uint64_t>(value)); }
+inline Console &operator <<(Console &cons,  int8_t value) { return operator <<(cons, static_cast<int64_t> (value)); }
 
 inline
 Console &operator <<(Console &cons, const std::string_view &str)

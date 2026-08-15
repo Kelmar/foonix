@@ -80,7 +80,7 @@ void Console::putstr(const std::string_view &v)
 
 /********************************************************************************************************************/
 
-void Console::putuint(unsigned int value, int radix /* = 10 */, int width /* = 0 */)
+void Console::putuint(uint64_t value, int radix /* = 10 */, int width /* = 0 */)
 {
     char buf[32];
     buf[31] = '\0';
@@ -114,7 +114,7 @@ void Console::putuint(unsigned int value, int radix /* = 10 */, int width /* = 0
 
 /********************************************************************************************************************/
 
-void Console::putint(int value)
+void Console::putint(int64_t value)
 {
     if (value < 0)
     {
@@ -122,7 +122,7 @@ void Console::putint(int value)
         value = -value;
     }
 
-    putuint(static_cast<unsigned int>(value));
+    putuint(static_cast<uint64_t>(value));
 }
 
 /********************************************************************************************************************/

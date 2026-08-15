@@ -16,6 +16,17 @@ namespace std
 
     // Integral needed for almost all other checks.
     #include <cppimpl/type_traits/integral.h>
+    #include <cppimpl/type_traits/fp.h>
+
+    template <class T>
+    struct is_arithmetic : integral_constant<bool, 
+        is_integral<T>::value || is_floating_point<T>::value>
+    { };
+
+    template <typename T>
+    constexpr bool is_arithmetic_v = is_arithmetic<T>::value;
+
+    #include <cppimpl/type_traits/sign.h>
 
     #include <cppimpl/type_traits/void.h>
     #include <cppimpl/type_traits/enum.h>
