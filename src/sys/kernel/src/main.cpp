@@ -8,6 +8,7 @@
 
 #include "cpu.h"
 
+#include <kernel/arch.h>
 #include <kernel/kernel_args.h>
 
 #include <kernel/arch/dconsole.h>

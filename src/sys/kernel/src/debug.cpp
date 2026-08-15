@@ -12,6 +12,8 @@
 #include <kernel/debug.h>
 #include <kernel/utilities.h>
 
+#include <kernel/vm.h>
+
 #include "paging.h"
 
 /********************************************************************************************************************/
@@ -20,31 +22,18 @@ namespace
 {
     void VarsCommand(size_t, const std::string_view[])
     {
-        paddr_t kstart = paging::AlignFloor(g_kernelArguments.KernelCode.Base);
-        paddr_t kend = paging::AlignCeiling(g_kernelArguments.KernelCode.End());
-
         console
             << "kernel_start: 0x" << hex(g_kernelArguments.KernelCode.Base, -8)
-            << " aligned: " << hex(kstart, -8)
+            << " aligned: " << hex(g_kernelArguments.KernelCode.BaseAligned(), -8)
             << "\r\n";
+
         console
             << "kernel_end: 0x" << hex(g_kernelArguments.KernelCode.End(), -8)
-            << " aligned: " << hex(kend, -8)
+            << " aligned: " << hex(g_kernelArguments.KernelCode.EndAligned(), -8)
             << "\r\n";
-    }
 
-    void MMapCommand(size_t, const std::string_view[])
-    {
         console
-            << "Free Memory\r\n"
-            << "    Start      Length\r\n";
-
-        for (uint32_t i = 0; i < g_kernelArguments.MemoryMapEntries; ++i)
-        {
-            const MemoryRange &mem = g_kernelArguments.MemoryMap[i];
-
-            console << "    0x" << hex(mem.Base, -8) << " 0x" << hex(mem.Length, -8) << "\r\n";
-        }
+            << "heap_start: 0x" << hex(g_kernelArguments.HeapStart, -8) << "\r\n";
     }
 
     void DumpCommand(size_t argCount, const std::string_view args[])
@@ -147,10 +136,10 @@ namespace
     /// @brief Static null terminated list of commands.
     DebugCommand s_commands[] =
     {
-        { "dump", DumpCommand },
-        { "mmap", MMapCommand },
-        { "vars", VarsCommand },
-        { 0, 0 } // terminator
+        { "dump"   , DumpCommand         },
+        { "meminfo", vmm::MemInfoCommand },
+        { "vars"   , VarsCommand         },
+        { 0        , 0                   } // terminator
     };
 
     /************************************************************************************************************/

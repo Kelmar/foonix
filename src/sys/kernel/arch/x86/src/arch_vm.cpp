@@ -20,6 +20,10 @@
 
 /********************************************************************************************************************/
 
+constexpr const uintptr_t Mark4MB = 4 * (1 << 20);
+
+/********************************************************************************************************************/
+
 // The assembly code will initialize these values for us.
 uint32_t g_bootMagic;   /* Value from EAX register */
 uint32_t g_bootInfoPtr; /* Value from EBX register */
@@ -35,10 +39,6 @@ extern "C" uintptr_t _kernel_phys_start;
 /// @brief Physical memory location of the end of the kernel.
 extern "C" uintptr_t _kernel_end;
 
-constexpr void *kernel_start = &_kernel_phys_start;
-
-constexpr void *kernel_end = &_kernel_end; //VIRT_2_PHYS(&_kernel_end);
-
 /********************************************************************************************************************/
 
 void arch::Init(KernelArgs *ka)
@@ -46,12 +46,17 @@ void arch::Init(KernelArgs *ka)
     Debug::PrintF("ENTER: Arch::Init()\r\n");
 
     Debug::PrintF("Boot Magic: 0x%08X\r\n", g_bootMagic);
-    
+   
     // Figure out where we live in physical memory.
-    ka->KernelCode.Base  = reinterpret_cast<uintptr_t>(VIRT_2_PHYS(&kernel_start));
-    uintptr_t kend = reinterpret_cast<uintptr_t>(VIRT_2_PHYS(&kernel_end));
 
-    ka->KernelCode.Length = kend - ka->KernelCode.Base;
+    // _kernel_phys_start is already set at physical address
+    uintptr_t kstart = reinterpret_cast<uintptr_t>(&_kernel_phys_start);
+
+    // _kernel_end is set at virtual address.
+    uintptr_t kend = reinterpret_cast<uintptr_t>(VIRT_2_PHYS(&_kernel_end));
+
+    ka->KernelCode = MemoryRange::FromAddresses(kstart, kend);
+    ka->HeapStart = reinterpret_cast<paddr_t>(paging::AlignCeiling(kend));
 
     Debug::PrintF("Kernel: %p 0x%08X\r\n", ka->KernelCode.Base, ka->KernelCode.Length);
 
@@ -74,7 +79,16 @@ void arch::Init(KernelArgs *ka)
     }
 
     if (err)
+    {
+        /*
+         * We didn't get a memory map, we'll have to take a guess. For now we assume at end of kernel up to 4MB is okay.
+         * Probably not the best solution, but it should be passible for testing.
+         */
         Debug::PrintF("WARN: No memory map, guessing.\r\n");
+
+        size_t len = Mark4MB - ka->HeapStart;
+        ka->AddMemoryMap(ka->HeapStart, len);
+    }
 }
 
 /********************************************************************************************************************/

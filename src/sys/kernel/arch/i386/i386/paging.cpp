@@ -8,9 +8,9 @@
 #include <kernel/kernel_args.h>
 #include <kernel/debug.h>
 
-#include <kernel/vm.h>
-
 #include <kernel/arch.h>
+#include <kernel/kernel_args.h>
+#include <kernel/vm.h>
 
 #include "asm.h"
 #include "atomic.h"

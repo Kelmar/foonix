@@ -11,7 +11,41 @@
 #include <kernel/kernel.h>
 #include <kernel/utilities.h>
 
-#include <kernel/arch.h>
+#include "cpu.h"
+
+/********************************************************************************************************************/
+
+namespace paging
+{
+    /************************************************************************************************************/
+    // Page alignment utilities
+    
+    /// @brief Round address down to current page boundary.
+    /// @param ptr The address to round.
+    /// @return The page boundary of the supplied address.
+    const util::TAlignFloor<cpu::PageSize> AlignFloor;
+
+    /// @brief Round address up to page boundary.
+    /// @remarks Unlike @ref AlignNext this will only rounded if we're not already on a page boundary.
+    /// @param ptr The address to round.
+    /// @return The address of the next page boundary.
+    const util::TAlignCeiling<cpu::PageSize> AlignCeiling;
+    
+    /// @brief Get the next page boundary.
+    /// @remarks Unlike @ref AlignCeiling this will always return the next page.
+    /// @param ptr The address to round.
+    /// @return The address of the next page boundary.
+    const util::TAlignNext<cpu::PageSize> AlignNext;
+
+    /// @brief Get the previous page boundary.
+    /// @remarks Unlike @ref AlignFloor this will always return the previous page.
+    /// @param ptr The address to round.
+    /// @return The address of the previous page boundary.
+    const util::TAlignPrev<cpu::PageSize> AlignPrev;
+
+    /// @brief Checks to see if the supplied pointer is page alligned.
+    const util::TIsAligned<cpu::PageSize> IsAligned;
+}
 
 /********************************************************************************************************************/
 /**

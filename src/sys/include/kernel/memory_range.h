@@ -14,6 +14,7 @@
 #include <expected>
 
 #include <kernel/kernel.h>
+#include <kernel/vm.h>
 
 /********************************************************************************************************************/
 /**
@@ -44,7 +45,7 @@ struct MemoryRange
      *          -- B.Simonds (July 26, 2026)
      */
 
-    paddr_t Base;
+    uintptr_t Base;
     size_t Length;
 
     constexpr MemoryRange() noexcept
@@ -53,7 +54,7 @@ struct MemoryRange
     {
     }
 
-    constexpr MemoryRange(paddr_t start, size_t length) noexcept
+    constexpr MemoryRange(uintptr_t start, size_t length) noexcept
         : Base(start)
         , Length(length)
     {
@@ -74,12 +75,40 @@ struct MemoryRange
     }
 
     /**
+     * @brief Build a memory range that includes both start and end memory addresses.
+     */
+    static inline
+    constexpr MemoryRange FromAddresses(uintptr_t start, uintptr_t end)
+    {
+        if (start > end)
+            std::swap(start, end);
+        
+        size_t length = end - start + 1;
+        return MemoryRange(start, length);
+    }
+
+    /**
+     * @brief Get the base address rounded down to the nearest page boundary.
+     */
+    inline
+    constexpr uintptr_t BaseAligned() const noexcept { return paging::AlignFloor(Base); }
+
+    /**
      * @brief Calculate the address at the end of the range.
      *
      * Returns the last valid address contained within the range.
      */
     inline
-    uint32_t End() const noexcept { return Base + Length - 1; }
+    constexpr uintptr_t End() const noexcept { return Base + Length - 1; }
+
+    /**
+     * @brief Get the ending address of the memory range rounded up to the nearest page boundary minus one.
+     *
+     * Thus for a 4KB page size, if the Base is at 0x00100000, and Length is 300 (0x12C), the AlignedEnd()
+     * would return 0x00100FFF, consistent with the behavior of End().
+     */
+    inline
+    constexpr uintptr_t EndAligned() const noexcept { return paging::AlignCeiling(End()) - 1; }
 
     /// @brief Returns true if the range has a zero length.
     inline
@@ -89,8 +118,8 @@ struct MemoryRange
     inline
     bool Overlaps(const MemoryRange &r) const noexcept
     {
-        paddr_t end = End();
-        paddr_t rend = r.End();
+        uintptr_t end = End();
+        uintptr_t rend = r.End();
 
         return
             (Length != 0) && (r.Length != 0) &&
@@ -107,8 +136,8 @@ struct MemoryRange
         if (r == *this)
             return true;
 
-        paddr_t end = End();
-        paddr_t rend = r.End();
+        uintptr_t end = End();
+        uintptr_t rend = r.End();
 
         if ((end + 1) >= r.Base && (end < rend))
             return true;
@@ -145,8 +174,8 @@ struct MemoryRange
         if (!r1.Contiguous(r2))
             return std::unexpected(MemoryMergeError::NotContiguous);
 
-        paddr_t minBase = std::min(r1.Base, r2.Base);
-        paddr_t maxEnd = std::max(r1.End(), r2.End());
+        uintptr_t minBase = std::min(r1.Base, r2.Base);
+        uintptr_t maxEnd = std::max(r1.End(), r2.End());
 
         return MemoryRange(minBase, maxEnd - minBase + 1);
     }

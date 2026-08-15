@@ -6,7 +6,11 @@
 
 /********************************************************************************************************************/
 
+#include <stddef.h>
+#include <string_view>
+
 #include <kernel/kernel.h>
+#include <kernel/utilities.h>
 #include <kernel/kernel_args.h>
 
 #include <kernel/vm/paging.h>
@@ -16,6 +20,8 @@
 namespace vmm
 {
     void Init();
+
+    void MemInfoCommand(size_t, const std::string_view[]);
 }
 
 /********************************************************************************************************************/

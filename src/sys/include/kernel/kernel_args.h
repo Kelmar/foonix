@@ -56,6 +56,9 @@ public:
     // Number of valid entries in the below array.
     size_t MemoryMapEntries;
 
+    /// @brief Physical address of where the kernel heap starts.
+    paddr_t HeapStart;
+
     /**
      * @brief List of available memory.
      */
@@ -65,6 +68,7 @@ public:
         : MemorySizeKByte(0)
         , KernelCode()
         , MemoryMapEntries(0)
+        , HeapStart(0)
     {
     }
 

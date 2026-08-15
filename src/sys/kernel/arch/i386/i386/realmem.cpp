@@ -33,7 +33,7 @@ namespace
     // Compute space for a map of the lower 1MB of pages.
     // We track these pages as special identity mapped pages.
     const size_t LOWER_1MB       = 1024 * 1024;
-    const size_t LOWER_1MB_PAGES = LOWER_1MB / PAGE_SIZE;
+    const size_t LOWER_1MB_PAGES = LOWER_1MB / cpu::PageSize;
 
     Bitmap<LOWER_1MB_PAGES> s_realMemMap;
 }
@@ -51,10 +51,10 @@ void Arch::VM::ReserveRealMemory(paddr_t addr, size_t length)
         length = LOWER_1MB - addr;
 
     // Make sure we start on a page boundary.
-    uint64_t pageNumber = addr / PAGE_SIZE;
+    uint64_t pageNumber = addr / cpu::PageSize;
 
     // Tell the VM these pages have been reserved.
-    size_t count = (length + (PAGE_SIZE - 1)) / PAGE_SIZE;
+    size_t count = (length + (cpu::PageSize - 1)) / cpu::PageSize;
 
     for (size_t i = 0; i < count; ++i, ++pageNumber)
     {
@@ -84,7 +84,7 @@ paddr_t Arch::VM::AllocRealMemory(void)
     if (index >= LOWER_1MB_PAGES)
         return 0; // No available memory!
 
-    return (index * PAGE_SIZE);
+    return (index * cpu::PageSize);
 }
 
 /********************************************************************************************************************/
@@ -105,7 +105,7 @@ void Arch::VM::ReleaseRealMemory(paddr_t addr)
         return; // Do not release the NULL page!
     }
 
-    size_t index = (addr / PAGE_SIZE);
+    size_t index = (addr / cpu::PageSize);
 
     //s_realMemMap[index] = false; // Ideal
     s_realMemMap.Clear(index);

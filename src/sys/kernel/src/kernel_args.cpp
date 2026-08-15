@@ -171,8 +171,8 @@ bool KernelArgs::AddMemoryMap(paddr_t addr, size_t length)
 void KernelArgs::KnockoutUsedMemory()
 {
     // Get page aligned start/end
-    paddr_t kernelStart = paging::AlignFloor(KernelCode.Base);
-    paddr_t kernelEnd = paging::AlignCeiling(KernelCode.End()) - 1;
+    paddr_t kernelStartAligned = KernelCode.BaseAligned();
+    paddr_t kernelEndAligned = KernelCode.EndAligned();
 
     SortMappings();
 
@@ -181,14 +181,14 @@ void KernelArgs::KnockoutUsedMemory()
         MemoryRange &mapping = MemoryMap[i];
         paddr_t mapEnd = mapping.End();
 
-        if (mapEnd < kernelStart)
+        if (mapEnd < kernelStartAligned)
             continue; // Haven't reached kernel yet.
 
-        if (mapping.Base > kernelEnd)
+        if (mapping.Base > kernelEndAligned)
             break; // We're past the end of the kernel; no need to check other sorted mappings.
 
-        bool hasStartGap = kernelStart > mapping.Base;
-        bool hasEndGap = kernelEnd < mapEnd;
+        bool hasStartGap = kernelStartAligned > mapping.Base;
+        bool hasEndGap = kernelEndAligned < mapEnd;
 
         if (!hasStartGap && !hasEndGap)
         {
@@ -201,7 +201,7 @@ void KernelArgs::KnockoutUsedMemory()
         if (hasStartGap)
         {
             // Adjust current entry for start gap.
-            mapping.Length = kernelStart - mapping.Base;
+            mapping.Length = kernelStartAligned - mapping.Base;
         }
         
         if (hasEndGap)
@@ -221,8 +221,8 @@ void KernelArgs::KnockoutUsedMemory()
             }
 
             // Next available would be one past end of kernel.
-            MemoryMap[i].Base = kernelEnd + 1;
-            MemoryMap[i].Length = mapEnd - kernelEnd;
+            MemoryMap[i].Base = kernelEndAligned + 1;
+            MemoryMap[i].Length = mapEnd - kernelEndAligned;
 
             if (hasStartGap)
                 break; // No other mappings affected;

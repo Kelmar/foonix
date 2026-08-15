@@ -1,13 +1,14 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <sys/cdefs.h>
 
 //#define THROW_SIG throw()
 #define THROW_SIG 
 #define ERROR(X_) kpanic(X_)
 
-#include <kernel/debug.h>
+//#include <kernel/debug.h>
 #include <kernel/flow.h>
-#include <kernel/vm.h>
+//#include <kernel/vm.h>
 
 void* operator new(size_t sz) THROW_SIG
 {

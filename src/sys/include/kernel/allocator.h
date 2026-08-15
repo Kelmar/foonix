@@ -15,10 +15,9 @@
 #include <kernel/bitmap.h>
 #include <kernel/kernel.h>
 
+#include "cpu.h"
+
 /********************************************************************************************************************/
-
-const int PAGE_SIZE = 4096; // TODO: Move this to platform.
-
 
 class PageBlock
 {
@@ -97,13 +96,13 @@ public:
 /**
  * @brief A simple slab allocator
  * 
- * This allocator only handles objects that are less than PAGE_SIZE
+ * This allocator only handles objects that are less than cpu::PageSize
  */
 template <typename T>
 class SlabAllocator : public Allocator<T>
 {
 private:
-    static const size_t ObjectsPerPage = PAGE_SIZE / sizeof(T);
+    static const size_t ObjectsPerPage = cpu::PageSize / sizeof(T);
 
     struct Cache
     {

@@ -11,6 +11,7 @@ SECTIONS
     . = 1M;
 
     /* Create start marker */
+    . = ALIGN(0x1000);
     _kernel_phys_start = ABSOLUTE(.);
 
     .multiboot.data :
