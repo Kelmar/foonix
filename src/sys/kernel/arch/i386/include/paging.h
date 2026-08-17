@@ -16,6 +16,8 @@
 
 //#include <kernel/vm.h> // We can't include this here, vm.h needs to reference us.
 
+#include <kernel/kernel_args.h>
+
 #include "cpu.h"
 
 namespace paging
@@ -40,22 +42,30 @@ namespace paging
 
     /************************************************************************************************************/
 
+    enum class DirectoryOptions
+    {
+        None    = 0,
+        NoClear = 1,
+    };
+
+    // Rework PageTable and BootPageTable into a single class, can call constructor manually with inplace new.
+
     class PageTable : public PageTableBase<PageTable>
     {
     private:
-        page_directory_t m_dir;
+        page_directory_entry_t *m_dir;
 
         PageTable(const PageTable &rhs) = delete;
         PageTable(PageTable &&rhs) = delete;
 
     public:
-        static constexpr const size_t PageSIze = 4096;
+        static constexpr const size_t PageSize = 4096;
 
-        PageTable();
+        constexpr PageTable() : m_dir(nullptr) { }
+
+        PageTable(page_directory_entry_t *directory, DirectoryOptions options = DirectoryOptions::None);
         
         virtual ~PageTable() { }
-
-        bool doIsMapped(paddr_t addr) const;
 
         Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags);
         Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
@@ -86,10 +96,18 @@ namespace paging
         paddr_t doGetPhysicalPageFor(vaddr_t vaddr);
     };
 
-    extern BootPageTable g_bootPageTable;
+    extern PageTable g_bootPageTable;
+
+    /************************************************************************************************************/
+
+    void Init(KernelArgs *ka);
 
     /************************************************************************************************************/
 }
+
+/********************************************************************************************************************/
+
+as_flags(paging::DirectoryOptions);
 
 /********************************************************************************************************************/
 

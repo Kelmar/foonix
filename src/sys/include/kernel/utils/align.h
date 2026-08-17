@@ -9,9 +9,9 @@
 
 /********************************************************************************************************************/
 
-/// @brief Concept that restricts to values that can be aligned.
+/// @brief Concept that restricts to values that can be aligned to.
 template <unsigned int V>
-concept Alignable = IsPow2<V> && (V > 1);
+concept Alignable = is_pow2_v<V> && (V > 1);
 
 template <uint SZ>
 requires Alignable<SZ>

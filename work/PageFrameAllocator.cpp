@@ -112,7 +112,10 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetExactFrame(uintptr_t addre
     }
 
     if (order >= BucketSize - 1)
-        return nullptr; // No more free memory!
+    {
+        // We're at the top of the buddy size order, no more free memory!.
+        return nullptr;
+    }
 
     size_t size = PAGE_SIZE << order;
 
@@ -183,13 +186,13 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetAvailableNode(size_t order
 
 /********************************************************************************************************************/
 
-PageBlock PageFrameAllocator::Aquire(uintptr_t address, size_t size)
+PageBlock PageFrameAllocator::Acquire(uintptr_t address, size_t size)
 {
     if (size == 0)
         return PageBlock::Nil;
 
     if (size >= m_maxSize)
-        return PageBlock::Nil; // Cannot allocate the entirity of memory.
+        return PageBlock::Nil; // Cannot allocate the entirety of memory.
 
     if (size < PAGE_SIZE)
         size = PAGE_SIZE;
@@ -202,7 +205,7 @@ PageBlock PageFrameAllocator::Aquire(uintptr_t address, size_t size)
 
     /*
      * Currently we're just effectively allocating lots of small blocks
-     * for the range we want, which isn't a very efficent way of doing
+     * for the range we want, which isn't a very efficient way of doing
      * this, but it at least works for now.
      */
 
@@ -240,7 +243,7 @@ PageBlock PageFrameAllocator::Allocate(size_t requested)
         return PageBlock::Nil;
 
     if (requested >= m_maxSize)
-        return PageBlock::Nil; // Cannot allocate the entirity of memory.
+        return PageBlock::Nil; // Cannot allocate the entirety of memory.
 
     if (requested < PAGE_SIZE)
         requested = PAGE_SIZE;

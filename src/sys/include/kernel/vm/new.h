@@ -1,26 +1,22 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
-#include <stdint.h>
-
-#include "paging.h"
-
-/********************************************************************************************************************/
-
-//typedef uint64_t page_entry_t;
-
-//typedef page_table_t page_entry_t[512];
-
-// Defined in start.S
-extern "C" uintptr_t boot_pml4t;
-extern "C" uintptr_t boot_pdpt;
-extern "C" uintptr_t boot_pdt;
-extern "C" uintptr_t boot_pt;
+#ifndef __FOONIX_VM_NEW_H__
+#define __FOONIX_VM_NEW_H__
 
 /********************************************************************************************************************/
 
-void paging::Init(KernelArgs *)
-{
-}
+//void *operator new  (size_t);
+//void *operator new[](size_t);
+//void operator delete  (void *) noexcept;
+//void operator delete[](void *) noexcept;
+
+inline void *operator new  (size_t, void *ptr) noexcept { return ptr; }
+inline void *operator new[](size_t, void *ptr) noexcept { return ptr; }
 
 /********************************************************************************************************************/
+
+#endif /* __FOONIX_VM_NEW_H__ */
+
+/********************************************************************************************************************/
+

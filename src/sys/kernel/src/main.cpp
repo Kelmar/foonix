@@ -16,6 +16,7 @@
 #include <kernel/console.h>
 
 #include <kernel/vm.h>
+#include <kernel/vm/new.h>
 
 //#include "cdefs.h"
 //#include "multboot.h"
@@ -47,9 +48,11 @@ KernelArgs g_kernelArguments;
 extern "C"
 void preinit(void)
 {
+    new (&g_kernelArguments) KernelArgs();
+
     DebugConsole::Init1(); // Non allocating initialization.
 
-    console.init();
+    new (&console) Console();
 
     Debug::PrintF("ENTER: preinit()\r\n");
 

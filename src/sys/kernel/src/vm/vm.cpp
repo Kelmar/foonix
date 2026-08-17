@@ -12,7 +12,9 @@
 #include <kernel/console.h>
 
 #include <kernel/arch.h>
+
 #include <kernel/vm.h>
+#include <kernel/vm/new.h>
 
 //#include <kernel/page.h>
 

@@ -11,6 +11,7 @@
 #include <kernel/arch.h>
 #include <kernel/kernel_args.h>
 #include <kernel/vm.h>
+#include <kernel/vm/new.h>
 
 #include "asm.h"
 #include "atomic.h"
@@ -247,109 +248,6 @@ namespace
         uintptr_t ptr = pde & DirEntryFlags::AddressMask;
         return reinterpret_cast<page_entry_t *>(PHYS_2_VIRT(ptr));
     }
-
-    /************************************************************************************************************/
-    /**
-     * @brief Map a phyiscal memory page to a virtual memory page.
-     * @remark Note that addresses and sizes might get aligned to processor page boundaries.
-     * @param dir Directory to map the page in.
-     * @param paddr The phyiscal address to be mapped
-     * @param vaddr The virtual address
-     * @param flags Flags to be set on the page (The Present flag is added automatically.)
-     */
-    Kernel::ErrorCode MapPage(paging::page_directory_t dir, paddr_t paddr, vaddr_t vaddr, PageFlags flags)
-    {
-        if (!IsAligned(paddr) || !IsAligned(vaddr))
-            return Kernel::ErrorCode::NotAligned;
-
-        //uint32_t dirFlags = MapToDirFlags(flags);
-        uint32_t pageFlags = MapToPageFlags(flags);
-
-        //Debug::PrintF("Map %p -> %p\r\n", paddr, vaddr);
-        
-        int pgtIndex = (vaddr >> 12) & 0x03FF;
-        int dirIndex = (vaddr >> 22) & 0x03FF;
-
-        page_directory_entry_t &pde = dir[dirIndex];
-
-        // Assert these entries are correct!
-        if ((pde & DirEntryFlags::Present) == 0)
-            kpanic("Request to map to non present page entry!");
-
-        page_entry_t entry = (paddr & PageEntryFlags::AddressMask) | pageFlags | PageEntryFlags::Present;
-
-        page_entry_t *pageTable = GetPageTable(pde);
-        page_entry_t &page = pageTable[pgtIndex];
-
-        if ((page & PageEntryFlags::Present) != 0 && (entry != page))
-            Debug::PrintF("WARNING: Page over writing: %p with %p\r\n", page, entry);
-
-        page = entry;
-
-        return Kernel::ErrorCode::NoError;
-    }
-
-    /************************************************************************************************************/
-    /**
-     * @brief Remove a virtual page from paging.
-     * @param dir Directory to unmap from.
-     * @param vaddr The virtual address to unmap.
-     */
-    Kernel::ErrorCode UnmapPage(paging::page_directory_t dir, vaddr_t vaddr)
-    {
-        if (!IsAligned(vaddr))
-            return Kernel::ErrorCode::NotAligned;
-        
-        int pgtIndex = (vaddr >> 12) & 0x03FF;
-        int dirIndex = (vaddr >> 22) & 0x03FF;
-
-        page_directory_entry_t &pde = dir[dirIndex];
-
-        // Assert these entries are correct!
-        if ((pde & DirEntryFlags::Present) == 0)
-            return Kernel::ErrorCode::NoError; // Nothing to do
-
-        page_entry_t *pageTable = GetPageTable(pde);
-        page_entry_t &page = pageTable[pgtIndex];
-
-        if ((page & PageEntryFlags::Present) == 0)
-            return Kernel::ErrorCode::NoError; // Nothing to do
-
-        page &= ~PageEntryFlags::Present;
-
-        return Kernel::ErrorCode::NoError;
-    }
-
-    /************************************************************************************************************/
-    /**
-     * @brief Get the physical page for the supplied virtual address.
-     *
-     * @param dir The page directory to look for the virtual address in.
-     * @param vaddr The virtual address to lookup.
-     *
-     * @remarks The virtual address does not need to be aligned, but an aligned address will always be returned.
-     *
-     * @return An aligned physical address that is holds the supplied virtual address.  Or nullptr (zero) if not mapped.
-     */
-    paddr_t GetPhysicalPageFor(const paging::page_directory_t dir, vaddr_t vaddr)
-    {
-        int pgtIndex = (vaddr >> 12) & 0x03FF;
-        int dirIndex = (vaddr >> 22) & 0x03FF;
-
-        const page_directory_entry_t &pde = dir[dirIndex];
-
-        // Assert these entries are correct!
-        if ((pde & DirEntryFlags::Present) == 0)
-            return 0; // Not mapped
-
-        const page_entry_t *pageTable = GetPageTable(pde);
-        const page_entry_t &page = pageTable[pgtIndex];
-        
-        if ((page & PageEntryFlags::Present) == 0)
-            return 0; // Not mapped
-
-        return reinterpret_cast<paddr_t>(page & PageEntryFlags::AddressMask);
-    }
 }
 
 /********************************************************************************************************************/
@@ -359,7 +257,7 @@ extern "C" page_directory_t boot_page_directory;
 extern "C" page_table_t boot_page_identity;
 extern "C" page_table_t boot_page_kernel;
 
-BootPageTable paging::g_bootPageTable;
+PageTable paging::g_bootPageTable;
 
 /********************************************************************************************************************/
 
@@ -403,52 +301,136 @@ Kernel::ErrorCode paging::InitPaging(KernelArgs *ka)
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
+/*
 PageTable::PageTable()
     : PageTableBase()
 {
     memset(m_dir, 0, sizeof(page_directory_t));
 }
+*/
+
+PageTable::PageTable(page_directory_entry_t *directory, DirectoryOptions options /* = DirectoryOptions::None */)
+    : PageTableBase()
+    , m_dir(directory)
+{
+    if (!(options && is_set(DirectoryOptions::NoClear)))
+    {
+        memset(m_dir, 0, sizeof(page_directory_t));
+    }
+}
 
 /********************************************************************************************************************/
-
+/**
+ * @brief Map a phyiscal memory page to a virtual memory page.
+ * @remark Note that addresses and sizes might get aligned to processor page boundaries.
+ * @param dir Directory to map the page in.
+ * @param paddr The phyiscal address to be mapped
+ * @param vaddr The virtual address
+ * @param flags Flags to be set on the page (The Present flag is added automatically.)
+ */
 Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
-    return ::MapPage(m_dir, paddr, vaddr, flags);
+    if (!IsAligned(paddr) || !IsAligned(vaddr))
+        return Kernel::ErrorCode::NotAligned;
+
+    //uint32_t dirFlags = MapToDirFlags(flags);
+    uint32_t pageFlags = MapToPageFlags(flags);
+
+    //Debug::PrintF("Map %p -> %p\r\n", paddr, vaddr);
+    
+    int pgtIndex = (vaddr >> 12) & 0x03FF;
+    int dirIndex = (vaddr >> 22) & 0x03FF;
+
+    page_directory_entry_t &pde = m_dir[dirIndex];
+
+    // Assert these entries are correct!
+    if ((pde & DirEntryFlags::Present) == 0)
+        kpanic("Request to map to non present page entry!");
+
+    page_entry_t entry = (paddr & PageEntryFlags::AddressMask) | pageFlags | PageEntryFlags::Present;
+
+    page_entry_t *pageTable = GetPageTable(pde);
+    page_entry_t &page = pageTable[pgtIndex];
+
+    if ((page & PageEntryFlags::Present) != 0 && (entry != page))
+        Debug::PrintF("WARNING: Page over writing: %p with %p\r\n", page, entry);
+
+    page = entry;
+
+    return Kernel::ErrorCode::NoError;
+//    return ::MapPage(m_dir, paddr, vaddr, flags);
 }
 
 /********************************************************************************************************************/
-
+/**
+ * @brief Remove a virtual page from paging.
+ * @param dir Directory to unmap from.
+ * @param vaddr The virtual address to unmap.
+ */
 Kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
 {
-    return ::UnmapPage(m_dir, vaddr);
+    if (!IsAligned(vaddr))
+        return Kernel::ErrorCode::NotAligned;
+    
+    int pgtIndex = (vaddr >> 12) & 0x03FF;
+    int dirIndex = (vaddr >> 22) & 0x03FF;
+
+    page_directory_entry_t &pde = m_dir[dirIndex];
+
+    // Assert these entries are correct!
+    if ((pde & DirEntryFlags::Present) == 0)
+        return Kernel::ErrorCode::NoError; // Nothing to do
+
+    page_entry_t *pageTable = GetPageTable(pde);
+    page_entry_t &page = pageTable[pgtIndex];
+
+    if ((page & PageEntryFlags::Present) == 0)
+        return Kernel::ErrorCode::NoError; // Nothing to do
+
+    page &= ~PageEntryFlags::Present;
+
+    return Kernel::ErrorCode::NoError;
+
+    //return ::UnmapPage(m_dir, vaddr);
 }
 
 /********************************************************************************************************************/
-
-paddr_t PageTable::doGetPhysicalPageFor(vaddr_t addr) const
+/**
+ * @brief Get the physical page for the supplied virtual address.
+ *
+ * @param dir The page directory to look for the virtual address in.
+ * @param vaddr The virtual address to lookup.
+ *
+ * @remarks The virtual address does not need to be aligned, but an aligned address will always be returned.
+ *
+ * @return An aligned physical address that is holds the supplied virtual address.  Or nullptr (zero) if not mapped.
+ */
+paddr_t PageTable::doGetPhysicalPageFor(vaddr_t vaddr) const
 {
-    return ::GetPhysicalPageFor(m_dir, addr);
+    int pgtIndex = (vaddr >> 12) & 0x03FF;
+    int dirIndex = (vaddr >> 22) & 0x03FF;
+
+    const page_directory_entry_t &pde = m_dir[dirIndex];
+
+    // Assert these entries are correct!
+    if ((pde & DirEntryFlags::Present) == 0)
+        return 0; // Not mapped
+
+    const page_entry_t *pageTable = GetPageTable(pde);
+    const page_entry_t &page = pageTable[pgtIndex];
+    
+    if ((page & PageEntryFlags::Present) == 0)
+        return 0; // Not mapped
+
+    return reinterpret_cast<paddr_t>(page & PageEntryFlags::AddressMask);
 }
 
 /********************************************************************************************************************/
-
-Kernel::ErrorCode BootPageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
-{
-    return ::MapPage(boot_page_directory, paddr, vaddr, flags);
-}
-
 /********************************************************************************************************************/
 
-Kernel::ErrorCode BootPageTable::doUnmapPage(vaddr_t vaddr)
+void paging::Init(KernelArgs *)
 {
-    return ::UnmapPage(boot_page_directory, vaddr);
-}
-
-/********************************************************************************************************************/
-
-paddr_t BootPageTable::doGetPhysicalPageFor(vaddr_t addr)
-{
-    return ::GetPhysicalPageFor(boot_page_directory, addr);
+    new (&g_bootPageTable) PageTable(boot_page_directory, DirectoryOptions::NoClear);
 }
 
 /********************************************************************************************************************/

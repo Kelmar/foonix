@@ -18,6 +18,8 @@
 
 #include "bootinfo.h"
 
+#include "paging.h"
+
 /********************************************************************************************************************/
 
 constexpr const uintptr_t Mark4MB = 4 * (1 << 20);
@@ -43,6 +45,8 @@ extern "C" uintptr_t _kernel_end;
 
 void arch::Init(KernelArgs *ka)
 {
+    paging::Init(ka);
+
     Debug::PrintF("ENTER: Arch::Init()\r\n");
 
     Debug::PrintF("Boot Magic: 0x%08X\r\n", g_bootMagic);

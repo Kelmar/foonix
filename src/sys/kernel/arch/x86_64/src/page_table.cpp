@@ -154,7 +154,7 @@ namespace
      * @param pdpt ???? to unmap from.
      * @param vaddr The virtual address to unmap.
      */
-    Kernel::ErrorCode UnmapPage(pdpt_t pdpt, vaddr_T vaddr)
+    Kernel::ErrorCode UnmapPage(pdpt_t pdpt, vaddr_t vaddr)
     {
         return Kernel::ErrorCode::Unknown;
     }
@@ -195,7 +195,7 @@ Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags f
 
 Kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
 {
-    return ::UnmapPage(m_pdpt, paddr, vaddr, flags);
+    return ::UnmapPage(m_pdpt, vaddr);
 }
 
 /********************************************************************************************************************/

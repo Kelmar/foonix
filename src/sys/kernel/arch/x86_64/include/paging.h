@@ -9,6 +9,7 @@
 #include <kernel/kernel.h>
 #include <kernel/utilities.h>
 
+#include <kernel/kernel_args.h>
 #include <kernel/vm.h>
 
 #include "cpu.h"
@@ -46,6 +47,8 @@ namespace paging
 
         paddr_t doGetPhysicalPageFor(vaddr_t vaddr) const;
     };
+
+    void Init(KernelArgs *);
 }
 
 /********************************************************************************************************************/

@@ -19,7 +19,7 @@ include_directories("${HOST_DIR}/include")
 #list(APPEND LINK_EXTRA "${RT_PATH}")
 
 list(APPEND x64_sources
-    start.S boot.S cpu.S
+    start.S boot.S cpu.S paging.cpp page_table.cpp
 )
 
 list(TRANSFORM x64_sources PREPEND "${HOST_DIR}/src/")

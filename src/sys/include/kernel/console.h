@@ -28,15 +28,8 @@ private:
     void pause_check();
 
 public:
-    /* constructor */ Console() noexcept
-        : m_paged(false)
-        , m_lineCount(0)
-    {
-    }
-
+    /* constructor */ Console() noexcept;
     ~Console() noexcept { }
-
-    void init();
     
     // Output
     bool set_paged(bool value);

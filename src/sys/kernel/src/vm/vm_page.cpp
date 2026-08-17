@@ -10,6 +10,7 @@
 #include <kernel/bitmap.h>
 #include <kernel/debug.h>
 #include <kernel/kernel_args.h>
+#include <kernel/utilities.h>
 
 #include <kernel/arch.h>
 #include <kernel/vm.h>
@@ -41,20 +42,9 @@ namespace
 
     BuddyFrame RootFrame;
 
-    // Pool of availble buddy frames not being used.
+    // Pool of available buddy frames not being used.
     BuddyFrame FreePool;
 
-    int NextPow2(int base)
-    {
-        // Brute force method
-        int i = 1;
-
-        while (i < base)
-            i <<= 1;
-
-        return i;
-    }
-    
 #if 0
     /**
      * @brief Attempts to allocate a frame
@@ -128,11 +118,11 @@ namespace
 void InitPageAllocator(KernelArgs *ka)
 {
     /*
-     * This will almost certianly end up with areas that do not actually exist.
+     * This will almost certainly end up with areas that do not actually exist.
      *
      * That is okay, we're going to mark those areas as unavailable.
      */
-    RootFrame.Size = NextPow2(ka->MemorySizeKByte);
+    RootFrame.Size = util::NextPow2(ka->MemorySizeKByte);
 }
 
 /********************************************************************************************************************/

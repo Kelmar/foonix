@@ -11,6 +11,7 @@
 #define IN_SECTION(X_) __attribute__((section(X_), visibility("hidden"), used))
 #define USED __attribute__((used))
 #define WEAK __attribute__((weak))
+#define HIDDEN __attribute__((visibility("hidden")))
 
 /********************************************************************************************************************/
 // Prototype for constructors and destructors.
@@ -32,13 +33,18 @@ fn __DTOR_LIST_END__[] IN_SECTION(".dtors") = { 0 };
 
 /********************************************************************************************************************/
 
-__attribute__((visibility("hidden"))) void *__dso_handle = &__dso_handle;
+HIDDEN
+void *__dso_handle = &__dso_handle;
 
 /********************************************************************************************************************/
 
 USED
 void __runtime_init(void)
 {
+    // Kernel uses inplace new to construct static objects in the specific order it needs.
+    // Seems like clang is using init_array and not __CTOR_LIST__ anyhow....
+
+#ifndef __is_libk
     static int called = 0; // Guard against accidental second call.
 
     if (called != 0)
@@ -57,6 +63,7 @@ void __runtime_init(void)
     // Call the constructors in reverse order
     for (size_t i = CNT; i >= 1; --i)
         __CTOR_LIST__[i]();
+#endif
 }
 
 /********************************************************************************************************************/
@@ -64,6 +71,7 @@ void __runtime_init(void)
 USED
 void __runtime_fini(void)
 {
+#ifndef __is_libk
     static int called = 0; // Guard against accidental second call.
 
     if (called != 0)
@@ -77,6 +85,7 @@ void __runtime_fini(void)
     // Unlike constructors, we call in forward order.
     for (size_t i = 1; i <= CNT; ++i)
         __DTOR_LIST__[i]();
+#endif
 }
 
 /********************************************************************************************************************/

@@ -152,10 +152,19 @@ public:
     /* constructor */ PageFrameAllocator(size_t maxSize);
     virtual          ~PageFrameAllocator(void);
 
-    PageBlock Aquire(uintptr_t address, size_t size);
+    /**
+     * @brief Allocate pages at specific address.
+     */
+    PageBlock Acquire(uintptr_t address, size_t size);
 
+    /**
+     * @brief Allocate pages from any available pool.
+     */
     PageBlock Allocate(size_t requested);
 
+    /**
+     * Return pages back to the allocator.
+     */
     void Release(PageBlock &&pb);
 
     bool CheckAllFree(void);
