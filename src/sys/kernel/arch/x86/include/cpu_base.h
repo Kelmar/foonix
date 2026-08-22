@@ -26,7 +26,7 @@ namespace cpu
     /************************************************************************************************************/
 
     static inline FORCE_INLINE
-    void pause() { __asm __volatile("pause"); }
+    void pause() { __asm__ volatile("pause"); }
 
     static inline FORCE_INLINE
     void stop_interrupts(void)
@@ -44,28 +44,28 @@ namespace cpu
     uint8_t inb(uint16_t port)
     {
         uint8_t data;
-        __asm ("inb %1,%0" : "=a" (data) : "d" (port));
+        __asm__ ("inb %1,%0" : "=a" (data) : "d" (port));
         return data;
     }
 
     static inline FORCE_INLINE
     void outb(uint16_t port, uint8_t data)
     {
-        __asm ("outb %0,%1" : : "a" (data), "d" (port));
+        __asm__ ("outb %0,%1" : : "a" (data), "d" (port));
     }
 
     static inline FORCE_INLINE
     uint16_t inw(uint16_t port)
     {
         uint16_t data;
-        __asm ("inw %1,%0" : "=a" (data) : "d" (port));
+        __asm__ ("inw %1,%0" : "=a" (data) : "d" (port));
         return data;
     }
 
     static inline FORCE_INLINE
     void outw(uint16_t port, uint16_t data)
     {
-        __asm ("outw %0,%1" : : "a" (data), "d" (port));
+        __asm__ ("outw %0,%1" : : "a" (data), "d" (port));
     }
 
     static inline FORCE_INLINE
