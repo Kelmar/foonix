@@ -9,17 +9,20 @@
 #include <kernel/debug.h>
 
 #include <kernel/arch.h>
-#include <kernel/kernel_args.h>
+
 #include <kernel/vm.h>
 #include <kernel/vm/new.h>
+#include <kernel/vm/page_table.h>
+
+#include "bootinfo.h"
 
 #include "asm.h"
 #include "atomic.h"
 #include "cpu.h"
 #include "cpudefs.h"
-#include "multiboot.h"
 #include "arch_vm.h"
 #include "paging.h"
+
 
 /********************************************************************************************************************/
 
@@ -32,7 +35,7 @@ namespace
     /// @brief Flags for page directory entries.
     namespace DirEntryFlags
     {
-        constexpr const uint32_t
+        static constexpr const uint32_t
             Present        = 0x00000001, // Set if this page is present.
             Writable       = 0x00000002, // Set if this is a writable page.
             User           = 0x00000004, // Set if this is a user space page.
@@ -56,7 +59,7 @@ namespace
     /// @brief Flags for page directorys entries in 4MB mode.
     namespace DirEntryFlags_4MB
     {
-        constexpr const uint32_t
+        static constexpr const uint32_t
             Present        = 0x00000001, // Set if this page is present.
             Writable       = 0x00000002, // Set if this is a writable page.
             User           = 0x00000004, // Set if this is a user space page.
@@ -84,7 +87,7 @@ namespace
     /// @brief Flags for page table entries.
     namespace PageEntryFlags
     {
-        constexpr const uint32_t
+        static constexpr const uint32_t
             Present        = 0x00000001, // Set if this page is present.
             Writable       = 0x00000002, // Set if this is a writable page.
             User           = 0x00000004, // Set if this is a user space page.
@@ -105,7 +108,6 @@ namespace
 
     /************************************************************************************************************/
 
-#if 0
     constexpr uint32_t MapToDirFlags(PageFlags flags)
     {
         uint32_t rval = DirEntryFlags::User;
@@ -118,7 +120,6 @@ namespace
 
         return rval;
     }
-#endif
 
     /************************************************************************************************************/
 
@@ -229,25 +230,7 @@ namespace
     }
 #endif
 
-    /************************************************************************************************************/
-    /**
-     * @brief Convert a page_directory_entry into a page_table_t.
-     *
-     * @remarks Effectively just strips the flags off the page_directory_entry_t value.
-     */
-    inline
-    page_entry_t *GetPageTable(const page_directory_entry_t &pde)
-    {
-        /*
-         * TODO: The pointer in the directory entry is the physical address, find a good
-         * way we can map that into the kernel space so we can update it.
-         *
-         * Right now we have it hard coded to our PHYS_2_VIRT macro.
-         */
-
-        uintptr_t ptr = pde & DirEntryFlags::AddressMask;
-        return reinterpret_cast<page_entry_t *>(PHYS_2_VIRT(ptr));
-    }
+    
 }
 
 /********************************************************************************************************************/
@@ -259,44 +242,9 @@ extern "C" page_table_t boot_page_kernel;
 
 PageTable paging::g_bootPageTable;
 
-/********************************************************************************************************************/
+static page_directory_t boot_page_directory_new;
 
-#if 0
-Kernel::ErrorCode paging::InitPaging(KernelArgs *ka)
-{
-    UNUSED(ka);
-
-    int tableIndex = -1;
-    int dirIndex = 0;
-
-    for (; dirIndex < PAGING_TABLE_SIZE; ++dirIndex)
-    {
-        if (bootDir->tables[dirIndex].Present)
-        {
-            page_index_t page = 0;
-            tableIndex = GetFreePageTableEntry()
-        }
-    }
-
-    if (!freeIndex)
-    {
-        // Edge case
-        Debug::PrintF("Could not find free page table!\r\n");
-        return Kernel::ErrorCode::Unknown;
-    }
-    
-    // Allocate a new page
-    page_index_t newPage = vmm::AllocRawPage();
-
-    if (newPage == 0)
-        return Kernel::ErrorCode::OutOfMemory;
-
-    // Map the new page table into our boot directory:
-    
-    return Kernel::ErrorCode::NoError;
-}
-
-#endif
+PageTable paging::g_bootPageTableNew;
 
 /********************************************************************************************************************/
 /********************************************************************************************************************/
@@ -320,6 +268,65 @@ PageTable::PageTable(page_directory_entry_t *directory, DirectoryOptions options
 }
 
 /********************************************************************************************************************/
+
+Kernel::ErrorCode PageTable::AddDirectoryEntry(size_t index, paddr_t table, PageFlags flags)
+{
+    //DEBUG_ASSERT(index < TableEntries, "Invalid directory index for AddDirectoryEntry() call.");
+    //DEBUG_ASSERT((m_dir[index] & DirEntryFlags::Preset) == 0, "Request to map page table to already mapped directory entry.");
+
+    void *ptr = reinterpret_cast<void *>(table);
+    memset(ptr, 0, sizeof(page_table_t));
+
+    uint32_t dirFlags = MapToDirFlags(flags) | PageEntryFlags::Present;
+
+    m_dir[index] = (table & PageEntryFlags::AddressMask) | dirFlags;
+    return Kernel::ErrorCode::NoError;
+}
+
+/********************************************************************************************************************/
+/**
+ * @brief Locate a table entry in the directory.  If none is found, then nullptr is returned.
+ */
+page_entry_t *PageTable::GetPageTable(vaddr_t vaddr, size_t &dirIndex) const
+{
+    dirIndex = ToDirIndex(vaddr);
+
+    page_directory_entry_t &pde = m_dir[dirIndex];
+
+    if ((pde & DirEntryFlags::Present) == 0)
+        return nullptr;
+
+    /*
+     * TODO: The pointer in the directory entry is the physical address, find a good
+     * way we can map that into the kernel space so we can update it.
+     *
+     * Right now we have it hard coded to our PHYS_2_VIRT macro.
+     */
+    paddr_t paddr = pde & DirEntryFlags::AddressMask;
+    return reinterpret_cast<page_entry_t *>(PHYS_2_VIRT(paddr));
+}
+
+/********************************************************************************************************************/
+/**
+ * @brief Locates a table entry in the directory, if none is found, a new one is allocated.
+ */
+page_entry_t *PageTable::GetOrCreatePageTable(vaddr_t vaddr, PageFlags flags)
+{
+    size_t dirIndex;
+
+    page_entry_t *result = GetPageTable(vaddr, dirIndex);
+
+    if (result == nullptr)
+    {    
+        paddr_t paddr = page_allocator.AllocatePage();
+        result = reinterpret_cast<page_entry_t *>(PHYS_2_VIRT(paddr)); // TODO: Needs mapping fix.
+        AddDirectoryEntry(dirIndex, paddr, flags);
+    }
+
+    return result;
+}
+
+/********************************************************************************************************************/
 /**
  * @brief Map a phyiscal memory page to a virtual memory page.
  * @remark Note that addresses and sizes might get aligned to processor page boundaries.
@@ -333,23 +340,14 @@ Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags f
     if (!IsAligned(paddr) || !IsAligned(vaddr))
         return Kernel::ErrorCode::NotAligned;
 
-    //uint32_t dirFlags = MapToDirFlags(flags);
-    uint32_t pageFlags = MapToPageFlags(flags);
-
     //Debug::PrintF("Map %p -> %p\r\n", paddr, vaddr);
+
+    page_entry_t *pageTable = GetOrCreatePageTable(vaddr, flags);
+
+    uint32_t pageFlags = MapToPageFlags(flags) | PageEntryFlags::Present;
+    page_entry_t entry = (paddr & PageEntryFlags::AddressMask) | pageFlags;
     
-    int pgtIndex = (vaddr >> 12) & 0x03FF;
-    int dirIndex = (vaddr >> 22) & 0x03FF;
-
-    page_directory_entry_t &pde = m_dir[dirIndex];
-
-    // Assert these entries are correct!
-    if ((pde & DirEntryFlags::Present) == 0)
-        kpanic("Request to map to non present page entry!");
-
-    page_entry_t entry = (paddr & PageEntryFlags::AddressMask) | pageFlags | PageEntryFlags::Present;
-
-    page_entry_t *pageTable = GetPageTable(pde);
+    size_t pgtIndex = ToEntryIndex(vaddr);
     page_entry_t &page = pageTable[pgtIndex];
 
     if ((page & PageEntryFlags::Present) != 0 && (entry != page))
@@ -358,7 +356,6 @@ Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags f
     page = entry;
 
     return Kernel::ErrorCode::NoError;
-//    return ::MapPage(m_dir, paddr, vaddr, flags);
 }
 
 /********************************************************************************************************************/
@@ -390,8 +387,6 @@ Kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
     page &= ~PageEntryFlags::Present;
 
     return Kernel::ErrorCode::NoError;
-
-    //return ::UnmapPage(m_dir, vaddr);
 }
 
 /********************************************************************************************************************/
@@ -428,9 +423,56 @@ paddr_t PageTable::doGetPhysicalPageFor(vaddr_t vaddr) const
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
+#if 0
+
+static
+void InitIdentityPages(BootInfo *bootInfo)
+{
+    for (size_t i = 0; i < TableEntries; ++i)
+    {
+        paddr_t paddr = reinterpret_cast<paddr_t>(i * cpu::PageSize);
+        vaddr_t vaddr = reinterpret_cast<vaddr_t>(paddr); // 1:1 mapping for identity.
+
+        g_bootPageTableNew.MapPage(paddr, vaddr, PageFlags::Write);
+    }
+}
+
+static
+void InitKernelPages(BootInfo *bootInfo)
+{
+    for (size_t i = 0; i < TableEntries; ++i)
+    {
+        paddr_t paddr = reinterpret_cast<paddr_t>(i * cpu::PageSize);
+
+        bool inRange = (paddr >= g_kernelArguments.KernelCode.BaseAligned()) &&
+            (paddr <= g_kernelArguments.KernelCode.EndAligned());
+
+        if (inRange)
+        {
+            vaddr_t vaddr = PHYS_2_VIRT(paddr);
+            g_bootPageTableNew.MapPage(paddr, vaddr, PageFlags::Execute | PageFlags::Kernel);
+        }
+    }
+}
+
+#endif
+
+/********************************************************************************************************************/
+
 void paging::Init(KernelArgs *)
 {
     new (&g_bootPageTable) PageTable(boot_page_directory, DirectoryOptions::NoClear);
+}
+
+void paging::Preinit(BootInfo *bootInfo)
+{
+    PageTable *bootPageTable = &g_bootPageTableNew;
+    //bootInfo->BootPageTable = bootPageTable;
+
+    new (bootPageTable) PageTable(boot_page_directory_new);
+
+    //InitIdentityPages(bootInfo);
+    //InitKernelPages(bootInfo);
 }
 
 /********************************************************************************************************************/

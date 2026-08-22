@@ -6,7 +6,7 @@
 
 /********************************************************************************************************************/
 
-// Holds global defintions for kernel types.
+// Holds global definitions for kernel types.
 
 /// @brief Physical address pointer
 typedef uintptr_t paddr_t;

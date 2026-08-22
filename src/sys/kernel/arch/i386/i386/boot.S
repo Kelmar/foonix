@@ -81,9 +81,20 @@ _start:
     movl $VIRT_2_PHYS(stack_top), %esp
     movl $VIRT_2_PHYS(stack_top), %ebp
 
+    /* Setup boot info for our preinit call */
+    movl %eax, VIRT_2_PHYS(g_bootMagic)
+    movl %ebx, VIRT_2_PHYS(g_bootInfoPtr)
+
     /* Preserve EAX and EBX which hold boot info from multiboot */
     pushl %ebx
     pushl %eax
+
+    /* EAX and EBX as arguments to preinit */
+    pushl %ebx
+    pushl %eax
+
+    /* Call new_preinit to setup all the things needed by a proper call to main(). */
+    call new_preinit
 
     /* Setup directory and page tables */
 
@@ -207,21 +218,21 @@ _paged_start:
     movl %eax, g_bootMagic
     movl %ebx, g_bootInfoPtr
 
-    call  preinit /* Initialize CPU & VM first */
+    call preinit /* Initialize CPU & VM first */
 
     /* Call C++ static constructors */
     /* call __runtime_init */
 
     # Call the kernel proper
-    call  kmain
+    call kmain
 
     cli /* Disable interrupts if they're still active */
-    jmp   .L_halt
+    jmp .L_halt
 
 .L_halt:
     # Halt machine.
     hlt
     pause
-    jmp   .L_halt
+    jmp .L_halt
 
 /********************************************************************************************************************/

@@ -43,7 +43,7 @@ namespace paging
     /// @return The address of the previous page boundary.
     const util::TAlignPrev<cpu::PageSize> AlignPrev;
 
-    /// @brief Checks to see if the supplied pointer is page alligned.
+    /// @brief Checks to see if the supplied pointer is page aligned.
     const util::TIsAligned<cpu::PageSize> IsAligned;
 }
 

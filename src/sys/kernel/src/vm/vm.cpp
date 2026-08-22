@@ -29,13 +29,6 @@ void vmm::Init()
     g_kernelArguments.ShowAvailableMemory();
 
     new (&page_allocator) paging::PageAllocator();
-
-    int bootPageCount = page_allocator.GetFreePages();
-
-    if (bootPageCount == 0)
-        kpanic("Unable to allocate any boot pages\r\n");
-
-    Debug::PrintF("%d boot page(s) free.\r\n", bootPageCount);
 }
 
 /********************************************************************************************************************/

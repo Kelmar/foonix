@@ -56,27 +56,6 @@ struct mb_elf_syms_t
 
 /********************************************************************************************************************/
 
-enum class BiosMemoryType : uint32_t
-{
-    /// @brief Invalid entry
-    Invalid   = 0,
-
-    /// @brief Memory is available for use
-    Available = 1,
-
-    /// @brief Memory has been reserved by the BIOS
-    Reserved  = 2,
-
-    /// @brief Memory is used for ACPI
-    ACPI      = 3,
-
-    /// @brief Memory is used for ACPI NVS
-    ACPI_VMS  = 4,
-
-    /// @brief Memory has been marked as bad
-    BadMemory = 5
-};
-
 struct mb_memory_map_t
 {
     uint32_t size;      // Size of this structure

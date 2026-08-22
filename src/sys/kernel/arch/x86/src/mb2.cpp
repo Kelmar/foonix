@@ -7,74 +7,73 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <kernel/arch.h>
-#include <kernel/kernel_args.h>
 #include <kernel/kernel.h>
 #include <kernel/debug.h>
-#include <kernel/utilities.h>
-#include <kernel/vm.h>
-
-#include "asm.h"
-#include "cpu.h"
-
-#include "multiboot.h"
-#include "multiboot2.h"
+#include <kernel/span.h>
 
 #include "bootinfo.h"
-
-//#include "paging.h"
 
 /********************************************************************************************************************/
 
 namespace
 {
-    int ParseCommandLine(KernelArgs *ka, const mb2_tag *tag)
+    int ParseCommandLine(BootInfo *bootInfo, const mb2_tag *tag)
     {
         const mb2_str_tag *cmd = reinterpret_cast<const mb2_str_tag *>(tag);
 
-        ka->SetCommandLine(cmd->GetStr());
+        util::span<char> cmdStr = cmd->GetStr();
+
+        size_t sz = std::min(cmdStr.size_bytes(), BootInfo::CmdLineSize);
+
+        if (sz == 0)
+            return 0; // Nothing to copy.
+
+        --sz; // Ensure space for null terminator.
+
+        memcpy(bootInfo->CommandLine, cmdStr.data(), sz);
+        bootInfo->CommandLine[sz] = '\0';
 
         return 0;
     }
 
     /************************************************************************************************************/
 
-    int ParseBasicMemoryInfo(KernelArgs *ka, const mb2_tag *tag)
+    int ParseBasicMemoryInfo(BootInfo *bootInfo, const mb2_tag *tag)
     {
         const mb2_basic_memory_info *info = reinterpret_cast<const mb2_basic_memory_info *>(tag);
 
-        ka->MemorySizeKByte = info->mem_lower + info->mem_upper;
-
-        Debug::PrintF("Multiboot reports %d KBytes available.\r\n", ka->MemorySizeKByte);
+        bootInfo->LowMemorySize = info->mem_lower;
+        bootInfo->HighMemorySize = info->mem_upper;
 
         return 0;
     }
 
     /************************************************************************************************************/
 
-    int ParseMemoryMap(KernelArgs *ka, const mb2_tag *tag)
+    int ParseMemoryMap(BootInfo *bootInfo, const mb2_tag *tag)
     {
         const mb2_memory_info *info = reinterpret_cast<const mb2_memory_info *>(tag);
 
-        Debug::PrintF("Checking %d memory record(s) from multiboot 2.\r\n", info->GetExtent());
+        //Debug::PrintF("Checking %d memory record(s) from multiboot 2.\r\n", info->GetExtent());
+
+        int biIndex = 0;
 
         for (auto item : info->GetEntries())
         {
             if (item.type != MB2MemoryType::Available)
                 continue; // Skip anything we can't use for boot up.
 
-            paddr_t base = static_cast<paddr_t>(item.base_addr);
+            bootInfo->MemoryInfo[biIndex].Start = item.base_addr;
+            bootInfo->MemoryInfo[biIndex].Length = item.length;
+            bootInfo->MemoryInfo[biIndex].Type = static_cast<BiosMemoryType>(item.type);
 
-            if (!ka->AddMemoryMap(base, item.length))
-                break; // We've run out of space in the memory map tables.
+            if (++biIndex >= BootInfo::MaxMemArgs)
+                break; // We've run out fo space in the memory map table.
         }
 
-        Debug::PrintF("Removing kernel usage from memory map.\r\n");
+        bootInfo->MemoryInfoCount = biIndex;
 
-        // Remove any memory used by boot loader (e.g. Kernel code space)
-        ka->KnockoutUsedMemory();
-
-        Debug::PrintF("Multiboot memory read complete.\r\n");
+        //Debug::PrintF("Multiboot memory read complete.\r\n");
 
         return 0;
     }
@@ -82,7 +81,7 @@ namespace
 
 /********************************************************************************************************************/
 
-int MB2::ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr)
+int MB2::ReadInfo(BootInfo *bootInfo, uint32_t multiboot_ptr)
 {
     Debug::PrintF("Multiboot 2 load detected.\r\n");
 
@@ -121,15 +120,15 @@ int MB2::ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr)
         switch (tag->type)
         {
         case MB2_TAG_BOOT_CMD:
-            err = ParseCommandLine(ka, tag);
+            err = ParseCommandLine(bootInfo, tag);
             break;
 
         case MB2_TAG_BASIC_MEMINFO:
-            err = ParseBasicMemoryInfo(ka, tag);
+            err = ParseBasicMemoryInfo(bootInfo, tag);
             break;
 
         case MB2_TAG_MEMORY_MAP:
-            err = ParseMemoryMap(ka, tag);
+            err = ParseMemoryMap(bootInfo, tag);
             break;
 
         default:

@@ -15,9 +15,6 @@
 #include "asm.h"
 #include "cpu.h"
 
-#include "multiboot.h"
-#include "multiboot2.h"
-
 #include "bootinfo.h"
 
 #include "arch_vm.h"

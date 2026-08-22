@@ -13,9 +13,6 @@
 #include "asm.h"
 #include "cpu.h"
 
-#include "multiboot.h"
-#include "multiboot2.h"
-
 #include "bootinfo.h"
 
 #include "paging.h"
@@ -45,6 +42,7 @@ extern "C" uintptr_t _kernel_end;
 
 void arch::Init(KernelArgs *ka)
 {
+#if 0
     paging::Init(ka);
 
     Debug::PrintF("ENTER: Arch::Init()\r\n");
@@ -93,6 +91,7 @@ void arch::Init(KernelArgs *ka)
         size_t len = Mark4MB - ka->HeapStart;
         ka->AddMemoryMap(ka->HeapStart, len);
     }
+#endif
 }
 
 /********************************************************************************************************************/

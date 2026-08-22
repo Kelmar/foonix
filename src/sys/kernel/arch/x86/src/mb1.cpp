@@ -7,22 +7,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <kernel/arch.h>
-#include <kernel/kernel_args.h>
 #include <kernel/kernel.h>
 #include <kernel/debug.h>
-#include <kernel/utilities.h>
-#include <kernel/vm.h>
-
-#include "asm.h"
-#include "cpu.h"
-
-#include "multiboot.h"
-#include "multiboot2.h"
 
 #include "bootinfo.h"
-
-//#include "paging.h"
 
 /********************************************************************************************************************/
 
@@ -34,42 +22,36 @@ namespace
 
     /************************************************************************************************************/
 
-    void ParseCommandLine(KernelArgs *ka, multiboot_t *multi)
+    void ParseCommandLine(BootInfo *bootInfo, multiboot_t *multi)
     {
         if ((multi->flags & MB_FLAG_CMDLINE) == 0)
             return; // No command line.
 
         const char *cmd = reinterpret_cast<const char *>(multi->cmdline);
-        
-        ka->SetCommandLine(cmd, MAX_CMD_LINE);
+        strncpy(bootInfo->CommandLine, cmd, BootInfo::CmdLineSize);
     }
 
     /************************************************************************************************************/
 
-    void ParseBasicMemoryInfo(KernelArgs *ka, multiboot_t *multi)
+    void ParseBasicMemoryInfo(BootInfo *bootInfo, multiboot_t *multi)
     {
         if ((multi->flags & MB_FLAG_MEM) == 0)
         {
-            // TODO: Guess at what the memory map is based on the kernel's physical address.
-            Debug::PrintF("No basic memory info provided by multiboot.");
+            //Debug::PrintF("No basic memory info provided by multiboot.");
             return;
         }
 
         // This is really just a hint, we'll want to detect actual memory config later.
-        ka->MemorySizeKByte = multi->mem_lower + multi->mem_upper;
-
-        Debug::PrintF("Multiboot reports %d KBytes available.\r\n", ka->MemorySizeKByte);
+        bootInfo->LowMemorySize = multi->mem_lower;
+        bootInfo->HighMemorySize = multi->mem_upper;
     }
 
     /************************************************************************************************************/
 
-    int ParseMemoryMap(KernelArgs *ka, multiboot_t *multi)
+    int ParseMemoryMap(BootInfo *bootInfo, multiboot_t *multi)
     {
         if ((multi->flags & MB_FLAG_MMAP) == 0)
-        {
-            Debug::PrintF("No memory map provided by multiboot.\r\n");
             return -1;
-        }
 
         size_t recordCnt = multi->mmap_length / sizeof(mb_memory_map_t);
         bool processing = true;
@@ -77,6 +59,8 @@ namespace
         mb_memory_map_t *memMap = reinterpret_cast<mb_memory_map_t *>(multi->mmap_addr);
 
         Debug::PrintF("Checking %d memory record(s) from multiboot.\r\n", recordCnt);
+
+        size_t biIndex = 0;
         
         for (uint32_t i = 0; processing && i < recordCnt; ++i)
         {
@@ -94,15 +78,16 @@ namespace
                 // Don't think records will show up out of order, but we keep going, just in case.
                 continue; 
             }
-#endif 
+#endif
+            bootInfo->MemoryInfo[biIndex].Start = record->base_addr;
+            bootInfo->MemoryInfo[biIndex].Length = record->length;
+            bootInfo->MemoryInfo[biIndex].Type = record->type;
 
-            processing &= ka->AddMemoryMap(record->base_addr, record->length);
+            if (++biIndex >= BootInfo::MaxMemArgs)
+                break; // We've run out fo space in the memory map table.
         }
 
-        Debug::PrintF("Removing kernel usage from memory map.\r\n");
-
-        // Remove any memory used by boot loader (e.g. Kernel code space)
-        ka->KnockoutUsedMemory();
+        bootInfo->MemoryInfoCount = biIndex;
 
         Debug::PrintF("Multiboot memory read complete.\r\n");
 
@@ -112,16 +97,16 @@ namespace
 
 /********************************************************************************************************************/
 
-int Multiboot::ReadInfo(KernelArgs *ka, uint32_t multiboot_ptr)
+int Multiboot::ReadInfo(BootInfo *bootInfo, uint32_t multiboot_ptr)
 {
     multiboot_t *multi = reinterpret_cast<multiboot_t *>(multiboot_ptr);
 
     Debug::PrintF("Multiboot Info: %p\r\n", multi);
     
-    ParseCommandLine(ka, multi);
-    ParseBasicMemoryInfo(ka, multi);
+    ParseCommandLine(bootInfo, multi);
+    ParseBasicMemoryInfo(bootInfo, multi);
 
-    return ParseMemoryMap(ka, multi);
+    return ParseMemoryMap(bootInfo, multi);
 }
 
 /********************************************************************************************************************/

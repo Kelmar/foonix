@@ -5,6 +5,8 @@
 
 #include <kernel/kernel_args.h>
 
+#include <kernel/debug.h>
+
 #include <kernel/thread/lockguard.h>
 
 #include <kernel/vm/page_allocator.h>
@@ -25,6 +27,9 @@ paging::PageAllocator::PageAllocator() noexcept
     , m_pageCacheCount(0)
 {
     InitBootPages();
+
+    if (m_pageCacheCount == 0)
+        kpanic("Unable to allocate any boot pages\r\n");
 }
 
 /********************************************************************************************************************/
@@ -69,6 +74,8 @@ void paging::PageAllocator::InitBootPages()
             AddPageToCache(addr);
         }
     }
+
+    Debug::PrintF("%d boot page(s) free.\r\n", m_pageCacheCount);
 }
 
 /********************************************************************************************************************/

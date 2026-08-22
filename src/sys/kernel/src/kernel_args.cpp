@@ -149,9 +149,9 @@ bool KernelArgs::AddMemoryMap(paddr_t addr, size_t length)
 
     // If we get here, we need a new memory map.
 
-    if (MemoryMapEntries + 1 >= MAX_MEMORY_ENTRIES)
+    if (MemoryMapEntries + 1 >= MaxMemoryEntries)
     {
-        Debug::PrintF("WARN: Attempt to add more entries than available in boot up memory map of %u\r\n", MAX_MEMORY_ENTRIES);
+        Debug::PrintF("WARN: Attempt to add more entries than available in boot up memory map of %u\r\n", MaxMemoryEntries);
         return false; // Out of space!
     }
 
@@ -211,7 +211,7 @@ void KernelArgs::KnockoutUsedMemory()
                 // Kernel fits entirely within this mapping; which means it needs to be split.
                 // First check to make sure we can fit the new mapping....
 
-                if ((MemoryMapEntries + 1) >= MAX_MEMORY_ENTRIES)
+                if ((MemoryMapEntries + 1) >= MaxMemoryEntries)
                 {
                     // I'm sure there's a better way to handle all of this, but for now... -- B.Simonds (July 26, 2026)
                     kpanic("Out of memory mappings for kernel boot, don't know what to do now...");

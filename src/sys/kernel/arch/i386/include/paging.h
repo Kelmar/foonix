@@ -20,9 +20,11 @@
 
 #include "cpu.h"
 
+struct BootInfo;
+
 namespace paging
 {
-    static const int PAGING_TABLE_SIZE = 1024;
+    static const int TableEntries = 1024;
 
     /************************************************************************************************************/
 
@@ -30,7 +32,7 @@ namespace paging
     typedef uint32_t page_entry_t;
 
     /// @brief Actual page table
-    typedef page_entry_t page_table_t[PAGING_TABLE_SIZE];
+    typedef page_entry_t page_table_t[TableEntries];
 
     /************************************************************************************************************/
 
@@ -38,7 +40,7 @@ namespace paging
     typedef uint32_t page_directory_entry_t;
 
     /// @brief Actual page directory
-    typedef page_directory_entry_t page_directory_t[PAGING_TABLE_SIZE];
+    typedef page_directory_entry_t page_directory_t[TableEntries];
 
     /************************************************************************************************************/
 
@@ -48,19 +50,29 @@ namespace paging
         NoClear = 1,
     };
 
-    // Rework PageTable and BootPageTable into a single class, can call constructor manually with inplace new.
-
     class PageTable : public PageTableBase<PageTable>
     {
+    public:
+        static constexpr const size_t PageSize = 4096;
+
     private:
         page_directory_entry_t *m_dir;
 
         PageTable(const PageTable &rhs) = delete;
         PageTable(PageTable &&rhs) = delete;
 
-    public:
-        static constexpr const size_t PageSize = 4096;
+        constexpr size_t ToEntryIndex(vaddr_t vaddr) const { return (vaddr >> 12) & 0x03FFF; }
+        constexpr size_t ToDirIndex  (vaddr_t vaddr) const { return (vaddr >> 22) & 0x03FFF; }
 
+        Kernel::ErrorCode AddDirectoryEntry(size_t index, paddr_t table, PageFlags flags);
+
+        page_entry_t *GetPageTable(vaddr_t vaddr, size_t &dirIndex) const;
+
+        page_entry_t *GetPageTable(vaddr_t vaddr) const { size_t discard; return GetPageTable(vaddr, discard); }
+
+        page_entry_t *GetOrCreatePageTable(vaddr_t vaddr, PageFlags flags);
+
+    public:
         constexpr PageTable() : m_dir(nullptr) { }
 
         PageTable(page_directory_entry_t *directory, DirectoryOptions options = DirectoryOptions::None);
@@ -73,34 +85,14 @@ namespace paging
         paddr_t doGetPhysicalPageFor(vaddr_t vaddr) const;
     };
 
-    /************************************************************************************************************/
-
-    class BootPageTable : public PageTableBase<BootPageTable>
-    {
-    private:
-        BootPageTable(const BootPageTable &rhs) = delete;
-        BootPageTable(BootPageTable &&rhs) = delete;
-
-    public:
-        static constexpr const size_t PageSize = 4096;
-
-        constexpr BootPageTable() : PageTableBase() { }
-
-        virtual ~BootPageTable() { }
-
-        bool doIsMapped(paddr_t addr) const;
-
-        Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags);
-        Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
-
-        paddr_t doGetPhysicalPageFor(vaddr_t vaddr);
-    };
-
     extern PageTable g_bootPageTable;
+    extern PageTable g_bootPageTableNew;
 
     /************************************************************************************************************/
 
     void Init(KernelArgs *ka);
+
+    void Preinit(BootInfo *bootInfo);
 
     /************************************************************************************************************/
 }

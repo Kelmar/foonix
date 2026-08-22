@@ -26,7 +26,6 @@ namespace paging
         PageNode *m_pageCache;
         size_t m_pageCacheCount; // TODO: Ideally this would be a semaphore
 
-    
     private: // Unguarded methods
         void AddPageToCache(paddr_t addr);
         paddr_t GetCachedPage();
