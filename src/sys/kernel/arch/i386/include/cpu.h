@@ -80,14 +80,6 @@ read_cr2(void)
 }
 
 static inline FORCE_INLINE uint32_t
-read_cr3(void)
-{
-    uint32_t rval;
-    __asm__("movl %%cr3,%0" : "=r" (rval));
-    return rval;
-}
-
-static inline FORCE_INLINE uint32_t
 read_cr4(void)
 {
     uint32_t rval;
@@ -102,23 +94,9 @@ load_cr0(uint32_t value)
 }
 
 static inline FORCE_INLINE void
-load_cr3(uint32_t value)
-{
-    __asm__("movl %0,%%cr3" :: "r" (value));
-}
-
-static inline FORCE_INLINE void
 load_cr4(uint32_t value)
 {
     __asm__("movl %0,%%cr4" :: "r" (value));
-}
-
-static inline FORCE_INLINE void
-reload_cr3(void)
-{
-    uint32_t value;
-    __asm__("movl %%cr3,%0" : "=r" (value));
-    __asm__("movl %0,%%cr3" :: "r" (value));
 }
 
 uint32_t read_ss(void);

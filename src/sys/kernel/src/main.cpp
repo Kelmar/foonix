@@ -25,7 +25,7 @@
 //#include "stdlib.h"
 //#include "kernio.h"
 //#include "ktime.h"
-//#include "paging.h"
+#include "paging.h"
 //#include "kheap.h"
 //#include "process.h"
 
@@ -45,22 +45,14 @@ KernelArgs g_kernelArguments;
  * Initialize the CPU and the VM system so we can begin allocating memory
  * for the rest of the OS.
  */
-extern "C"
-void preinit(void)
+void InitGlobals(void)
 {
+    Debug::PrintF("ENTER: InitGlobals()\r\n");
+
     new (&g_kernelArguments) KernelArgs();
-
-    DebugConsole::Init1(); // Non allocating initialization.
-
     new (&console) Console();
 
-    Debug::PrintF("ENTER: preinit()\r\n");
-
-    arch::Init(&g_kernelArguments);
-
-    vmm::Init();
-
-    Debug::PrintF("EXIT: preinit()\r\n");
+    Debug::PrintF("EXIT: InitGlobals()\r\n");
 }
 
 /********************************************************************************************************************/
@@ -131,6 +123,15 @@ extern "C" void kmain(void)
     //uint8_t *term = (uint8_t *)(0x000B8000);
 
     Debug::PrintF("ENTER: kmain()\r\n");
+
+    InitGlobals();
+
+    arch::Init(&g_kernelArguments);
+
+    vmm::Init();
+
+    Debug::PrintF("g_kernelArguments = %p\r\n", &g_kernelArguments);
+    Debug::PrintF("console = %p\r\n", &console);
 
     Debug::shell();
 

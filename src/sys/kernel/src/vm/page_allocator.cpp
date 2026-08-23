@@ -65,8 +65,8 @@ void paging::PageAllocator::InitBootPages()
         {
             paddr_t addr = memoryRange.Base + offset;
 
-            if (addr < g_kernelArguments.HeapStart)
-                continue; // Ignore pages before the kernel's heap start.
+            if (addr < g_kernelArguments.HeapNext)
+                continue; // Ignore pages before the kernel's heap next.
 
             if (addr >= Mark4MB)
                 return; // We've reached past our 4MB identity map.

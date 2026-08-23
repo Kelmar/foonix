@@ -81,6 +81,28 @@ namespace cpu
     {
         __asm__("outl %0,%1" : : "a" (data), "d" (port));
     }
+
+    static inline FORCE_INLINE uintptr_t
+    read_cr3(void)
+    {
+        uintptr_t rval;
+        __asm__("movl %%cr3,%0" : "=r" (rval));
+        return rval;
+    }
+
+    static inline FORCE_INLINE void
+    load_cr3(uintptr_t value)
+    {
+        __asm__("movl %0,%%cr3" :: "r" (value));
+    }
+
+    static inline FORCE_INLINE void
+    reload_cr3(void)
+    {
+        uint32_t value;
+        __asm__("movl %%cr3,%0" : "=r" (value));
+        __asm__("movl %0,%%cr3" :: "r" (value));
+    }
 }
 
 /********************************************************************************************************************/

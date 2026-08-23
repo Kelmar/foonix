@@ -59,48 +59,25 @@ struct bitmask_set_t
     virtual bool operator()(TEnum other) const = 0;
 };
 
-/// @brief Logical set of any bits required.
 template <BitmaskEnum TEnum>
-struct any_set : bitmask_set_t<TEnum>
+constexpr bool has_any(TEnum v, TEnum items)
 {
-    TEnum values;
+    using basetype = std::underlying_type_t<TEnum>;
+    return (static_cast<basetype>(v) & static_cast<basetype>(items)) != 0;
+}
 
-    constexpr any_set(TEnum v) : values(v) { }
-
-    bool operator()(TEnum other) const override
-    {
-        auto v = std::to_underlying(values);
-        auto o = std::to_underlying(other);
-
-        return (o & v) != 0;
-    }
-};
-
-/// @brief Logical set of all bits required.
 template <BitmaskEnum TEnum>
-struct all_set : bitmask_set_t<TEnum>
+constexpr bool has_all(TEnum v, TEnum items)
 {
-    TEnum values;
-
-    constexpr all_set(TEnum v) : values(v) { }
-
-    bool operator()(TEnum other) const override
-    {
-        auto v = std::to_underlying(values);
-        auto o = std::to_underlying(other);
-
-        return (o & v) == v;
-    }
-};
+    using basetype = std::underlying_type_t<TEnum>;
+    return (static_cast<basetype>(v) & static_cast<basetype>(items)) == static_cast<basetype>(items);
+}
 
 /// @brief Alias for all_set
 template <BitmaskEnum TEnum>
-struct is_set : all_set<TEnum> { is_set(TEnum v) : all_set<TEnum>(v) { } };
-
-template <BitmaskEnum TEnum>
-bool operator &&(TEnum lhs, const bitmask_set_t<TEnum> &rhs)
+constexpr bool is_set(TEnum v, TEnum items)
 {
-    return rhs(lhs);
+    return has_all(v, items);
 }
 
 /*
@@ -115,12 +92,12 @@ bool operator &&(TEnum lhs, const bitmask_set_t<TEnum> &rhs)
  * {
  *     MyFlags f = MyFlags::Flag1 | MyFlags::Flag2;
  *
- *     if (f && is_set(MyFlags::Flag1))
+ *     if (is_set(f, MyFlags::Flag1))
  *     {
  *         // Do a thing if Flag1 set
  *     }
  *
- *     if (f && any_set(MyFlags::Flag1 | MyFlags::Flag3))
+ *     if (any_set(f, MyFlags::Flag1 | MyFlags::Flag3))
  *     {
  *         // Do a thing if Flag1 or Flag3 are set.
  *     }

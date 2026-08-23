@@ -61,6 +61,8 @@ namespace paging
         PageTable(const PageTable &rhs) = delete;
         PageTable(PageTable &&rhs) = delete;
 
+        static paddr_t AllocatePage();
+
         constexpr size_t ToEntryIndex(vaddr_t vaddr) const { return (vaddr >> 12) & 0x03FFF; }
         constexpr size_t ToDirIndex  (vaddr_t vaddr) const { return (vaddr >> 22) & 0x03FFF; }
 
@@ -73,9 +75,8 @@ namespace paging
         page_entry_t *GetOrCreatePageTable(vaddr_t vaddr, PageFlags flags);
 
     public:
-        constexpr PageTable() : m_dir(nullptr) { }
-
-        PageTable(page_directory_entry_t *directory, DirectoryOptions options = DirectoryOptions::None);
+        PageTable() noexcept;
+        PageTable(page_directory_entry_t *directory, DirectoryOptions options = DirectoryOptions::None) noexcept;
         
         virtual ~PageTable() { }
 
@@ -83,6 +84,8 @@ namespace paging
         Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
 
         paddr_t doGetPhysicalPageFor(vaddr_t vaddr) const;
+
+        void doMakeActive() const { cpu::load_cr3(reinterpret_cast<uintptr_t>(m_dir)); }
     };
 
     extern PageTable g_bootPageTable;

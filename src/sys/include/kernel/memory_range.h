@@ -60,19 +60,8 @@ struct MemoryRange
     {
     }
 
-    MemoryRange(const MemoryRange &lsh) noexcept
-        : Base(0)
-        , Length(0)
-    {
-        operator =(lsh);
-    }
-
-    MemoryRange(MemoryRange &&rhs) noexcept
-        : Base(0)
-        , Length(0)
-    {
-        operator =(std::move(rhs));
-    }
+    MemoryRange(const MemoryRange &lsh) noexcept = default;
+    MemoryRange(MemoryRange &&rhs) noexcept = default;
 
     /**
      * @brief Build a memory range that includes both start and end memory addresses.
@@ -146,22 +135,10 @@ struct MemoryRange
     }
 
     inline
-    MemoryRange &operator =(const MemoryRange &r) noexcept
-    {
-        Base = r.Base;
-        Length = r.Length;
-
-        return *this;
-    }
+    MemoryRange &operator =(const MemoryRange &r) noexcept = default;
 
     inline
-    MemoryRange &operator =(MemoryRange &&r) noexcept
-    {
-        std::swap(Base, r.Base);
-        std::swap(Length, r.Length);
-
-        return *this;
-    }
+    MemoryRange &operator =(MemoryRange &&r) noexcept = default;
 
     /**
      * @brief Attempt to merge two MemoryRange objects into one.
@@ -169,7 +146,8 @@ struct MemoryRange
      * Returns the merged memory range if successful.  MemoryMergeError if not.
      */
     inline static 
-    auto Merge(const MemoryRange &r1, const MemoryRange &r2) -> std::expected<MemoryRange, MemoryMergeError>
+    auto Merge(const MemoryRange &r1, const MemoryRange &r2)
+        -> std::expected<MemoryRange, MemoryMergeError>
     {
         if (!r1.Contiguous(r2))
             return std::unexpected(MemoryMergeError::NotContiguous);

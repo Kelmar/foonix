@@ -1,11 +1,16 @@
 /********************************************************************************************************************/
 
+#include <kernel/arch.h>
 #include <kernel/arch/dconsole.h>
 
 #include "asm.h"
 #include "cpu.h"
 
 #include "bootinfo.h"
+
+#include "multiboot.h"
+#include "multiboot2.h"
+
 #include "paging.h"
 
 /********************************************************************************************************************/
@@ -113,7 +118,7 @@ void InitHeapInfo(BootInfo *bootInfo)
  * need on start.
  */
 extern "C"
-void new_preinit(uint32_t magicNumber, uint32_t eax)
+void preinit(uint32_t magicNumber, uint32_t eax)
 {
     DebugConsole::Init1();
 
@@ -144,6 +149,26 @@ void new_preinit(uint32_t magicNumber, uint32_t eax)
 
     // Get paging setup.
     paging::Preinit(bootInfo);
+}
+
+/********************************************************************************************************************/
+
+void arch::Init(KernelArgs *ka)
+{
+    BootInfo *bootInfo = &g_bootInfo;
+    ka->SetCommandLine(bootInfo->CommandLine, BootInfo::CmdLineSize);
+    ka->KernelCode = MemoryRange::FromAddresses(bootInfo->KernelStart, bootInfo->KernelEnd);
+    ka->MemorySizeKByte = bootInfo->LowMemorySize + bootInfo->HighMemorySize;
+    ka->HeapStart = bootInfo->HeapStart;
+    ka->HeapNext = bootInfo->HeapNext;
+
+    for (size_t i = 0; i < bootInfo->MemoryInfoCount; ++i)
+    {
+        if (bootInfo->MemoryInfo[i].Type != BiosMemoryType::Available)
+            continue;
+
+        ka->AddMemoryMap(bootInfo->MemoryInfo[i].Start, bootInfo->MemoryInfo[i].Length);
+    }
 }
 
 /********************************************************************************************************************/

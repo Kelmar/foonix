@@ -7,11 +7,15 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <algorithm>
+
 #include <kernel/kernel.h>
 #include <kernel/debug.h>
 #include <kernel/span.h>
+#include <kernel/utilities.h>
 
 #include "bootinfo.h"
+#include "multiboot2.h"
 
 /********************************************************************************************************************/
 
@@ -146,7 +150,7 @@ int MB2::ReadInfo(BootInfo *bootInfo, uint32_t multiboot_ptr)
         ptr += tag->size;
     }
 
-    Debug::PrintF("MB2: Detected %d total tags.\r\n", i);
+    Debug::PrintF("MB2: Read completed, processed %d total tags.\r\n", i);
 
     return err;
 }

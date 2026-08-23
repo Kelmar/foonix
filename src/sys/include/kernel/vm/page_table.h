@@ -69,7 +69,7 @@ enum class PageFlags
     Execute = 1 << 1,
 
     /// @brief The page is for Kernel access only, prevent access to User level code.
-    Kernel  = 1 << 7
+    Kernel  = 1 << 7,
 };
 
 as_flags(PageFlags);
@@ -81,10 +81,11 @@ as_flags(PageFlags);
 template <typename T>
 concept IsPageTable = requires(T pt, paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
+    { T::PageSize } -> std::same_as<const size_t &>;
     { pt.doMapPage(paddr, vaddr, flags) } -> std::same_as<Kernel::ErrorCode>;
     { pt.doUnmapPage(vaddr) } -> std::same_as<Kernel::ErrorCode>;
     { pt.doGetPhysicalPageFor(vaddr) } -> std::same_as<paddr_t>;
-    { T::PageSize } -> std::same_as<const size_t &>;
+    { pt.doMakeActive() } -> std::same_as<void>;
 };
 
 /********************************************************************************************************************/
@@ -225,6 +226,11 @@ public:
         vaddr_t vaddr = reinterpret_cast<vaddr_t>(reinterpret_cast<uintptr_t>(mapped));
         return MapUnaligned(paddr, vaddr, sizeof(TMapped), flags);
     }
+
+    /**
+     * @brief Sets the page table as the currently active page table for the MMU.
+     */
+    void MakeActive() const { self()->doMakeActive(); }
 };
 
 /********************************************************************************************************************/
