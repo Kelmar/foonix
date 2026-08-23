@@ -1,9 +1,8 @@
 #!/bin/sh
 
-QEMU="qemu-system-x86_64"
-#QEMU="qemu-system-i386"
-
 PLATFORM="${1:-x86_64}"
+
+QEMU="qemu-system-${PLATFORM}"
 ISO="out/boot.${PLATFORM}.iso"
 
 if [ ! -f "$ISO" ]; then
