@@ -112,7 +112,7 @@ namespace PageEntryFlags
  *
  * @remarks This allocator cannot free pages.
  */
-class BootPageAllocator : public IPageAllocator
+class BootPageAllocator
 {
 private:
     BootInfo *m_bootInfo;
@@ -125,14 +125,14 @@ public:
 
     virtual ~BootPageAllocator() { }
 
-    paddr_t AllocatePage() final
+    paddr_t AllocatePage()
     {
         paddr_t rval = m_bootInfo->HeapNext;
         m_bootInfo->HeapNext += cpu::PageSize;
         return rval;
     }
 
-    void ReleasePage(paddr_t) final
+    void ReleasePage(paddr_t)
     {
         // Do nothing, we can't really free pages.
     }
