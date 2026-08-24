@@ -1,32 +1,22 @@
 /********************************************************************************************************************/
+/********************************************************************************************************************/
+
+#ifndef _X_CPPIMPL_TT_CONDITIONAL_H__
+#define _X_CPPIMPL_TT_CONDITIONAL_H__ 1
 
 /********************************************************************************************************************/
 
-#ifndef _X_CONCEPTS
-#define _X_CONCEPTS 1
+template <bool B, class T, class F>
+struct conditional { using type = T; };
+
+template <class T, class F>
+struct conditional<false, T, F> { using type = F; };
+
+template <bool B, class T, class F>
+using conditional_t = typename conditional<B, T, F>::type;
 
 /********************************************************************************************************************/
 
-#include <type_traits>
-
-/********************************************************************************************************************/
-
-namespace std
-{
-    template <typename T>
-    concept integral = is_integral_v<T>;
-
-    template <class T, class U>
-    concept same_as = std::is_same_v<T, U> && std::is_same_v<U, T>;
-
-    template <class From, class To>
-    concept convertible_to =
-        std::is_convertible_v<From, To> &&
-        requires { static_cast<To>(declval<From>()); };
-}
-
-/********************************************************************************************************************/
-
-#endif /* _X_CONCEPTS */
+#endif /* _X_CPPIMPL_TT_CONDITIONAL_H__ */
 
 /********************************************************************************************************************/

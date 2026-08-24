@@ -59,6 +59,12 @@ namespace std
     {
         return t;
     }
+
+    template <typename T>
+    typename std::type_identity_t<T> declval() noexcept
+    {
+        static_assert(false, "Do not call into declval()");
+    }
 }
 
 /********************************************************************************************************************/

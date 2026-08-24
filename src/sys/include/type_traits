@@ -43,6 +43,9 @@ namespace std
 
     template <class T, class U>
     constexpr bool is_same_v = is_same<T, U>::value;
+
+    #include <cppimpl/type_traits/conditional.h>
+    #include <cppimpl/type_traits/convertible.h>
 }
 
 /********************************************************************************************************************/
