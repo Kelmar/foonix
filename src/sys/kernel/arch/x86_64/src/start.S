@@ -141,24 +141,23 @@ _start:
     addl $8, %edi      // Size of page table entry
     loop 1b
 
-    popl %eax
-    popl %ebx
+    /* 
+     * Restore multiboot values into edi and esi for call to preinit.
+     *
+     * Somewhat conviently we don't need edi or esi for the below instructions
+     * but we do need eax, ebx?, ecx, and edx.  However, Clang is using the SysV ABI
+     * which passes the first and second parameters in edi and esi respectively.
+     */
+    popl %edi
+    popl %esi
 
-    movl $boot_pml4t, %edi
-    movl %edi, %cr3 // Load up our new page table addresses.
+    movl $boot_pml4t, %eax
+    movl %eax, %cr3 // Load up our new page table addresses.
 
     // Enable PAE
     movl %cr4, %ecx
     orl $(1 << 5), %ecx
     movl %ecx, %cr4
-
-    /*
-     * Using EDI to preserve EAX while we transition to x64 mode w/o using the stack.
-     *
-     * We can't use EBX because that has it's own value we need to preserve.
-     * rdmsr/wrmsr use EAX, ECX, and EDX....
-     */
-    movl %eax, %edi
 
     movl $0xC0000080, %ecx
     rdmsr
@@ -168,9 +167,6 @@ _start:
     movl %cr0, %eax
     orl $(1 << 31), %eax
     movl %eax, %cr0
-
-    /* Restore EAX */
-    movl %edi, %eax
 
     /* Load the global descriptor table */
     lgdt g_gdtPtr

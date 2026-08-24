@@ -18,6 +18,7 @@ stack_bottom:
 stack_top:
 
 .global stack_top
+.global prepreinit
 
 /********************************************************************************************************************/
 
@@ -40,11 +41,8 @@ _x64_start:
     movq $stack_top, %rsp
     movq $stack_top, %rbp
 
-    # Load in parameters from the bootloader into places the C++ code can get to them.
-    /*
-    pushl %ebx
-    pushl %eax
-    */
+    # Note that rdi and rsi were loaded from start.S prior to the long jump.
+    # This has our multiboot parameters in them.
 
     call preinit /* Initialize CPU & VM first */
 

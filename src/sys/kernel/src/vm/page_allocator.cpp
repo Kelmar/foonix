@@ -15,7 +15,12 @@
 
 paging::PageAllocator page_allocator;
 
-constexpr const size_t Mark4MB = 4 * (1 << 20);
+/*
+ * On x64 we only map the first 2MB starting out; for x32, we're doing 4MB.  For now we just add the lesser of the
+ * two into our page allocator list.
+ */
+//constexpr const size_t Mark4MB = 4 * (1 << 20);
+constexpr const size_t Mark2MB = 2 * (1 << 20);
 
 /********************************************************************************************************************/
 
@@ -68,8 +73,8 @@ void paging::PageAllocator::InitBootPages()
             if (addr < g_kernelArguments.HeapNext)
                 continue; // Ignore pages before the kernel's heap next.
 
-            if (addr >= Mark4MB)
-                return; // We've reached past our 4MB identity map.
+            if (addr >= Mark2MB)
+                return; // We've reached past our 2MB identity map.
 
             AddPageToCache(addr);
         }
