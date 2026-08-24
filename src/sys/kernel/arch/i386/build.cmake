@@ -14,7 +14,7 @@ list(APPEND i386_sources
     realmem.cpp
 )
 
-list(TRANSFORM i386_sources PREPEND "${HOST_DIR}/i386/")
+list(TRANSFORM i386_sources PREPEND "${HOST_DIR}/src/")
 list(APPEND SOURCES ${i386_sources})
 
 # Add platform specific device drivers.
