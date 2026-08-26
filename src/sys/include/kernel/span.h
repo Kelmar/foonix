@@ -21,7 +21,7 @@ namespace util
 {
     // Similar to std::span, but not exactly the same...
 
-    constexpr size_t default_stride = (size_t)(-1);
+    static constexpr size_t default_stride = (size_t)(-1);
 
     template <typename T>
     class span
@@ -36,59 +36,90 @@ namespace util
         typedef const T&          const_reference;
 
     public: // Iterators
-        class Iterator
+
+        template <bool IsConst>
+        class IteratorBase
         {
         private:
-            const span &m_container;
-            int m_index;
+            using container_type = std::conditional_t<IsConst, const span&, span&>;
+
+            container_type m_container;
+            size_t m_index;
+
+            template <bool> friend class IteratorBase;
 
         public:
-            using value_type      = std::remove_cv<T>;
+            using value_type      = std::remove_cv_t<T>;
             using difference_type = size_type;
-            using pointer         = T*;
-            using reference       = T&;
+            using pointer         = std::conditional_t<IsConst, const T*, T*>;
+            using reference       = std::conditional_t<IsConst, const T&, T&>;
 
-            explicit Iterator(const span &container, int index = 0) noexcept
+            explicit IteratorBase(container_type container, size_t index = 0) noexcept
                 : m_container(container)
                 , m_index(index)
             {
             }
 
-            Iterator(const Iterator &rhs) noexcept = default;
-            Iterator(Iterator &&rhs) noexcept = default;
+            IteratorBase(const IteratorBase &rhs) noexcept = default;
+            IteratorBase(IteratorBase &&rhs) noexcept = default;
 
-            Iterator &operator =(const Iterator &rhs) noexcept = default;
-            Iterator &operator =(Iterator &&rhs) noexcept = default;
+            // Implicit iterator -> const_iterator conversion (mirrors std:: container iterators).
+            template <bool WasConst, typename = std::enable_if_t<IsConst && !WasConst>>
+            IteratorBase(const IteratorBase<WasConst> &rhs) noexcept
+                : m_container(rhs.m_container)
+                , m_index(rhs.m_index)
+            {
+            }
 
-            //reference       operator * ()       { return m_container.at(m_index); }
-            const_reference operator * () const { return m_container.at(m_index); }
-            //pointer         operator ->()       { return m_container.fetch(m_index); }
-            const_pointer   operator ->() const { return m_container.fetch(m_index); }
+            IteratorBase &operator =(const IteratorBase &rhs) noexcept = default;
+            IteratorBase &operator =(IteratorBase &&rhs) noexcept = default;
 
-            constexpr bool operator ==(const Iterator &rhs) const
+            reference operator * () const { return m_container.at(m_index); }
+            pointer   operator ->() const { return m_container.fetch(m_index); }
+
+            template <bool OtherConst>
+            constexpr bool operator ==(const IteratorBase<OtherConst> &rhs) const
             {
                 return (m_container.m_data == rhs.m_container.m_data) && (m_index == rhs.m_index);
             }
 
-            constexpr bool operator !=(const Iterator &rhs) const
+            template <bool OtherConst>
+            constexpr bool operator !=(const IteratorBase<OtherConst> &rhs) const
             {
-                return (m_container.m_data != rhs.m_container.m_data) || (m_index != rhs.m_index);
+                return !(*this == rhs);
             }
 
-            Iterator &operator ++()    { ++m_index; return *this; }
-            Iterator  operator ++(int) { auto tmp = *this; ++(*this); return tmp; }
+            IteratorBase &operator ++()
+            {
+                ++m_index;
+                return *this;
+            }
 
-            Iterator &operator --()    { --m_index; return *this; }
-            Iterator  operator --(int) { auto tmp = *this; --(*this); return tmp; }
+            IteratorBase  operator ++(int)
+            {
+                auto result = *this;
+                operator ++();
+                return result;
+            }
+
+            IteratorBase &operator --()
+            {
+                --m_index; return *this;
+            }
+
+            IteratorBase  operator --(int)
+            {
+                auto result = *this;
+                operator --();
+                return result;
+            }
         };
 
-        friend class Iterator;
+        typedef IteratorBase<false> iterator;
+        typedef IteratorBase<true>  const_iterator;
 
-        typedef Iterator       iterator;
-        typedef const Iterator const_iterator;
-
-        typedef std::reverse_iterator<Iterator>       reverse_iterator;
-        typedef const std::reverse_iterator<Iterator> const_reverse_iterator;
+        typedef std::reverse_iterator<iterator>       reverse_iterator;
+        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
     private:
         pointer   m_data;
@@ -145,15 +176,21 @@ namespace util
          */
         constexpr size_type size_bytes() const { return m_size * m_stride; }
 
-        constexpr iterator                 begin() const { return iterator(*this, 0); }
-        constexpr const_iterator          cbegin() const { return iterator(*this, 0); }
-        constexpr reverse_iterator        rbegin() const { return std::reverse_iterator(begin()); }
-        constexpr const_reverse_iterator crbegin() const { return std::reverse_iterator(cbegin()); }
+        constexpr iterator             begin()       { return iterator(*this, 0); }
+        constexpr const_iterator       begin() const { return const_iterator(*this, 0); }
+        constexpr const_iterator      cbegin() const { return const_iterator(*this, 0); }
 
-        constexpr iterator                 end() const { return iterator(*this, m_size); }
-        constexpr const_iterator          cend() const { return iterator(*this, m_size); }
-        constexpr reverse_iterator        rend() const { return std::reverse_iterator(end()); }
-        constexpr const_reverse_iterator crend() const { return std::reverse_iterator(cend()); }
+        constexpr reverse_iterator        rbegin()       { return reverse_iterator(end()); }
+        constexpr const_reverse_iterator  rbegin() const { return const_reverse_iterator(end()); }
+        constexpr const_reverse_iterator crbegin() const { return const_reverse_iterator(cend()); }
+
+        constexpr iterator             end()       { return iterator(*this, m_size); }
+        constexpr const_iterator       end() const { return const_iterator(*this, m_size); }
+        constexpr const_iterator      cend() const { return const_iterator(*this, m_size); }
+
+        constexpr reverse_iterator        rend()       { return reverse_iterator(begin()); }
+        constexpr const_reverse_iterator  rend() const { return const_reverse_iterator(begin()); }
+        constexpr const_reverse_iterator crend() const { return const_reverse_iterator(cbegin()); }
 
         constexpr reference       first()       { return at(0); }
         constexpr const_reference first() const { return at(0); }
@@ -166,6 +203,9 @@ namespace util
     
         constexpr reference       operator[](size_type pos)       { return at(pos); }
         constexpr const_reference operator[](size_type pos) const { return at(pos); }
+
+        constexpr pointer       pointer_to(size_type pos)       { return fetch(pos); }
+        constexpr const_pointer pointer_to(size_type pos) const { return fetch(pos); }
 
         constexpr pointer       data()       { return m_data; }
         constexpr const_pointer data() const { return m_data; }

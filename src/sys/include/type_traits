@@ -46,6 +46,7 @@ namespace std
 
     #include <cppimpl/type_traits/conditional.h>
     #include <cppimpl/type_traits/convertible.h>
+    #include <cppimpl/type_traits/enable.h>
 }
 
 /********************************************************************************************************************/
