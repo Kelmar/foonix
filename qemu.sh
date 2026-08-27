@@ -11,6 +11,12 @@ if [ ! -f "$ISO" ]; then
     exit 1
 fi
 
+# Hack for i686 vs. i386
+regex='^i.86$'
+if [[ "$1" =~ $regex ]] ; then
+    QEMU="qemu-system-i386"
+fi
+
 #$QEMU -nographic -kernel kernel.elf -serial mon:stdio
 
 rm -f out/qemu.log

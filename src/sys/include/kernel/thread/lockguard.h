@@ -21,10 +21,10 @@ namespace thread
     };
 
     /**
-    * @brief Utility class for automatically calling Lock/Unlock on a BasicLock concept.
-    *
-    * Note that this class will first acquire the lock on construction and then release it when it is disposed of.
-    */
+     * @brief Utility class for automatically calling Lock/Unlock on a BasicLock concept.
+     *
+     * Note that this class will first acquire the lock on construction and then release it when it is disposed of.
+     */
     template <BasicLock T>
     class LockGuard
     {

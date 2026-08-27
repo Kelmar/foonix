@@ -9,8 +9,8 @@ include ("${KERNEL_SRC_DIR}/arch/x86/build.cmake")
 
 # Add platform specific files
 list(APPEND i386_sources
-    boot.S cpu.S isr.S memsetw.S vectors.s
-    bus.cpp gdt.cpp idt.cpp paging.cpp preinit.cpp
+    boot.S cpu.S memsetw.S preinit.cpp paging.cpp 
+    vectors.s idt.cpp isr.S gdt.cpp bus.cpp 
     realmem.cpp
 )
 

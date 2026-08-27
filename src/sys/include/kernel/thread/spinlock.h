@@ -11,9 +11,7 @@
 
 namespace thread
 {
-    /**
-    * @brief A basic spin lock that can be locked, and unlocked.
-    */
+    /// @brief A basic spin lock that can be locked, and unlocked.
     class SpinLock
     {
     private:
@@ -28,24 +26,22 @@ namespace thread
         ~SpinLock() { }
 
         /**
-        * @brief Attempts to acquire the lock.
-        * @return True if the lock was successfully acquired, false if not.
-        */
+         * @brief Attempts to acquire the lock.
+         * @return True if the lock was successfully acquired, false if not.
+         */
         bool TryLock() noexcept { return atomic::xchg(&m_value, 1) == 0; }
 
         /**
-        * @brief Spins to acquire a lock.
-        * @remarks This will spin indefinitely to acquire the lock.
-        */
+         * @brief Spins to acquire a lock.
+         * @remarks This will spin indefinitely to acquire the lock.
+         */
         void Lock() noexcept
         {
             while (!TryLock())
                 cpu::pause();
         }
 
-        /**
-        * @brief Releases the lock.
-        */
+        /// @brief Releases the lock.
         void Unlock() noexcept
         {
             atomic::store(&m_value, 0);

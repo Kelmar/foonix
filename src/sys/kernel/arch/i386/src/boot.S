@@ -90,7 +90,7 @@ paging_init:
 .type _paged_start, @function
 _paged_start:
     /* Load values for kernel selectors */
-    movw $(2 << 3), %ax
+    movw $(2 << 3), %ax /* $0x10 */
     movw %ax, %ds
     movw %ax, %es
     movw %ax, %ss

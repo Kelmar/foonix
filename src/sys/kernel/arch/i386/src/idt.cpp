@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <kernel/debug.h>
 #include <kernel/flow.h>
 #include <kernel/tty.h>
 
@@ -60,7 +61,7 @@ namespace
 
     isr_handler_t s_isr_callbacks[IDT_ENTRIES];
 
-    int s_exception_depth = 0;
+    //int s_exception_depth = 0;
 
     const char* exception_messages[] =
     {
@@ -179,6 +180,20 @@ void init_idt(void)
 }
 
 /********************************************************************************************************************/
+
+void dump_regs(const struct regs *r)
+{
+    Debug::PrintF("CPU DUMP:\n");
+    Debug::PrintF("EAX: %p  EBX: %p  ECX: %p  EDX: %p\n", r->eax, r->ebx, r->ecx, r->edx);
+    Debug::PrintF("EDI: %p  ESI: %p  EBP: %p  ESP: %p\n", r->edi, r->esi, r->ebp, r->esp);
+    Debug::PrintF(" GS: %p   FS: %p   ES: %p   DS: %p\n", r->gs, r->fs, r->es, r->ds);
+    Debug::PrintF(" CS: %p  EIP: %p   SS: %p  ESP: %p\n", r->cs, r->eip, r->ss, r->useresp);
+    //Debug::PrintF("CR0: %p  CR2: %p  CR3: %p  CR4: %p\n", read_cr0(), read_cr2(), read_cr3(), read_cr4());
+    Debug::PrintF("FLG: %p\n", r->eflags);
+}
+
+
+/********************************************************************************************************************/
 /*
  * Handler for panic conditions.
  */
@@ -191,14 +206,15 @@ static void panic_handler(struct regs* r)
 
     // Display our own little BSOD and halt the system.
 
-    terminal_clear();
-    printf("Exception (%02X): %s\n", r->int_no, msg);
-    printf("Error code: %d\n\n", r->err_code);
+    //terminal_clear();
+    Debug::PrintF("Exception (%02X): %s\n", r->int_no, msg);
+    Debug::PrintF("Error code: %d\n\n", r->err_code);
 
-    //dump_regs(r);
+    dump_regs(r);
     //stack_trace(r->ebp);
 
-    puts("\nSystem Halted.");
+    //puts("\nSystem Halted.");
+    Debug::PrintF("\nSystem Halted.");
     khalt();
 }
 
@@ -224,7 +240,7 @@ extern "C" void outb(io_port_t port, uint8_t byte);
  * interrupt is triggered.
  */
 extern "C" void handle_isr(regs* r)
-{
+{    
     //char buf[16];
     //int i;
 
@@ -263,6 +279,9 @@ extern "C" void handle_isr(regs* r)
     //if (i != 0)
     //    set_debug_section_info(s_debsect, buf, i);
 
+#if 0
+    // Sending the end of interrupt notices to the PIC controllers seems to be bogging the system way down.
+
     if (is_irq)
     {
         //bus master_pic((void*)0x0020, 2);
@@ -287,6 +306,7 @@ extern "C" void handle_isr(regs* r)
     }
 
     --s_exception_depth;
+#endif
 }
 
 /********************************************************************************************************************/

@@ -42,7 +42,7 @@ namespace
     // Change this if needed.
     const int TIMER_FREQ = 100; // in Hz
 
-    // Physicial timer's frequency.
+    // Physical timer's frequency.
     const int TIMER_PHYSFREQ = 1193180; // don't change this! */
 
     const int HZ = (TIMER_PHYSFREQ / 10000);

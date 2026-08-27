@@ -5,6 +5,7 @@
 
 #include "asm.h"
 #include "cpu.h"
+#include "idt.h"
 
 #include "bootinfo.h"
 
@@ -153,6 +154,8 @@ void preinit(uint32_t magicNumber, uint32_t eax)
 
 /********************************************************************************************************************/
 
+void init_idt(); // TODO: Put this decl in a header.
+
 void arch::Init(KernelArgs *ka)
 {
     BootInfo *bootInfo = &g_bootInfo;
@@ -169,6 +172,8 @@ void arch::Init(KernelArgs *ka)
 
         ka->AddMemoryMap(bootInfo->MemoryInfo[i].Start, bootInfo->MemoryInfo[i].Length);
     }
+
+    init_idt();
 }
 
 /********************************************************************************************************************/
