@@ -204,6 +204,7 @@ namespace util
         constexpr reference       operator[](size_type pos)       { return at(pos); }
         constexpr const_reference operator[](size_type pos) const { return at(pos); }
 
+        // Non-standard extension to quickly get pointer to item.
         constexpr pointer       pointer_to(size_type pos)       { return fetch(pos); }
         constexpr const_pointer pointer_to(size_type pos) const { return fetch(pos); }
 

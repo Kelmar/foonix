@@ -1,6 +1,8 @@
 .vscode/*
 .vs
 
+.idea
+
 qemu.log
 kernel.log
 kernel.elf

@@ -19,7 +19,7 @@ namespace cpu
 {
     /************************************************************************************************************/
 
-    constexpr const size_t PageSize = PAGE_SIZE;
+    constexpr size_t PageSize = PAGE_SIZE;
 
 #undef PAGE_SIZE
 

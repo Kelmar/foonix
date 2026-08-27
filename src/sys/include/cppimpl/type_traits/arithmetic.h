@@ -1,26 +1,19 @@
 /********************************************************************************************************************/
+/********************************************************************************************************************/
 
-#ifndef __FOONIX_ARCH_X86_64_CPU_H__
-#define __FOONIX_ARCH_X86_64_CPU_H__
+#ifndef _X_CPPIMPL_TT_ARITHMETIC_H__
+#define _X_CPPIMPL_TT_ARITHMETIC_H__ 1
 
 /********************************************************************************************************************/
 
-#include <stddef.h>
-#include <stdint.h>
+template <class T>
+struct is_arithmetic : integral_constant<bool, is_integral<T>::value || is_floating_point<T>::value> { };
 
-#include "cpudefs.h"
-
-#include "cpu_base.h"
-
-/********************************************************************************************************************/
-
-namespace cpu
-{
-    constexpr size_t BitSize = 64;
-}
+template <typename T>
+constexpr bool is_arithmetic_v = is_arithmetic<T>::value;
 
 /********************************************************************************************************************/
 
-#endif /* __FOONIX_ARCH_X86_64_CPU_H__ */
+#endif /* _X_CPPIMPL_TT_ARITHMETIC_H__ */
 
 /********************************************************************************************************************/

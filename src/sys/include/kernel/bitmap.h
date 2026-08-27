@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "kernel/math.h"
+
 /********************************************************************************************************************/
 /**
  * @brief Describes details for storing and working with bitmaps representing BITS number of bits.
@@ -18,17 +20,21 @@ template <size_t BITS>
     requires (BITS > 0)
 struct BitmapTraits
 {
+    using CellType = typename std::conditional_t<cpu::BitSize == 64, uint64_t, uint32_t>;
+
     /// @brief Number of bits this these traits are for.
     static constexpr const size_t BitCount = BITS;
 
     /// @brief Number of bits per "cell" (array item)
-    static constexpr const size_t CellBits = sizeof(uint32_t) * 8;
+    static constexpr const size_t CellBits = sizeof(CellType) * 8;
+
+    static constexpr const size_t CellBitShift = math::msb_index_v<(sizeof(CellType) * 8)>;
 
     /// @brief Number of left over bits that don't quite fill a full cell.
     static constexpr const size_t ExtraBitCount = BITS & (CellBits - 1);
 
     /// @brief Bit mask for testing bits in extra cell.
-    static constexpr const uint32_t ExtraBitMask = static_cast<uint32_t>((1 << ExtraBitCount) - 1);
+    static constexpr const CellType ExtraBitMask = static_cast<CellType>((1 << ExtraBitCount) - 1);
 
     /// @brief Count of array items that consume all bits of an uint32_t.
     static constexpr const size_t MinCellCount = BITS / CellBits;
@@ -37,13 +43,23 @@ struct BitmapTraits
     static constexpr const size_t ArraySize = MinCellCount + (ExtraBitCount != 0 ? 1 : 0);
 
     /// @brief The size of the array in bytes
-    static constexpr const size_t ArraySizeBytes = ArraySize * sizeof(uint32_t);
+    static constexpr const size_t ArraySizeBytes = ArraySize * sizeof(CellType);
 
     /// @brief Get the array index needed to find the requested bit.
-    static constexpr int GetCellIndex(size_t bitIndex) { return bitIndex / CellBits; }
+    static constexpr size_t GetCellIndex(size_t bitIndex)
+    {
+        return bitIndex / CellBits;
+        //return bitIndex >> CellBitShift;
+    }
 
     /// @brief Mask the index for the bit to test an individual cell.
-    static constexpr int GetBit(size_t bitIndex) { return bitIndex % CellBits; }
+    static constexpr CellType GetBit(size_t bitIndex)
+    {
+        return 1<< (bitIndex & (CellBits - 1));
+    }
+
+    /// @brief Invalid size indicator.
+    static constexpr size_t npos = (size_t)(-1);
 };
 
 /********************************************************************************************************************/
@@ -56,10 +72,18 @@ namespace impl__
     struct BitBlockTest
     {
         typedef BitmapTraits<BITS> Traits;
+        
+        using CellType = Traits::CellType;
 
-        static bool AllClear(uint32_t *array)
+        static constexpr CellType AllBits = ((CellType)(0) - 1);
+
+        static constexpr size_t BitCount = Traits::BitCount;
+        static constexpr size_t CellBits = Traits::CellBits;
+        static constexpr size_t npos = Traits::npos;
+
+        static bool AllClear(const CellType *array)
         {
-            for (int i = 0; i < Traits::MinCellCount; ++i)
+            for (size_t i = 0; i < Traits::MinCellCount; ++i)
             {
                 if (array[i] != 0)
                     return false;
@@ -71,11 +95,11 @@ namespace impl__
             return true;
         }
 
-        static bool AllSet(uint32_t *array)
+        static bool AllSet(const CellType *array)
         {
-            for (int i = 0; i < Traits::MinCellCount; ++i)
+            for (size_t i = 0; i < Traits::MinCellCount; ++i)
             {
-                if (array[i] != UINT32_MAX)
+                if (array[i] != AllBits)
                     return false;
             }
 
@@ -84,6 +108,48 @@ namespace impl__
 
             return true;
         }
+
+        static size_t FirstSet(const CellType *array)
+        {
+            for (size_t i = 0; i < Traits::MinCellCount; ++i)
+            {
+                size_t pos = math::lsb_index(array[i]);
+
+                if (pos != 0)
+                    return (i * CellBits) + (pos - 1);
+            }
+
+            if (Traits::MinCellCount != Traits::ArraySize)
+            {
+                size_t pos = math::lsb_index(array[Traits::MinCellCount]);
+
+                if (pos <= Traits::ExtraBitCount)
+                    return (Traits::MinCellCount * CellBits) + (pos - 1);
+            }
+
+            return Traits::npos;
+        }
+
+        static size_t FirstClear(const CellType *array)
+        {
+            for (size_t i = 0; i < Traits::MinCellCount; ++i)
+            {
+                size_t pos = math::lsb_index(~array[i]);
+
+                if (pos != 0)
+                    return (i * CellBits) + (pos - 1);
+            }
+
+            if (Traits::MinCellCount != Traits::ArraySize)
+            {
+                size_t pos = math::lsb_index(~array[Traits::MinCellCount]);
+
+                if (pos <= Traits::ExtraBitCount)
+                    return (Traits::MinCellCount * CellBits) + (pos - 1);
+            }
+
+            return Traits::npos;
+        }
     };
 
     template <>
@@ -91,9 +157,21 @@ namespace impl__
     {
         typedef BitmapTraits<32> Traits;
 
-        static bool AllClear(uint32_t *array) { return array[0] == 0; }
+        using CellType = Traits::CellType;
 
-        static bool AllSet(uint32_t *array) { return array[0] == UINT32_MAX; }
+        static bool AllClear(const CellType *array) { return array[0] == 0; }
+
+        static bool AllSet(const CellType *array) { return array[0] == UINT32_MAX; }
+
+        static size_t FirstSet(const CellType *array)
+        {
+            return math::lsb_index(array[0]) - 1;
+        }
+
+        static size_t FirstClear(const CellType *array)
+        {
+            return math::lsb_index(~array[0]) - 1;
+        }
     };
 
     template <size_t BITS>
@@ -102,11 +180,25 @@ namespace impl__
     {
         typedef BitmapTraits<BITS> Traits;
 
-        static bool AllClear(uint32_t *array) { return array[0] == 0; }
+        using CellType = Traits::CellType;
 
-        static bool AllSet(uint32_t *array)
+        static bool AllClear(const CellType *array) { return array[0] == 0; }
+
+        static bool AllSet(const CellType *array)
         {
             return (array[0] & Traits::ExtraBitMask) == Traits::ExtraBitMask;
+        }
+
+        static size_t FirstSet(const CellType *array)
+        {
+            size_t pos = math::lsb_index(array[0]);
+            return pos < BITS ? (pos - 1) : Traits::npos;
+        }
+
+        static size_t FirstClear(const CellType *array)
+        {
+            size_t pos = math::lsb_index(~array[0]);
+            return pos < BITS ? (pos - 1) : Traits::npos;
         }
     };
 }
@@ -122,12 +214,15 @@ private:
     using Traits = BitmapTraits<BITS>;
     using BlockTest = impl__::BitBlockTest<BITS>;
 
+public:
+    using CellType = Traits::CellType;
+    static constexpr size_t npos = Traits::npos;
+
+private:
     static constexpr const size_t ArraySize = Traits::ArraySize;
     static constexpr const size_t ArraySizeBytes = Traits::ArraySizeBytes;
 
-    static const size_t ItemBits = sizeof(uint32_t) * 8;
-
-    uint32_t m_items[ArraySize];
+    CellType m_items[ArraySize];
 
     /* constructor */ Bitmap(const Bitmap &) = delete;
     /* constructor */ Bitmap(Bitmap &&) = delete;
@@ -146,12 +241,18 @@ public:
     /// @brief Check of all bits are set.
     bool Full() const { return BlockTest::AllSet(m_items); }
 
-    #define BIT_OPERATION(NAME__, OP__)             \
-        void NAME__(size_t index) {                 \
-            if (index >= BitCount) return;          \
-            int idx = Traits::GetCellIndex(index);  \
-            int bit = Traits::GetBit(index);        \
-            m_items[idx] = m_items[idx] OP__ bit; }
+    /// @brief Return the index of the first set bit, or npos if all bits clear.
+    size_t FirstSet() const { return BlockTest::FirstSet(m_items); }
+
+    /// @brief Return the index of the first unset bit, or npos if all bits set.
+    size_t FirstClear() const { return BlockTest::FirstClear(m_items); }
+
+    #define BIT_OPERATION(NAME__, OP__)                    \
+        void NAME__(size_t index) {                        \
+            if (index >= BitCount) return;                 \
+            size_t cellIdx = Traits::GetCellIndex(index);  \
+            CellType bit = Traits::GetBit(index);          \
+            m_items[cellIdx] = m_items[cellIdx] OP__ bit; }
 
     BIT_OPERATION(Set, |)
     BIT_OPERATION(Clear, & ~)
@@ -162,8 +263,8 @@ public:
         if (index >= BitCount)
             return false;
 
-        int itemIndex = Traits::GetCellIndex(index);
-        int itemBit = Traits::GetBit(index);
+        size_t itemIndex = Traits::GetCellIndex(index);
+        CellType itemBit = Traits::GetBit(index);
 
         return (m_items[itemIndex] & itemBit) != 0;
     }

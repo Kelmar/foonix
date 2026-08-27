@@ -14,20 +14,11 @@ namespace std
     template <class T>
     using type_identity_t = type_identity<T>::type;
 
-    // Integral needed for almost all other checks.
+    // Integral is needed for almost all other checks.
     #include <cppimpl/type_traits/integral.h>
     #include <cppimpl/type_traits/fp.h>
-
-    template <class T>
-    struct is_arithmetic : integral_constant<bool, 
-        is_integral<T>::value || is_floating_point<T>::value>
-    { };
-
-    template <typename T>
-    constexpr bool is_arithmetic_v = is_arithmetic<T>::value;
-
+    #include <cppimpl/type_traits/arithmetic.h>
     #include <cppimpl/type_traits/sign.h>
-
     #include <cppimpl/type_traits/void.h>
     #include <cppimpl/type_traits/enum.h>
     #include <cppimpl/type_traits/ref.h>
