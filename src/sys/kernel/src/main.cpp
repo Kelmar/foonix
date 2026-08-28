@@ -14,6 +14,7 @@
 #include <kernel/arch/dconsole.h>
 #include <kernel/debug.h>
 #include <kernel/console.h>
+#include <kernel/interrupt.h>
 
 #include <kernel/vm.h>
 #include <kernel/vm/new.h>
@@ -37,6 +38,11 @@
  */
 KernelArgs g_kernelArguments;
 
+namespace cpu
+{
+    InterruptStack interrupt_stack;
+}
+
 /********************************************************************************************************************/
 /**
  * Called before VM is setup and we have just basic paging enabled from
@@ -49,6 +55,7 @@ void InitGlobals(void)
 {
     Debug::PrintF("ENTER: InitGlobals()\r\n");
 
+    new (&cpu::interrupt_stack) cpu::InterruptStack();
     new (&g_kernelArguments) KernelArgs();
     new (&console) Console();
 

@@ -32,7 +32,7 @@ namespace
 
         uint8_t  type    : 4; // 9 = TSS, E = 32bit Int Gate, F = 32bit Trap Gate
         uint8_t  storage : 1; // Always zero
-        uint8_t  level   : 2; // Privelege level
+        uint8_t  level   : 2; // Privilege level
         uint8_t  present : 1; // Always 1
 
         uint16_t base_hi;     // Base address high
@@ -80,7 +80,7 @@ namespace
         /* 12 */ "Stack Fault",
         /* 13 */ "General Protection Fault",
         /* 14 */ "Page Fault",
-        /* 15 */ "Unknown Inerrupt",
+        /* 15 */ "Unknown Interrupt",
         /* 16 */ "FPU Fault",
         /* 17 */ "Alignment Check",
         /* 18 */ "Machine Check",
@@ -147,36 +147,12 @@ void init_idt(void)
     s_idtp.limit = (sizeof(idt_entry_t) * IDT_ENTRIES) - 1;
     s_idtp.base = s_idt;
 
-    bus master_pic((void*)0x0020, 2);
-    bus slave_pic((void*)0x00A0, 2);
-
-    /*
-     * These magic numbers tell the PICs to remap what interrupts are fired when an IRQ is triggered.
-     *
-     * TODO: Get details about reprogramming the PICs.
-     */
-    master_pic.byte(0, 0x11);
-    slave_pic .byte(0, 0x11);
-    master_pic.byte(1, 0x20); // vector: IRQ_START
-    slave_pic .byte(1, 0x28); // vector: IRQ_START + 8
-    master_pic.byte(1, 0x04);
-    slave_pic .byte(1, 0x02);
-    master_pic.byte(1, 0x01);
-    slave_pic .byte(1, 0x01);
-    master_pic.byte(1, 0);
-    slave_pic .byte(1, 0);
-
-    //master_pic.byte(1, 0xFD);
-    //slave_pic.byte(1, 0xFF);
-
     for (int i = 0; i < IDT_ENTRIES; ++i)
         set_idt_entry(i, vectors[i], false, 0x08, 0);
 
     //set_idt_entry(0xF0, isr_call, true, 8, 0);
 
     load_idt(&s_idtp);
-
-    cpu::start_interrupts();
 }
 
 /********************************************************************************************************************/
@@ -191,7 +167,6 @@ void dump_regs(const struct regs *r)
     //Debug::PrintF("CR0: %p  CR2: %p  CR3: %p  CR4: %p\n", read_cr0(), read_cr2(), read_cr3(), read_cr4());
     Debug::PrintF("FLG: %p\n", r->eflags);
 }
-
 
 /********************************************************************************************************************/
 /*
@@ -229,8 +204,8 @@ static void default_handler(struct regs* r)
 
 /********************************************************************************************************************/
 
-extern "C" uint8_t inb(io_port_t port);
-extern "C" void outb(io_port_t port, uint8_t byte);
+// TODO: Put into a proper header.
+void pic_send_eoi(int irq_no);
 
 /********************************************************************************************************************/
 /*
@@ -240,11 +215,9 @@ extern "C" void outb(io_port_t port, uint8_t byte);
  * interrupt is triggered.
  */
 extern "C" void handle_isr(regs* r)
-{    
-    //char buf[16];
-    //int i;
+{
 
-    //printf("Interrupt %d\n", r->int_no);
+    //Debug::PrintF("Interrupt %d\n", r->int_no);
 
     int irq_no = r->int_no - 32;
     bool is_irq = ((irq_no >= 0) && (irq_no < MAX_IRQS));
@@ -254,6 +227,17 @@ extern "C" void handle_isr(regs* r)
         panic("Caught nested exceptions.");
 */
 
+    /*
+     * Would like to rethink this a bit.  Might be useful to beable to have multiple handlers on a single IRQ
+     * and it would also would be nice to have the PIC code to be able to actually detect (or receive) when
+     * a hardware IRQ is actually handled or not.
+     *
+     * If it isn't handled, we would probably like for it to mask that bit off and prevent further interrupts
+     * on that IRQ unless explicitly enabled by something else.
+     *
+     * We also should investigate in APIC (Advanced Programmable Interrupt Controller) and APCI (???)
+     */ 
+    
     isr_handler_t cb = s_isr_callbacks[r->int_no];
 
     if (cb == nullptr)
@@ -269,44 +253,8 @@ extern "C" void handle_isr(regs* r)
         cb(r);
     }
 
-    //if (r->int_no != 32)
-    //{
-    //    i = snprintf(buf, sizeof(buf), "INT: %02X", r->int_no);
-    //}
-    //else
-    //    i = 0;
-
-    //if (i != 0)
-    //    set_debug_section_info(s_debsect, buf, i);
-
-#if 0
-    // Sending the end of interrupt notices to the PIC controllers seems to be bogging the system way down.
-
     if (is_irq)
-    {
-        //bus master_pic((void*)0x0020, 2);
-
-        if (irq_no == 1)
-        {
-            uint8_t scan = cpu::inb((uint16_t)0x60);
-            (void)(scan);
-        }
-
-        // If IRQ 8-15, we need to send an EOI to the slave controller.
-        if (irq_no >= 8)
-        {
-            //bus slave_pic((void*)0x00A0, 2);
-            //slave_pic.byte(0, 0x20);
-            cpu::outb((uint16_t)0x00A0, 0x20);
-        }
-
-        // In all cases we need to send an EOI to the master controller.
-        //master_pic.byte(0, 0x20);
-        cpu::outb((uint16_t)0x0020, 0x20);
-    }
-
-    --s_exception_depth;
-#endif
+        pic_send_eoi(irq_no);
 }
 
 /********************************************************************************************************************/

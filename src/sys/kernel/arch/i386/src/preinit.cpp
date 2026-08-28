@@ -154,7 +154,10 @@ void preinit(uint32_t magicNumber, uint32_t eax)
 
 /********************************************************************************************************************/
 
-void init_idt(); // TODO: Put this decl in a header.
+// TODO: Put these in proper headers.
+void init_idt();
+void init_pics();
+void init_timer();
 
 void arch::Init(KernelArgs *ka)
 {
@@ -174,6 +177,11 @@ void arch::Init(KernelArgs *ka)
     }
 
     init_idt();
+    init_pics();
+
+    init_timer();
+
+    cpu::start_interrupts();
 }
 
 /********************************************************************************************************************/

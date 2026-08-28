@@ -9,8 +9,8 @@ WORKDIR /work
 
 RUN cmake ../src -DCONFIG=${CONFIG}
 
-RUN cmake --build . -v
-RUN cmake --install . -v
+RUN cmake --build .
+RUN cmake --install .
 
 RUN grub-mkrescue -o boot.iso sysroot
 

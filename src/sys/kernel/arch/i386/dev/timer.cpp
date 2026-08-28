@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#include <kernel/debug.h>
+
 #include "bus.h"
 #include "cpu.h"
 #include "idt.h"
@@ -58,11 +60,12 @@ namespace
         UNUSED(HZ);
 
         UNUSED(r);
-        printf("Tick\n");
+        
+        //Debug::PrintF("Tick\n");
     }
 
     void set_timer_freq(int freq)
-    {
+    {        
         int divis;
 
         /*
@@ -73,7 +76,15 @@ namespace
         divis = (TIMER_PHYSFREQ << 1) / freq;
         divis = (divis >> 1) + (divis & 1);
 
-        cpu::stop_interrupts();
+        /*
+         * Normally interrupt disabling is needed here, but we're called before the first cpu::start_interrupts call, and 
+         * we don't wish to start them if some other part of the system is not yet ready to have them enabled.
+         *
+         * We'll let preinit() figure out when to start them up; this function is only needed once on boot and is never
+         * again called.
+         */
+
+        //cpu::stop_interrupts();
 
         bus pit(TIMER_PORTBASE, 4);
 
@@ -85,7 +96,7 @@ namespace
         //s_freq = freq;
         //s_freq_cnt = divis ? divis : 0xFFFF;
 
-        cpu::start_interrupts();
+        //cpu::start_interrupts();
     }
 }
 
@@ -97,7 +108,7 @@ void init_timer(void)
 
     set_isr_callback(32, tick);
 
-    printf("Timer initialized.\n");
+    Debug::PrintF("Timer initialized.\n");
 }
 
 /********************************************************************************************************************/

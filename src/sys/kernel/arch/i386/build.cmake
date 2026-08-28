@@ -14,13 +14,16 @@ list(APPEND i386_sources
     realmem.cpp
 )
 
+list(APPEND i386_devs
+    timer.cpp pic8259.cpp
+)
+
 list(TRANSFORM i386_sources PREPEND "${HOST_DIR}/src/")
 list(APPEND SOURCES ${i386_sources})
 
 # Add platform specific device drivers.
-list(APPEND SOURCES
-    "${HOST_DIR}/dev/timer.cpp"
-)
+list(TRANSFORM i386_devs PREPEND "${HOST_DIR}/dev/")
+list(APPEND SOURCES ${i386_devs})
 
 # =========================================================================
 # Setup include and linker options
