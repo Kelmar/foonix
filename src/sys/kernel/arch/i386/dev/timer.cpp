@@ -51,7 +51,7 @@ namespace
 
     /************************************************************************************************************/
 
-    void tick(struct regs* r)
+    void tick(struct regs_t* r)
     {
         UNUSED(TIMER_COUNTER1);
         UNUSED(TIMER_COUNTER2);
@@ -60,7 +60,7 @@ namespace
         UNUSED(HZ);
 
         UNUSED(r);
-        
+
         //Debug::PrintF("Tick\n");
     }
 

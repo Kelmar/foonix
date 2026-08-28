@@ -11,7 +11,7 @@ include ("${KERNEL_SRC_DIR}/arch/x86/build.cmake")
 list(APPEND i386_sources
     boot.S cpu.S memsetw.S preinit.cpp paging.cpp 
     vectors.s idt.cpp isr.S gdt.cpp bus.cpp 
-    realmem.cpp
+    arch_debug.cpp realmem.cpp
 )
 
 list(APPEND i386_devs

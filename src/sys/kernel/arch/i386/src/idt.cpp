@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <kernel/arch.h>
+#include <kernel/console.h>
 #include <kernel/debug.h>
 #include <kernel/flow.h>
 #include <kernel/tty.h>
@@ -155,24 +157,13 @@ void init_idt(void)
     load_idt(&s_idtp);
 }
 
-/********************************************************************************************************************/
-
-void dump_regs(const struct regs *r)
-{
-    Debug::PrintF("CPU DUMP:\n");
-    Debug::PrintF("EAX: %p  EBX: %p  ECX: %p  EDX: %p\n", r->eax, r->ebx, r->ecx, r->edx);
-    Debug::PrintF("EDI: %p  ESI: %p  EBP: %p  ESP: %p\n", r->edi, r->esi, r->ebp, r->esp);
-    Debug::PrintF(" GS: %p   FS: %p   ES: %p   DS: %p\n", r->gs, r->fs, r->es, r->ds);
-    Debug::PrintF(" CS: %p  EIP: %p   SS: %p  ESP: %p\n", r->cs, r->eip, r->ss, r->useresp);
-    //Debug::PrintF("CR0: %p  CR2: %p  CR3: %p  CR4: %p\n", read_cr0(), read_cr2(), read_cr3(), read_cr4());
-    Debug::PrintF("FLG: %p\n", r->eflags);
-}
+void dump_regs(const regs_t &r);
 
 /********************************************************************************************************************/
 /*
  * Handler for panic conditions.
  */
-static void panic_handler(struct regs* r)
+static void panic_handler(struct regs_t* r)
 {
     const char* msg = "Unknown Exception";
 
@@ -181,15 +172,14 @@ static void panic_handler(struct regs* r)
 
     // Display our own little BSOD and halt the system.
 
-    //terminal_clear();
-    Debug::PrintF("Exception (%02X): %s\n", r->int_no, msg);
-    Debug::PrintF("Error code: %d\n\n", r->err_code);
+    console << "Exception (" << hex(r->int_no, -2) << "): " << msg << "\r\n";
+    console << "Error Code: " << r->err_code << "\r\n";
 
-    dump_regs(r);
-    //stack_trace(r->ebp);
+    dump_regs(*r);
+    //cpu::stack_trace(r->ebp);
 
-    //puts("\nSystem Halted.");
-    Debug::PrintF("\nSystem Halted.");
+    console << "\nSystem Halted.";
+
     khalt();
 }
 
@@ -197,7 +187,7 @@ static void panic_handler(struct regs* r)
 /*
  * Default interrupt handler
  */
-static void default_handler(struct regs* r)
+static void default_handler(struct regs_t* r)
 {
     UNUSED(r);
 }
@@ -214,7 +204,7 @@ void pic_send_eoi(int irq_no);
  * This is called by our assembly code, which is inturn called when an
  * interrupt is triggered.
  */
-extern "C" void handle_isr(regs* r)
+extern "C" void handle_isr(regs_t* r)
 {
 
     //Debug::PrintF("Interrupt %d\n", r->int_no);

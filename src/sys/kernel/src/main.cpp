@@ -1,29 +1,22 @@
 /********************************************************************************************************************/
 
-#include <kernel/flow.h>
-#include <kernel/tty.h>
-
 #include <stdio.h>
 #include <string.h>
 
 #include "cpu.h"
 
-#include <kernel/arch.h>
-#include <kernel/kernel_args.h>
-
 #include <kernel/arch/dconsole.h>
 #include <kernel/debug.h>
 #include <kernel/console.h>
+#include <kernel/tty.h>
+
+#include <kernel/arch.h>
+#include <kernel/kernel_args.h>
 #include <kernel/interrupt.h>
 
 #include <kernel/vm.h>
 #include <kernel/vm/new.h>
 
-//#include "cdefs.h"
-//#include "multboot.h"
-//#include "cpu.h"
-//#include "string.h"
-//#include "stdlib.h"
 //#include "kernio.h"
 //#include "ktime.h"
 #include "paging.h"
@@ -68,12 +61,6 @@ void InitGlobals(void)
 void pmain(void);
 
 void read_disk_info(multiboot_t *mbd);
-
-extern void force_crash(void);
-
-void test_stack_trace(void);
-
-static const uint32_t *start_ebp;
 #endif
 
 /********************************************************************************************************************/
@@ -82,53 +69,6 @@ static const uint32_t *start_ebp;
  */
 extern "C" void kmain(void)
 {
-#if 0
-    start_ebp = (uint32_t *)read_ebp();
-
-    uint32_t cs = read_cs();
-    uint32_t ip = (uint32_t)(kmain);
-    uint32_t ss = read_ss();
-    uint32_t sp = read_esp();
-
-    // Should be moved to a driver section
-    init_display();
-
-    printf("CODE : %p:%p\n", cs, ip);
-    printf("STACK: %p:%p\n", ss, sp);
-    printf("STACK START: %p\n", stackPtr + 0x4000);
-    printf("STACK END: %p\n", stackPtr);
-
-    init_descriptor_tables();
-
-    /* Interrupts should now be safe! */
-    start_interrupts();
-
-    init_paging(mbd);
-    init_scheduler();
-    init_timer();
-
-    // Should be a driver
-    init_keyboard();
-
-    read_disk_info(mbd);
-
-    // Debugging test
-    /*
-    printf("kmain() == %p\n", kmain);
-    printf("test_stack_trace() == %p\n", test_stack_trace);
-    printf("stack_trace() == %p\n", stack_trace);
-    test_stack_trace();
-
-    force_crash();
-    */
-
-    /* Start preemptive kernel thread. */
-    create_process(pmain);
-
-    /* After our first context switch, the code below will stop running. */
-#endif
-    //uint8_t *term = (uint8_t *)(0x000B8000);
-
     Debug::PrintF("ENTER: kmain()\r\n");
 
     InitGlobals();
@@ -137,12 +77,24 @@ extern "C" void kmain(void)
 
     vmm::Init();
 
+#if 0
+    init_scheduler();
+
+    // Should be a driver
+    init_keyboard();
+
+    read_disk_info(mbd);
+
+    /* Start preemptive kernel thread. */
+    create_process(pmain);
+
+    /* After our first context switch, the code below will stop running. */
+#endif
+
     Debug::PrintF("g_kernelArguments = %p\r\n", &g_kernelArguments);
     Debug::PrintF("console = %p\r\n", &console);
 
     Debug::shell();
-
-    //khalt();
 }
 
 /********************************************************************************************************************/
@@ -160,9 +112,7 @@ void pmain(void)
     kprintf("Kernel loaded\n");
 
     for (;;)
-    {
-        asm volatile("pause"::);
-    }
+        cpu::pause();
 }
 
 /********************************************************************************************************************/
@@ -175,7 +125,7 @@ void read_disk_info(multiboot_t *mbd)
 
     if ((mbd->flags & MB_FLAG_BOOTDEV) == 0)
     {
-        kprintf("WARNING: UNKNOWN BOOT DEVICE!\n");
+        Debug::PrintF("WARNING: UNKNOWN BOOT DEVICE!\n");
         return;
     }
 
@@ -184,7 +134,7 @@ void read_disk_info(multiboot_t *mbd)
     isHDD = ((boot_dev & 0x80) != 0);
     boot_dev &= ~0x80;
 
-    kprintf("Boot device: %s %d(", isHDD ? "HDD" : "FDD", boot_dev);
+    Debug::PrintF("Boot device: %s %d(", isHDD ? "HDD" : "FDD", boot_dev);
 
     for (i = 2; i >= 0; --i)
     {
@@ -192,52 +142,12 @@ void read_disk_info(multiboot_t *mbd)
             break;
 
         if (i != 2)
-            kprintf(", ");
+            Debug::PrintF(", ");
 
-        kprintf("%d", i);
+        Debug::PrintF("%d", i);
     }
 
-    kprintf(")\n");
-}
-
-/********************************************************************************************************************/
-
-void stack_trace(uintptr_t stack)
-{
-    (void)(stack);
-    uint32_t *ebp = (uint32_t *)read_ebp();
-    uint32_t eip; //, *args;
-
-    kprintf("Stack Trace:\n");
-
-    for (;;)
-    {
-        eip = ebp[1];
-
-        if (eip == 0)
-        {
-            kprintf("END OF STACK TRACE: EIP == 0\n");
-            break;
-        }
-
-        ebp = (uint32_t *)ebp[0];
-        //args = (uint32_t *)ebp[2];
-        kprintf("  %p\n", eip);
-
-        if (ebp >= start_ebp)
-        {
-            // Past kmain()
-            kprintf("END OF STACK TRACE\n");
-            break;
-        }
-    }
-}
-
-/********************************************************************************************************************/
-
-void test_stack_trace(void)
-{
-    stack_trace(read_ebp());
+    Debug::PrintF(")\n");
 }
 
 /********************************************************************************************************************/

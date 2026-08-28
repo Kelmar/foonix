@@ -111,6 +111,15 @@ namespace
 
         console.set_paged(false);
     }
+
+    void FaultCommand(size_t, const std::string_view [])
+    {
+        console << "Causing a page fault.\r\n";
+
+        char *data = reinterpret_cast<char *>(0x0080'0000);
+        char c = *data; // Fault should happen here.
+        (void)c;
+    }
 }
 
 /********************************************************************************************************************/
@@ -139,6 +148,7 @@ namespace
         { "dump"   , DumpCommand         },
         { "meminfo", vmm::MemInfoCommand },
         { "vars"   , VarsCommand         },
+        { "fault"  , FaultCommand        },
         { 0        , 0                   } // terminator
     };
 

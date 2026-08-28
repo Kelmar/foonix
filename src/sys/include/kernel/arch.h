@@ -27,6 +27,15 @@ namespace arch
     void Init(KernelArgs *ka);
 }
 
+namespace cpu
+{
+    /// @brief Dump the status of the CPU to the console.
+    //void dump(const regs_t &r);
+
+    /// @brief Dump a stack trace to the console.
+    //void stack_trace(uintptr_t);
+}
+
 /********************************************************************************************************************/
 
 #endif /* __FOONIX_KERNEL_ARCH_H__ */

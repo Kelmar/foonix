@@ -15,7 +15,7 @@
 
 typedef uint32_t register_t;
 
-struct regs
+struct regs_t
 {
     /* Segs are pushed last. */
     register_t gs, fs, es, ds;
@@ -32,10 +32,8 @@ struct regs
     register_t useresp, ss;
 } __attribute__((packed));
 
-typedef struct regs regs_t;
-
 typedef void* io_port_t;
-typedef void (*isr_handler_t)(struct regs* r);
+typedef void (*isr_handler_t)(struct regs_t* r);
 
 /********************************************************************************************************************/
 
