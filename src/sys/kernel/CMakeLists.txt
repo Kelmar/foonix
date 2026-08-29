@@ -2,8 +2,6 @@
 # Kernel global CMakeLists
 # =========================================================================
 
-cmake_minimum_required(VERSION 3.25)
-
 project(kernel C CXX ASM)
 
 set(KERNEL_SRC_DIR "${CMAKE_SOURCE_DIR}/sys/kernel")
@@ -22,14 +20,17 @@ list(APPEND KERN_SOURCES
 
 list(TRANSFORM KERN_SOURCES PREPEND "${KERNEL_SOURCE_DIR}")
 
-#list(APPEND INC_DIRS "${CAMKE_SOURCE_DIR}/sys/kernel/include")
-
 list(APPEND SOURCES ${KERN_SOURCES})
 
 # =========================================================================
 
 add_executable(kernel ${SOURCES})
-add_dependencies(kernel k)
+
+add_dependencies(kernel k kpp)
+
+target_include_directories(kernel PRIVATE
+    "${CMAKE_SOURCE_DIR}/sys/include"
+)
 
 set_target_properties(kernel PROPERTIES OUTPUT_NAME "kernel.elf")
 
@@ -45,8 +46,8 @@ target_compile_options(kernel PRIVATE
 
 target_link_options(kernel PRIVATE -nostdlib ${ALL_EXTRA} ${LINK_EXTRA})
 
-#target_link_libraries(kernel PRIVATE k gcc)
-target_link_libraries(kernel PRIVATE k ${LINK_LIBS})
+#target_link_libraries(kernel PRIVATE k kpp gcc)
+target_link_libraries(kernel PRIVATE k kpp ${LINK_LIBS})
 
 install(
     TARGETS kernel RUNTIME

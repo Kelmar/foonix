@@ -28,7 +28,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -nostdinc++")
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${COMMON_FLAGS} -nostdinc++")
 
-# Except we DO want the compiler includes.
+# Except we DO want the compiler includes. (E.g. stdint.h & stddef.h)
 execute_process(
     COMMAND clang -print-resource-dir
     OUTPUT_VARIABLE CLANG_RESOURCE_DIR
@@ -40,7 +40,7 @@ project(foonix C CXX ASM)
 include_directories(
     SYSTEM
     "${CLANG_RESOURCE_DIR}/include"
-    "${CMAKE_SOURCE_DIR}/sys/include"
+    "${CMAKE_SOURCE_DIR}/include"
 )
 
 add_custom_command(
@@ -51,6 +51,7 @@ add_custom_command(
 
 add_custom_target(foonix ALL DEPENDS sysroot)
 
+add_subdirectory(libs)
 add_subdirectory(sys)
 add_subdirectory(grub)
 

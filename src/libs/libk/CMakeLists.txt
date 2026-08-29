@@ -2,9 +2,7 @@
 # Kernel library global CMakeLists
 # =========================================================================
 
-cmake_minimum_required(VERSION 3.25)
-
-project(libc C CXX ASM)
+project(libc C ASM)
 
 link_directories(
     ../tools/local/lib
@@ -53,17 +51,17 @@ if (EXISTS "${HOST_DIR}/build.cmake")
 endif()
 
 # =========================================================================
-# These files cannot be overriden.
 
-list(APPEND SOURCES 
-    "rt/runtime.c"
-    "rt/cppfill.cpp"
-)
-
-# =========================================================================
-
-add_definitions(-D__is_libk)
 add_library(k STATIC ${SOURCES})
+
+target_compile_definitions(k PUBLIC __is_libk)
+
+target_include_directories(k
+    PUBLIC
+        "${CMAKE_SOURCE_DIR}/libs/libk/include"
+    PRIVATE
+        "${CMAKE_SOURCE_DIR}/sys/include"
+)
 
 target_compile_options(k PRIVATE
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -fno-rtti -fno-exceptions> -ggdb
@@ -71,6 +69,5 @@ target_compile_options(k PRIVATE
 
 target_link_options(k PRIVATE -nostdlib)
 #target_link_libraries(k PRIVATE gcc)
-target_include_directories(k PUBLIC include)
 
 # =========================================================================
