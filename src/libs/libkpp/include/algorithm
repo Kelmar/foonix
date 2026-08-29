@@ -1,5 +1,5 @@
-#ifndef _X_ALGORITHM
-#define _X_ALGORITHM 1
+#ifndef _LIBKPP_ALGORITHM
+#define _LIBKPP_ALGORITHM 1
 
 #include <type_traits>
 
@@ -20,4 +20,4 @@ namespace std
     }
 }
 
-#endif /* _X_ALGORITHM */
+#endif /* _LIBKPP_ALGORITHM */
