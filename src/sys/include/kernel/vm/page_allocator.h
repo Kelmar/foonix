@@ -43,14 +43,17 @@ namespace paging
         /// @brief Get the number of pages currently in the page cache.
         size_t GetCacheSize() const;
 
-        /**
-         * @brief Allocate a single page and return its physical address.
-         */
+        /// @brief Allocate a single page and return its physical address.
         paddr_t AllocatePage();
 
-        /**
-         * @brief Return a page to the allocator for use by other things.
-         */
+        /// @brief Allocate a page and return it as a phyiscal pointer of the given type.
+        template <typename T>
+        inline T *AllocatePageAs()
+        {
+            return reinterpret_cast<T *>(AllocatePage());
+        }
+
+        /// @brief Return a page to the allocator for use by other things.
         void ReleasePage(paddr_t page);
     };
 }
