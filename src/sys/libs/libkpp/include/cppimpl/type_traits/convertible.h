@@ -8,6 +8,13 @@
 
 namespace impl__
 {
+    // We need a version fo declval, but utilities depends on type_traits
+    template <typename T>
+    typename std::type_identity_t<T> declval_int() noexcept
+    {
+        static_assert(false, "Do not call into declval()");
+    }
+
     template <class T>
     auto return_test(int) -> decltype(
         void (static_cast<T(*)()>(nullptr)),
@@ -19,7 +26,7 @@ namespace impl__
 
     template <class From, class To>
     auto return_implicit_test(int) -> decltype(
-        void (declval<void(&)(To)>()(declval<From>())),
+        void (declval_int<void(&)(To)>()(declval_int<From>())),
         std::true_type { }
     );
 

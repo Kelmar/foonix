@@ -10,7 +10,7 @@
  */
 char* _s_strncat(char* dst, size_t dsz, const char* src, size_t ssz)
 {
-    char* end = (char *)memchr(dst, '\0', dsz);
+    char* end = (char *)PREFIX_(memchr)(dst, '\0', dsz);
     size_t dlen, slen;
 
     if (end == NULL)
@@ -20,13 +20,13 @@ char* _s_strncat(char* dst, size_t dsz, const char* src, size_t ssz)
     }
 
     dlen = (size_t)(end - dst);
-    slen = strnlen(src, ssz);
+    slen = PREFIX_(strnlen)(src, ssz);
 
     /* Don't forget to account for NUL */
     if ((dlen + slen) > (dsz - 1))
 	slen = dsz - (dlen + 1);
 
-    memcpy(end, src, slen);
+    PREFIX_(memcpy)(end, src, slen);
     end[slen] = '\0';
 
     return dst;

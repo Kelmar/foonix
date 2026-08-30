@@ -8,7 +8,9 @@
 #ifndef PREFIX__
 # define PREFIX_(X_) X_
 #else
-# define PREFIX_(X_) PREFIX__ ## X_
+# define LK_CAT_IN__(A_, B_) A_ ## B_
+# define LK_CAT__(A_, B_) LK_CAT_IN__(A_, B_)
+# define PREFIX_(X_) LK_CAT__(PREFIX__, X_)
 #endif
 
 /********************************************************************************************************************/

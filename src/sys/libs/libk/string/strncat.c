@@ -7,8 +7,8 @@
 
 char* PREFIX_(strncat)(char* buf, const char* src, size_t size)
 {
-    size_t blen = strnlen(buf, size);
-    size_t ssz = strnlen(src, size) + 1; // Be sure to include the NUL character.
+    size_t blen = PREFIX_(strnlen)(buf, size);
+    size_t ssz = PREFIX_(strnlen)(src, size) + 1; // Be sure to include the NUL character.
 
     if (blen >= size)
         return buf;
@@ -21,7 +21,7 @@ char* PREFIX_(strncat)(char* buf, const char* src, size_t size)
         ssz -= t;
     }
 
-    memcpy(buf + blen, src, ssz);
+    PREFIX_(memcpy)(buf + blen, src, ssz);
 
     // Pedantic safety, could be an issue if the write is unexpected.
     buf[size - 1] = '\0';

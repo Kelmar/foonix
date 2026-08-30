@@ -13,10 +13,10 @@ char* _s_strncpy(char* dst, size_t dsz, const char* src, size_t ssz)
     size_t mlen = (dsz > ssz) ? ssz : dsz;
     size_t slen;
 
-    slen = strnlen(src, ssz) + 1; /* Don't forget to account for NUL */
+    slen = PREFIX_(strnlen)(src, ssz) + 1; /* Don't forget to account for NUL */
     mlen = (mlen > slen) ? slen : mlen;
 
-    memcpy(dst, src, mlen);
+    PREFIX_(memcpy)(dst, src, mlen);
 
 
     // Pedantic safety, should be taken care of with copy of NUL from src to dst.

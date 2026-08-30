@@ -1,32 +1,19 @@
 # =========================================================================
-# Unit tests for libk
+# Unit tests for libkpp
 # =========================================================================
 
-project (foonix_libk_tests C CXX ASM)
+project (foonix_libkpp_tests C CXX ASM)
 
 # =========================================================================
 
 set(LIBK_DIR "${FOO_ROOT_DIR}/sys/libs/libk")
+set(LIBKPP_DIR "${FOO_ROOT_DIR}/sys/libs/libkpp")
 
 # =========================================================================
 
-add_library(libk_under_test STATIC
-    "${LIBK_DIR}/string/memchr.c"
-    "${LIBK_DIR}/string/memcmp.c"
-    "${LIBK_DIR}/string/memcpy.c"
-    "${LIBK_DIR}/string/memmove.c"
-    "${LIBK_DIR}/string/memset.c"
-    "${LIBK_DIR}/string/strlen.c"
-    "${LIBK_DIR}/string/strnlen.c"
-    "${LIBK_DIR}/string/strncat.c"
-    "${LIBK_DIR}/string/strncpy.c"
-    "${LIBK_DIR}/string/_s_strncat.c"
-    "${LIBK_DIR}/string/_s_strncpy.c"
-    "${LIBK_DIR}/stdio/vsnprintf.c"
-    "${LIBK_DIR}/stdio/snprintf.c"
-)
+add_library(libkpp_under_test STATIC stub.cpp)
 
-target_include_directories(libk_under_test
+target_include_directories(libkpp_under_test
     PUBLIC
         "${GLOBAL_INCLUDE_DIR}"
         "${LIBK_DIR}/include"
@@ -35,9 +22,9 @@ target_include_directories(libk_under_test
         "${SYS_INCLUDE_DIR}"
 )
 
-target_link_libraries(libk_under_test PRIVATE kstubs)
+target_link_libraries(libkpp_under_test PRIVATE kstubs)
 
-target_compile_options(libk_under_test PRIVATE
+target_compile_options(libkpp_under_test PRIVATE
     -Wall -Wextra -Wpedantic -g ${SANITIZE_FLAGS}
 )
 
@@ -46,21 +33,18 @@ target_compile_options(libk_under_test PRIVATE
 # host version of the same name.  Also will keep various memory checkers
 # (like ASan) from trying to intercept calls to our functions.
 #
-target_compile_definitions(libk_under_test PRIVATE
+target_compile_definitions(libkpp_under_test PRIVATE
     __is_libk
     PREFIX__=foonix_
 )
 
 # =========================================================================
 
-add_executable(libk_tests
-    bounded_string_tests.c
-    memory_tests.c
-    strlen_tests.c
-    vsnprintf_tests.c
+add_executable(libkpp_tests
+    string_view_tests.cpp
 )
 
-target_include_directories(libk_tests
+target_include_directories(libkpp_tests
     PUBLIC
         "${GLOBAL_INCLUDE_DIR}"
         "${LIBK_DIR}/include"
@@ -69,17 +53,17 @@ target_include_directories(libk_tests
         "${SYS_INCLUDE_DIR}"
 )
 
-target_link_libraries(libk_tests PRIVATE kstubs libk_under_test)
+target_link_libraries(libkpp_tests PRIVATE kstubs libkpp_under_test)
 
-target_compile_options(libk_tests PRIVATE
+target_compile_options(libkpp_tests PRIVATE
     -Wall -Wextra -Wpedantic -g ${SANITIZE_FLAGS}
 )
 
-target_compile_definitions(libk_tests PRIVATE
+target_compile_definitions(libkpp_tests PRIVATE
     __is_libk
     PREFIX__=foonix_
 )
 
-add_test(NAME libk_tests COMMAND libk_tests)
+add_test(NAME libkpp_tests COMMAND libkpp_tests)
 
 # =========================================================================

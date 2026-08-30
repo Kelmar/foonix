@@ -2,22 +2,27 @@ cmake_minimum_required(VERSION 3.20)
 
 # =========================================================================
 
+set (CMAKE_C_STANDARD 11)
+set (CMAKE_C_STANDARD_REQUIRED ON)
+
+set (CMAKE_CXX_STANDARD 23)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set (FOO_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
+set (GLOBAL_INCLUDE_DIR "${FOO_ROOT_DIR}/include")
+
 project (foonix_tests)
 
-include(FetchContent)
+# =========================================================================
+
+#set(SANITIZE_FLAGS -fsanitize=address,undefined -fno-omit-frame-pointer)
 
 # =========================================================================
 
-FetchContent_Declare(doctest
-    GIT_REPOSITORY https://github.com/doctest/doctest.git
-    GIT_TAG v2.5.3
-    GIT_SHALLOW ON
-)
+enable_testing()
 
-FetchContent_MakeAvailable(doctest)
-
-# =========================================================================
-
-add_subdirectory("sys/libs/libk/tests")
+add_subdirectory("sys/libs/kstubs")
+add_subdirectory("sys/libs/libk")
+add_subdirectory("sys/libs/libkpp")
 
 # =========================================================================

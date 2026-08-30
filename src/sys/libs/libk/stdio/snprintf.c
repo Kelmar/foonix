@@ -10,7 +10,7 @@ int  PREFIX_(snprintf)(char* sbuf, size_t slen, const char* fmt, ...)
     va_list args;
 
     va_start(args, fmt);
-    rval = vsnprintf(sbuf, slen, fmt, args);
+    rval = PREFIX_(vsnprintf)(sbuf, slen, fmt, args);
     va_end(args);
 
     return rval;

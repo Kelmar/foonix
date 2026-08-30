@@ -6,9 +6,7 @@
 #define THROW_SIG 
 #define ERROR(X_) kpanic(X_)
 
-//#include <kernel/debug.h>
-#include <kernel/flow.h>
-//#include <kernel/vm.h>
+#include <kassert.h>
 
 void* operator new(size_t sz) THROW_SIG
 {

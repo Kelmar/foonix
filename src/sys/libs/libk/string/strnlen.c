@@ -6,7 +6,7 @@
 
 size_t PREFIX_(strnlen)(const char* str, size_t max)
 {
-    const char* p = memchr(str, '\0', max);
+    const char* p = PREFIX_(memchr)(str, '\0', max);
 
     if (p)
         return (size_t)(p - str);

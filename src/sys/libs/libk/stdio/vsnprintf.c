@@ -24,7 +24,7 @@
  * To work around this cast the char to an int:
  *
  * printf("%02X", (int)c);
- * 
+ *
  * 64-Bit integer support is busted. :/
  */
 
@@ -132,7 +132,7 @@ int  PREFIX_(vsnprintf)(char *sbuf, size_t slen, const char *fmt, va_list args)
 
     if (slen == 0)
         return 0;
-    
+
     for (;;)
     {
         while ((*fp != '%') && (*fp != '\0'))
@@ -268,7 +268,7 @@ number:
 
         case 's':
             p = va_arg(args, char *);
-            n = strlen(p);
+            n = PREFIX_(strlen)(p);
             pad = ' ';
 
 string:
@@ -281,7 +281,7 @@ string:
             if (width > n)
             {
                 // We need to add padding....
-                memset(sbuf + s, pad, (width - n));
+                PREFIX_(memset)(sbuf + s, pad, (width - n));
                 s += (width - n);
             }
 

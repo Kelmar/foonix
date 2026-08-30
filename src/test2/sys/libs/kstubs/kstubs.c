@@ -1,11 +1,11 @@
 /*
  * Stubs for some kernel functions we call from our not quite standard C library.
  */
- 
-#include <stdlib.h>
+
 #include <stdio.h>
 
 __attribute__((noreturn))
+
 void kpanic(const char *message)
 {
     printf("KPANIC: %s\n", message);

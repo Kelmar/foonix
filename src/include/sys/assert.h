@@ -5,21 +5,16 @@
 
 /********************************************************************************************************************/
 
-#include <sys/cdefs.h>
 
 #if defined(__is_foo_kernel) || defined(__is_libk)
-// Pull in functions for kpanic and kassert
-# include "kernel/flow.h"
 
-/*
- * ASSERT macro, checks for COND_ to be true, if false, then we call abort (kpanic) with an ASSERT failure and provide
- * debugging information.
- */
+# include <kassert.h>
 
-# define ASSERT(TEST_, REASON_) \
-    (TEST_) ? (void)(0) : kassert(#TEST_, REASON_, __LINE__, __FILE__, __func__)
 #else
 // Non kernel version, display an error and calls abort()
+
+#include <sys/cdefs.h>
+
 
 # define ASSERT(TEST_, REASON_) \
     do { if (TEST_) { } else { fprintf(stderr, \
