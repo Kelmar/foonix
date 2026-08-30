@@ -43,9 +43,9 @@ namespace std
     template <class T>
     inline void swap(T &x, T &y) noexcept
     {
-        T tmp = move(x);
-        x = move(y);
-        y = move(tmp);
+        T tmp = std::move(x);
+        x = std::move(y);
+        y = std::move(tmp);
     }
 
     template <typename T>

@@ -26,7 +26,7 @@ target_compile_options(kpp PRIVATE
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -fno-rtti -fno-exceptions> -ggdb
 )
 
-target_link_options(k PRIVATE -nostdlib)
-#target_link_libraries(k PRIVATE gcc)
+target_link_options(kpp PRIVATE -nostdlib)
+target_link_libraries(kpp PRIVATE k)
 
 # =========================================================================
