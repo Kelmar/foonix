@@ -51,7 +51,7 @@ add_custom_command(
 
 add_custom_target(foonix ALL DEPENDS sysroot)
 
-add_subdirectory(libs)
+#add_subdirectory(libs)
 add_subdirectory(sys)
 add_subdirectory(grub)
 

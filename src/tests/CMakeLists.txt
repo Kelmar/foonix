@@ -28,8 +28,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(FOONIX_TESTS_SANITIZE "Build with AddressSanitizer + UndefinedBehaviorSanitizer" ON)
 
+set(GLOBAL_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 set(SYS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../sys/include")
-set(LIBK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../sys/libk")
+
+set(LIBK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../sys/libs/libk")
+set(LIBKPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../sys/libs/libkpp")
 
 set(SANITIZE_FLAGS "")
 
@@ -91,7 +94,14 @@ add_library(libk_under_test STATIC
     "${LIBK_DIR}/stdio/snprintf.c"
 )
 
-target_include_directories(libk_under_test PRIVATE "${SYS_INCLUDE_DIR}")
+target_include_directories(libk_under_test
+    PUBLIC
+        "${GLOBAL_INCLUDE_DIR}"
+        "${LIBK_DIR}/include"
+        "${LIBKPP_DIR}/include"
+    PRIVATE
+        "${SYS_INCLUDE_DIR}"
+)
 
 # Matches the real libk build (sys/libk/CMakeLists.txt: add_definitions(-D__is_libk)), for
 # fidelity with what actually ships. Also required for sys/assert.h's ASSERT macro to route
@@ -139,6 +149,7 @@ target_link_options(libk_tests PRIVATE ${SANITIZE_FLAGS})
 target_link_libraries(libk_tests PRIVATE libk_under_test kstubs test_io)
 
 enable_testing()
+
 add_test(NAME libk_tests COMMAND libk_tests)
 
 # =========================================================================
@@ -155,7 +166,10 @@ add_library(kernel_args_under_test STATIC
 )
 
 target_include_directories(kernel_args_under_test PRIVATE
+    "${GLOBAL_INCLUDE_DIR}"
     "${SYS_INCLUDE_DIR}"
+    "${LIBK_DIR}/include"
+    "${LIBKPP_DIR}/include"
 )
 
 target_compile_options(kernel_args_under_test PRIVATE
@@ -192,10 +206,20 @@ add_executable(string_view_tests
     test_string_view.cpp
 )
 
-target_include_directories(string_view_tests PRIVATE "${SYS_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(string_view_tests PRIVATE
+    "${GLOBAL_INCLUDE_DIR}"
+    "${SYS_INCLUDE_DIR}"
+    "${LIBK_DIR}/include"
+    "${LIBKPP_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
 target_compile_definitions(string_view_tests PRIVATE ${LIBK_SYMBOL_RENAMES})
+
 target_compile_options(string_view_tests PRIVATE -Wall -Wextra -g ${SANITIZE_FLAGS})
+
 target_link_options(string_view_tests PRIVATE ${SANITIZE_FLAGS})
+
 target_link_libraries(string_view_tests PRIVATE libk_under_test kstubs test_io)
 
 add_test(NAME string_view_tests COMMAND string_view_tests)

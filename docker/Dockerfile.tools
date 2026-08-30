@@ -5,5 +5,3 @@ RUN apt upgrade -y
 
 RUN apt install -y cmake git
 RUN apt install -y grub-pc-bin grub-common xorriso
-
-
