@@ -29,8 +29,8 @@
  */
 /********************************************************************************************************************/
 
-#ifndef __FOONIX_KERNEL_ATOMIC_H__
-#define __FOONIX_KERNEL_ATOMIC_H__
+#ifndef __FOONIX_ARCH_X86_64_ATOMIC_H__
+#define __FOONIX_ARCH_X86_64_ATOMIC_H__
 
 #include <stdint.h>
 
@@ -38,30 +38,23 @@
 
 /********************************************************************************************************************/
 /*
- * x86 32-bit specific atomic functions.
+ * x86 64-bit specific atomic operations.
  */
 
 namespace atomic
 {
-    /*
-     * Note that these versions use the cmpxchg8b which did not appear until the Pentium processor became a thing.
-     */
-
-    // Modified version from FreeBSD    
     static inline FORCE_INLINE
     uint64_t xchg(volatile uint64_t *addr, uint64_t value)
-    {        
-        __asm __volatile(
-            "  movl %%eax, %%ebx ;"
-            "  movl %%edx, %%ecx ;"
-            "1:"
-            "  lock; cmpxchg8b %0 ;"
-            "  jne 1b"
-            : "+m" (*addr), /* 0 */
-              "+A" (value)  /* 1 */
-            : : "ebx", "ecx", "memory", "cc");
+    {
+        uint64_t result;
 
-        return value;
+        __asm__ volatile(
+            "lock; xchgq %0, %1"
+            : "+m" (*addr), "=a" (result)
+            : "1" (value)
+            : "memory", "cc");
+
+        return result;
     }
 
     // Modified version from FreeBSD
@@ -71,57 +64,40 @@ namespace atomic
         uint8_t result;
 
         __asm__ volatile(
-            "  lock; cmpxchg8b %1 ; "
-            "  sete %0"
-            : "=q" (result),                /* 0 */
-              "+m" (*addr),                 /* 1 */
-              "+A" (expected)               /* 2 */
-            : "b" ((uint32_t)value),        /* 3 */
-              "c" ((uint32_t)(value >> 32)) /* 4 */
+            " lock; cmpxchg %3, %1 ; "
+            : "=@cce" (result), /* 0 */
+              "+m" (*addr),     /* 1 */
+              "+a" (expected)   /* 2 */
+            : "r" (value)       /* 3 */
             : "memory", "cc");
 
         return (result != 0);
     }
 
-    // Modified version from FreeBSD
-    template <>
-    inline FORCE_INLINE
-    void store<uint64_t>(volatile uint64_t *addr, uint64_t value)
+    // Wrapper around cmpxchg16b
+    template <typename T>
+        requires (sizeof(T) == 16)
+    static inline FORCE_INLINE
+    bool cmpset(volatile T *addr, T expected, T value)
     {
-        __asm__ volatile(
-            "  movl %%eax, %%ebx ;"
-            "  movl %%edx, %%ecx ;"
-            "1:"
-            "  lock; cmpxchg8b %0 ; "
-            "  jne 1b"
-            : "+m" (*addr),  /* 0 */
-              "+A" (value) /* 1 */
-            : : "ebx", "ecx", "memory", "cc");
-    }
+        uint8_t result;
 
-    // Modified version from FreeBSD
-    template <>
-    inline FORCE_INLINE
-    std::type_identity_t<uint64_t> load<uint64_t>(volatile const uint64_t *addr)
-    {
-        uint64_t result;
-
-        // Technically does a write even though value isn't modified.
-        // May cause a PF if the page is read only.
         __asm__ volatile(
-            "  movl %%ebx, %%eax ;"
-            "  movl %%ecx, %%edx ;"
-            "  lock; cmpxchg8b %1"
-            : "=&A" (result) /* 0 */
-            : "m" (*addr)    /* 1 */
+            "  lock; cmpxchg16b %1 ; "
+            "  sete %0"
+            : "=q" (result),                /* 0 */
+              "+m" (*addr),                 /* 1 */
+              "+A" (expected)               /* 2 */
+            : "b" ((uint64_t)value),        /* 3 */
+              "c" ((uint64_t)(value >> 64)) /* 4 */
             : "memory", "cc");
 
-        return result;
-    }    
+        return (result != 0);
+    }
 }
 
 /********************************************************************************************************************/
 
-#endif /* __FOONIX_KERNEL_ATOMIC_H__ */
+#endif /* __FOONIX_ARCH_X86_64_ATOMIC_H__ */
 
 /********************************************************************************************************************/

@@ -17,6 +17,9 @@ namespace std
     concept integral = is_integral_v<T>;
 
     template <typename T>
+    concept signed_integral = is_integral_v<T> && is_signed_v<T>;
+
+    template <typename T>
     concept unsigned_integral = is_integral_v<T> && !is_signed_v<T>;
 
     template <class T, class U>

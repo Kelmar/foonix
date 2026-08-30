@@ -113,12 +113,15 @@ void pic_send_eoi(int irq_no)
 
     bus primary_pic((void*)PRIMARY_PIC_PORT, 2);
 
+    /*
     if (irq_no == 1)
     {
+        // TODO: This needs to be moved to the ps2kbd driver.
         // Keyboard IRQ
         uint8_t scan = cpu::inb((uint16_t)0x60);
         (void)(scan);
     }
+    */
 
     // If IRQ 8-15, we need to send an EOI to the slave controller.
     if (irq_no >= 8)

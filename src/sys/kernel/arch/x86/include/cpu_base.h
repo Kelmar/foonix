@@ -24,21 +24,45 @@ namespace cpu
 #undef PAGE_SIZE
 
     /************************************************************************************************************/
-
+    /**
+     * @brief Gives the a slight amount of delay while also reducing power consumption.
+     *
+     * @remarks If the given platform does not support the x86 equivalent of "pause" then this function will
+     * effectively inject a nop or similar instruction into the code.
+     */
     static inline FORCE_INLINE
     void pause() { __asm__ volatile("pause"); }
 
-    static inline FORCE_INLINE
-    void stop_interrupts(void)
-    {
-        __asm__("cli");
-    }
+    /************************************************************************************************************/
+    /*
+     * CPU interrupt management
+     */
 
+    /**
+     * @brief Disable interrupts on the CPU
+     */
     static inline FORCE_INLINE
-    void start_interrupts(void)
-    {
-        __asm__("sti");
-    }
+    void stop_interrupts(void) { __asm__("cli"); }
+
+    /**
+     * @brief Enable interrupts on the CPU
+     */
+    static inline FORCE_INLINE
+    void start_interrupts(void) { __asm__("sti"); }
+
+}
+
+/********************************************************************************************************************/
+/*
+ * x86 CPU specific calls.
+ */
+
+namespace x86
+{
+    /************************************************************************************************************/
+    /*
+     * ISA bus read/write
+     */
 
     static inline FORCE_INLINE
     uint8_t inb(uint16_t port)
@@ -82,6 +106,11 @@ namespace cpu
         __asm__("outl %0,%1" : : "a" (data), "d" (port));
     }
 
+    /************************************************************************************************************/
+    /*
+     * CR3 manipulation (holds page table address)
+     */
+
     static inline FORCE_INLINE uintptr_t
     read_cr3(void)
     {
@@ -103,6 +132,8 @@ namespace cpu
         __asm__("movl %%cr3,%0" : "=r" (value));
         __asm__("movl %0,%%cr3" :: "r" (value));
     }
+
+    /************************************************************************************************************/
 }
 
 /********************************************************************************************************************/

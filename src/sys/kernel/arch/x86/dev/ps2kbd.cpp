@@ -374,12 +374,12 @@ void keyboard_init()
 
 extern "C" int terminal_getchar()
 {
-    uint8_t val = cpu::inb(STATUS_PORT);
+    uint8_t val = x86::inb(STATUS_PORT);
 
     if ((val & STATUS_READ) == 0)
         return -1; // No data
 
-    return ProcessScanCode(cpu::inb(DATA_PORT));
+    return ProcessScanCode(x86::inb(DATA_PORT));
 }
 
 /********************************************************************************************************************/

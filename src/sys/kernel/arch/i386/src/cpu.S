@@ -7,88 +7,6 @@
 #include "asm.h"
 #include "cpuflags.h"
 
-_LABEL(insb)
-    push %ebp
-    movl %esp, %ebp
-    push %edi
-    movl 8(%ebp), %edx
-    movl 12(%ebp), %edi
-    movl 16(%ebp), %ecx
-    cld
-    rep insb
-    pop %edi
-    leave
-    ret
-
-_LABEL(outsb)
-    push %ebp
-    movl %esp, %ebp
-    push %edi
-    movl 8(%ebp), %edx
-    movl 12(%ebp), %edi
-    movl 16(%ebp), %ecx
-    cld
-    rep outsb
-    pop %edi
-    leave
-    ret
-	
-_LABEL(insw)
-    push %ebp
-    movl %esp, %ebp
-    push %edi
-    movl 8(%ebp), %edx
-    movl 12(%ebp), %edi
-    movl 16(%ebp), %ecx
-    shrl $1, %ecx
-    cld
-    rep insw
-    pop %edi
-    leave
-    ret
-	
-_LABEL(outsw)
-    push %ebp
-    movl %esp, %ebp
-    push %edi
-    movl 8(%ebp), %edx
-    movl 12(%ebp), %edi
-    movl 16(%ebp), %ecx
-    shrl $1, %ecx
-    cld
-    rep outsw
-    pop %edi
-    leave
-    ret
-	
-_LABEL(insl)
-    push %ebp
-    movl %esp, %ebp
-    push %edi
-    movl 8(%ebp), %edx
-    movl 12(%ebp), %edi
-    movl 16(%ebp), %ecx
-    shrl $2, %ecx
-    cld
-    rep insl
-    pop %edi
-    leave
-    ret
-	
-_LABEL(outsl)
-    push %ebp
-    movl %esp, %ebp
-    push %edi
-    movl 8(%ebp), %edx
-    movl 12(%ebp), %edi
-    movl 16(%ebp), %ecx
-    shrl $2, %ecx
-    cld
-    rep outsl
-    pop %edi
-    leave
-    ret
-
 /*
  * Halts execution of the system.
  *
@@ -100,83 +18,6 @@ _LABEL(khalt)
     hlt
     pause
     jmp .L_hlt
-
-#_LABEL(process_prestub)
-#   call process_stub
-#   ret
-
-/*
- * Load a global descriptor table.
- *
- * void load_gdt(struct gdt_ptr *)
- */
-_LABEL(load_gdt)
-	movl 4(%esp), %eax
-	lgdt (%eax)
-	jmp  $0x08,$1f
-	nop
-1:
-	mov  $0x10, %ax
-	mov  %ax, %ds
-	mov  %ax, %es
-	mov  %ax, %fs
-	mov  %ax, %gs
-	mov  %ax, %ss
-	ret
-	
-/*
- * Sets the page directory.
- *
- * void set_pagedir(void *pd);
- */
-_LABEL(set_pagedir)
-    movl 4(%esp), %eax
-    movl %eax, %cr3
-    
-    /* Enable paging and flush page cache. */
-    movl %cr0, %eax
-    orl  $CR0_PG, %eax
-    movl %eax, %cr0
-    ret
-
-_LABEL(flush_page_cache)
-    movl %cr3, %eax
-    movl %eax, %cr3
-    ret
-	
-/* Read's the value of the EAX register. */
-_LABEL(read_eax)
-    ret
-
-/* Reads the SS register */
-_LABEL(read_ss)
-    movl %ss, %eax
-    ret
-	
-_LABEL(read_cs)
-    movl %cs, %eax
-    ret
-	
-/* Reads the EBP register */
-_LABEL(read_ebp)
-    movl %ebp, %eax
-    ret
-
-/* Reads the ESP regster */
-_LABEL(read_esp)
-    movl %esp, %eax
-    ret
-
-/* Read's the current EIP register. */
-_LABEL(read_eip)
-    pop %eax
-    jmp *%eax
-	
-/* Reads the EFLAGS regster */
-_LABEL(read_eflags)
-    pushf
-    pop %eax
-    ret
 
 /*
  * Reads the CPU counter.
@@ -269,21 +110,6 @@ _LABEL(read_rtc_time)
 
     ret
 
-/*
- * Deliberately causes a page fault by dereferencing a NULL pointer.
- *
- * Sets the registers to known values.
- */
-_LABEL(force_crash)
-    movl $0xAAAAAAAA, %eax
-    movl $0xBBBBBBBB, %ebx
-    movl $0xCCCCCCCC, %ecx
-    movl $0xDDDDDDDD, %edx
-    movl $0xEEEEEEEE, %edi
-    movl $0xFFFFFFFF, %esi
-
-    movl (%edi), %esi // Page fault now
-    ret // Shouldn't get here
 
 /*
  * Provides a brief short delay, the length of the delay is highly dependent
@@ -331,40 +157,4 @@ _LABEL(reboot)
 
     /* If we got here, the computer didn't reboot.... */
     movl $0xFFFFFFFF, %eax
-    ret
-
-/**
- * Copies a page of physical memory from one address to another.
- *
- * void copy_page(uintptr_t dest_physical, uintptr_t source_physical);
- */
-_LABEL(copy_page)
-    movl %edi, %edx
-    pushl %esi
-
-    movl  8(%esp), %edi
-    movl 12(%esp), %esi
-    movl $400, %ecx
-
-    /* Preserve the state of interrupt handling. */
-    pushf
-    cli /* Disable interrupts (if they aren't already) */
-
-    /* Disable paging for a minute */
-    movl %cr0, %eax
-    andl $0x7FFFFFFF, %eax
-    movl %eax, %cr0
-
-    /* Now copy the page */
-    rep stosl
-
-    /* Re-enable paging */
-    movl %cr0, %eax
-    orl $0x80000000, %eax
-    movl %eax, %cr0
-
-    popf /* Restores state of interrupt handling */
-
-    popl %esi
-    mov %edx, %edi
     ret
