@@ -25,17 +25,17 @@ namespace
     void VarsCommand(size_t, const std::string_view[])
     {
         console
-            << "kernel_start: 0x" << hex(g_kernelArguments.KernelCode.Base, -8)
-            << " aligned: " << hex(g_kernelArguments.KernelCode.BaseAligned(), -8)
+            << "kernel_start: 0x" << hex(kernel::arguments.KernelCode.Base, -8)
+            << " aligned: " << hex(kernel::arguments.KernelCode.BaseAligned(), -8)
             << "\r\n";
 
         console
-            << "kernel_end: 0x" << hex(g_kernelArguments.KernelCode.End(), -8)
-            << " aligned: " << hex(g_kernelArguments.KernelCode.EndAligned(), -8)
+            << "kernel_end: 0x" << hex(kernel::arguments.KernelCode.End(), -8)
+            << " aligned: " << hex(kernel::arguments.KernelCode.EndAligned(), -8)
             << "\r\n";
 
         console
-            << "heap_start: 0x" << hex(g_kernelArguments.HeapStart, -8) << "\r\n";
+            << "heap_start: 0x" << hex(kernel::arguments.HeapStart, -8) << "\r\n";
     }
 
     void DumpCommand(size_t argCount, const std::string_view args[])

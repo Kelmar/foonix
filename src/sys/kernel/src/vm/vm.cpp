@@ -30,7 +30,7 @@ using namespace vmm;
 
 void vmm::Init()
 {
-    g_kernelArguments.ShowAvailableMemory();
+    kernel::arguments.ShowAvailableMemory();
 
     new (&page_allocator) paging::PageAllocator();
 }
@@ -43,9 +43,9 @@ void vmm::MemInfoCommand(size_t, const std::string_view[])
         << "Boot Memory\r\n"
         << "    Start      Length\r\n";
 
-    for (uint32_t i = 0; i < g_kernelArguments.MemoryMapEntries; ++i)
+    for (uint32_t i = 0; i < kernel::arguments.MemoryMapEntries; ++i)
     {
-        const MemoryRange &mem = g_kernelArguments.MemoryMap[i];
+        const MemoryRange &mem = kernel::arguments.MemoryMap[i];
         console << "    0x" << hex(mem.Base, -8) << " 0x" << hex(mem.Length, -8) << "\r\n";
     }
 

@@ -26,10 +26,11 @@
 //#include "ata.h"
 
 /********************************************************************************************************************/
-/**
- * @brief Global kernel arguments structure.
- */
-KernelArgs g_kernelArguments;
+
+namespace kernel
+{
+    KernelArgs arguments;
+}
 
 namespace cpu
 {
@@ -53,10 +54,10 @@ extern "C" void kmain(void)
     Debug::PrintF("ENTER: kmain()\r\n");
 
     new (&cpu::interrupt_stack) cpu::InterruptStack();
-    new (&g_kernelArguments) KernelArgs();
+    new (&kernel::arguments) KernelArgs();
     new (&console) Console();
 
-    arch::Init(&g_kernelArguments);
+    arch::Init(&kernel::arguments);
 
     vmm::Init();
 
@@ -76,7 +77,7 @@ extern "C" void kmain(void)
     /* After our first context switch, the code below will stop running. */
 #endif
 
-    Debug::PrintF("g_kernelArguments = %p\r\n", &g_kernelArguments);
+    Debug::PrintF("kernel::arguments = %p\r\n", &kernel::arguments);
     Debug::PrintF("console = %p\r\n", &console);
 
     Debug::shell();

@@ -120,7 +120,13 @@ public:
     void ShowAvailableMemory(void);
 };
 
-extern KernelArgs g_kernelArguments;
+namespace kernel
+{
+    /**
+     * @brief Global kernel arguments structure.
+     */
+    extern KernelArgs arguments;
+}
 
 /********************************************************************************************************************/
 

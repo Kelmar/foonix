@@ -36,7 +36,7 @@ paging::PageAllocator::PageAllocator() noexcept
     if (m_pageCacheCount == 0)
         kpanic("Unable to allocate any boot pages\r\n");
 
-    g_kernelArguments.CanAllocPages = true;
+    kernel::arguments.CanAllocPages = true;
 }
 
 /********************************************************************************************************************/
@@ -64,15 +64,15 @@ void paging::PageAllocator::InitBootPages()
 {
     thread::LockGuard lock(m_allocLock);
 
-    for (size_t i = 0; i < g_kernelArguments.MemoryMapEntries; ++i)
+    for (size_t i = 0; i < kernel::arguments.MemoryMapEntries; ++i)
     {
-        MemoryRange &memoryRange = g_kernelArguments.MemoryMap[i];
+        MemoryRange &memoryRange = kernel::arguments.MemoryMap[i];
 
         for (size_t offset = 0; offset < memoryRange.Length; offset += cpu::PageSize)
         {
             paddr_t addr = memoryRange.Base + offset;
 
-            if (addr < g_kernelArguments.HeapNext)
+            if (addr < kernel::arguments.HeapNext)
                 continue; // Ignore pages before the kernel's heap next.
 
             if (addr >= Mark2MB)
