@@ -21,7 +21,10 @@
 
 /********************************************************************************************************************/
 
+extern size_t kallocAllocatedPages;
+
 using namespace vmm;
+
 
 /********************************************************************************************************************/
 
@@ -53,6 +56,10 @@ void vmm::MemInfoCommand(size_t, const std::string_view[])
     console
         << "\r\nFree Pages: " << freePageCount << "\r\n"
         << "Free Memory: " << freemem << " KB\r\n";
+
+    console
+        << "\r\nkalloc stats\r\n"
+        << "  pages allocated: " << kallocAllocatedPages << "\r\n";
 }
 
 /********************************************************************************************************************/

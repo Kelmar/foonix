@@ -63,7 +63,7 @@ public:
     }
 
     /// @brief Preallocate cnt slabs and places them into the bucket's empty list.
-    void Prealloc(size_t cnt);
+    //void Prealloc(size_t cnt);
 
     /// @brief Perform garbage collection on this bucket.
     void GC();

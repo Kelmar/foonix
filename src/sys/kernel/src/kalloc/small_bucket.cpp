@@ -10,6 +10,8 @@
 #include <kernel/utils/list.h>
 #include <kernel/utils/span.h>
 
+#include <kernel/debug.h>
+
 #include <kernel/thread/lockguard.h>
 
 #include <kernel/kalloc.h>
@@ -24,7 +26,7 @@
 
 /********************************************************************************************************************/
 
-extern size_t g_allocatedSlabs;
+extern size_t kallocAllocatedPages;
 
 template <typename T>
 static T *AllocatePageObj()
@@ -47,7 +49,8 @@ SmallItemSlab *SmallItemBucket::GetAvailableSlab()
     if (!slab)
     {
         slab = AllocatePageObj<SmallItemSlab>();
-        ++g_allocatedSlabs;
+        ++kallocAllocatedPages;
+        //Debug::PrintF("Allocated page for %u bucket.\r\n", m_itemSize);
     }
 
     slab->Setup(
@@ -78,16 +81,19 @@ size_t SmallItemBucket::GetPointerIndex(SmallItemSlab *slab, void *ptr) const
 
 /********************************************************************************************************************/
 
+#if 0
 void SmallItemBucket::Prealloc(size_t cnt)
 {
     // Preload some slabs into the empty slab list.
     for (size_t i = 0; i < cnt; ++i)
     {
         SmallItemSlab *slab = AllocatePageObj<SmallItemSlab>();
-        ++g_allocatedSlabs;
+        ++kallocAllocatedPages;
+        //Debug::PrintF("Allocated page for %u bucket.\r\n", m_itemSize);
         m_empty.PushBack(slab);
     }
 }
+#endif
 
 /********************************************************************************************************************/
 
@@ -100,7 +106,8 @@ void SmallItemBucket::GC()
         auto slab = m_empty.PopBack();
         slab->~SmallItemSlab();
         page_allocator.ReleasePage(slab);
-        --g_allocatedSlabs;
+        --kallocAllocatedPages;
+        //Debug::PrintF("Released page for %u bucket.\r\n", m_itemSize);
     }
 }
 
@@ -167,7 +174,7 @@ void SmallItemBucket::Return(SmallItemSlab *slab, void *ptr)
             slab->Reset();
 
             m_partial.Remove(slab);
-            m_empty.PushBack(slab);
+            m_empty.PushBack(slab); // Might need to sort these pages as we release them.
         }
     }
 }

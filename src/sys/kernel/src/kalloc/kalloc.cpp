@@ -30,7 +30,7 @@
 
 /********************************************************************************************************************/
 
-size_t g_allocatedSlabs = 0;
+size_t kallocAllocatedPages = 0;
 
 /********************************************************************************************************************/
 
@@ -96,6 +96,8 @@ void memory::init_kalloc()
     if (!g_kernelArguments.CanAllocPages)
         kpanic("memory::init_kalloc(): Called before ability to allocate memory pages!\r\n");
 
+    kallocAllocatedPages = 0;
+
     // TODO: Fix this later when we can allocate more than one page at a time.
     static_assert(sizeof(SmallItemBucket) * SmallItemHash::MAX_BUCKET_INDEX < cpu::PageSize, "Cannot fit all buckets on one page.");
 
@@ -106,7 +108,7 @@ void memory::init_kalloc()
     for (auto &bucket : bucketSpan)
     {
         new (&bucket) SmallItemBucket(index);
-        bucket.Prealloc(EMPTY_MAX);
+        //bucket.Prealloc(EMPTY_MAX);
         ++index;
     }
 
@@ -178,10 +180,12 @@ static void *kalloc_large(size_t sz)
             return nullptr; // Out of memory!
 
         meta = new (ptr) LargePageMeta();
-
-        //meta->PagePtr = page_allocator.AllocatePagesAs<void *>(pageCnt);
-        meta->PagePtr = page_allocator.AllocatePageAs<void *>();
     }
+
+    //meta->PagePtr = page_allocator.AllocatePagesAs<void *>(pageCnt);
+    meta->PagePtr = page_allocator.AllocatePageAs<void *>();
+    ++kallocAllocatedPages;
+    //Debug::PrintF("Allocated page for large bucket.\r\n");
 
     if (meta->PagePtr == nullptr)
     {
@@ -239,8 +243,10 @@ void kfree(void *ptr)
             {
                 lgBuckets[bucket]->Remove(&meta);
 
-                //ReleasePage(meta.PagePtr);
-                //meta.PagePtr = nullptr;
+                page_allocator.ReleasePage(meta.PagePtr);
+                meta.PagePtr = nullptr;
+                --kallocAllocatedPages;
+                //Debug::PrintF("Release page for large bucket.\r\n");
 
                 freeLargeMetas.Push(&meta);
                 return;
