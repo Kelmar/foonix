@@ -7,6 +7,7 @@
 #include <kassert.h>
 
 #include <kernel/debug.h>
+#include <kernel/kernel_args.h>
 
 #include <kernel/utils/span.h>
 #include <kernel/utils/list.h>
@@ -58,7 +59,7 @@ struct LargePageMeta
 
 /// @brief Small item allocation buckets, hashed by size.
 static
-SmallItemBucket *smBuckets[SmallItemHash::MAX_BUCKET_INDEX];
+SmallItemBucket *smBuckets; //[SmallItemHash::MAX_BUCKET_INDEX];
 
 /// @brief Global lock for lgBuckets (TODO: Replace this later.)
 thread::SpinLock lgBucketMutex;
@@ -92,10 +93,21 @@ void memory::init_kalloc()
 {
     Debug::PrintF("ENTER: memory::init_kalloc()\r\n");
 
-    for (uint8_t bucket = 0; bucket < SmallItemHash::MAX_BUCKET_INDEX; ++bucket)
+    if (!g_kernelArguments.CanAllocPages)
+        kpanic("memory::init_kalloc(): Called before ability to allocate memory pages!\r\n");
+
+    // TODO: Fix this later when we can allocate more than one page at a time.
+    static_assert(sizeof(SmallItemBucket) * SmallItemHash::MAX_BUCKET_INDEX < cpu::PageSize, "Cannot fit all buckets on one page.");
+
+    smBuckets = page_allocator.AllocatePageAs<SmallItemBucket>();
+    util::span<SmallItemBucket> bucketSpan(smBuckets, SmallItemHash::MAX_BUCKET_INDEX);
+    int index = 0;
+
+    for (auto &bucket : bucketSpan)
     {
-        smBuckets[bucket] = new SmallItemBucket(bucket);
-        smBuckets[bucket]->Prealloc(EMPTY_MAX);
+        new (&bucket) SmallItemBucket(index);
+        bucket.Prealloc(EMPTY_MAX);
+        ++index;
     }
 
     // Safe to use kalloc_small for our List<LargePageMeta> objects.
@@ -110,6 +122,8 @@ void memory::init_kalloc()
         void *ptr = kalloc_small(sizeof(List<LargePageMeta>));
         lgBuckets[i] = new (ptr) List<LargePageMeta>();
     }
+
+    g_kernelArguments.CanKalloc = true;
 
     Debug::PrintF("EXIT: memory::init_kalloc()\r\n");
 }
@@ -129,7 +143,7 @@ void *kalloc_small(size_t sz)
     for (size_t idx = SmallItemHash::IndexFromSize(sz); idx < SmallItemHash::MAX_BUCKET_INDEX && !result; ++idx)
     {
         // Tries for progressively larger buckets if the better fit doesn't have any space available.
-        result = smBuckets[idx]->Allocate();
+        result = smBuckets[idx].Allocate();
     }
 
     return result;
@@ -192,6 +206,9 @@ void *kalloc(size_t size)
     if (size == 0)
         return nullptr;
 
+    if (!g_kernelArguments.CanKalloc)
+        kpanic("kalloc(): Called before initialized!\r\n");
+
     if (size <= SmallItemHash::MAX_ITEM_SIZE)
         return kalloc_small(size);
 
@@ -204,6 +221,9 @@ void kfree(void *ptr)
 {
     if (ptr == nullptr)
         return;
+
+    if (!g_kernelArguments.CanKalloc)
+        kpanic("kfree(): Called before kalloc() initialized!\r\n");
 
     uintptr_t ip = reinterpret_cast<uintptr_t>(ptr);
 
@@ -232,7 +252,7 @@ void kfree(void *ptr)
         SmallItemSlab *smSlab = SmallItemSlab::GetSlabFromPtr(ptr);
 
         if (smSlab != nullptr)
-            smBuckets[smSlab->getBucket()]->Return(smSlab, ptr);
+            smBuckets[smSlab->getBucket()].Return(smSlab, ptr);
     }
 }
 

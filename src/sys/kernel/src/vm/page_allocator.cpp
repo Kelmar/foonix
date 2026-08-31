@@ -35,6 +35,8 @@ paging::PageAllocator::PageAllocator() noexcept
 
     if (m_pageCacheCount == 0)
         kpanic("Unable to allocate any boot pages\r\n");
+
+    g_kernelArguments.CanAllocPages = true;
 }
 
 /********************************************************************************************************************/

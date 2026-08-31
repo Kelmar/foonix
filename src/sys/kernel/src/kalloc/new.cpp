@@ -9,7 +9,6 @@
 
 void* operator new(size_t sz)
 {
-    UNUSED(sz);
     void* rval = kalloc(sz);
 
     if (rval == nullptr)
@@ -20,7 +19,6 @@ void* operator new(size_t sz)
 
 void* operator new[](size_t sz)
 {
-    UNUSED(sz);
     void* rval = kalloc(sz);
 
     if (rval == nullptr)

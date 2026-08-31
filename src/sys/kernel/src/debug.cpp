@@ -14,6 +14,8 @@
 
 #include <kernel/vm.h>
 
+#include <kernel/kalloc.h>
+
 #include "paging.h"
 
 /********************************************************************************************************************/
@@ -112,6 +114,50 @@ namespace
         console.set_paged(false);
     }
 
+    void TestAllocCommand(size_t argCount, const std::string_view args[])
+    {
+        if (argCount < 2)
+        {
+            console
+                << "Not enough arguments." << "\r\n"
+                << "testa <size>\r\n";
+
+            return;
+        }
+
+        auto result = util::parseInt(args[1]);
+
+        if (!result)
+        {
+            console << "Invalid length: " << args[1] << "\r\n";
+            return;
+        }
+
+        size_t sz = result.value();
+
+        if (sz == 0)
+        {
+            console << "Cannot allocate less than 1 byte!\r\n";
+            return;
+        }
+        if (sz >= cpu::PageSize)
+        {
+            console << "Cannot allocate more than " << cpu::PageSize << " bytes!\r\n";
+            return;
+        }
+
+        console << "Attempting to allocate " << sz << " bytes.";
+
+        void *ptr = kalloc(sz);
+        uintptr_t p = reinterpret_cast<uintptr_t>(ptr);
+
+        console << "\r\nGot pointer: " << hex(p, -8) << "\r\nFreeing...";
+
+        kfree(ptr);
+
+        console << "  freed?  Maybe?  Let's hope!\r\n";
+    }
+
     void FaultCommand(size_t, const std::string_view [])
     {
         console << "Causing a page fault.\r\n";
@@ -149,6 +195,7 @@ namespace
         { "meminfo", vmm::MemInfoCommand },
         { "vars"   , VarsCommand         },
         { "fault"  , FaultCommand        },
+        { "testa"  , TestAllocCommand    },
         { 0        , 0                   } // terminator
     };
 

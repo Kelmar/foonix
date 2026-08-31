@@ -8,6 +8,8 @@
 
 #include <stdint.h>
 
+#include <type_traits>
+
 #include <kernel/types.h>
 #include <kernel/thread/spinlock.h>
 

@@ -20,58 +20,6 @@
 
 /********************************************************************************************************************/
 
-/// @brief Startup state of various memory management components.
-class MemManagerState
-{
-public:
-    enum Values
-    {
-        /// @brief No memory management has been started yet.
-        Uninitialized = 0,
-
-        /// @brief Paging is being initialized.
-        Initializing = 100,
-
-        /// @brief General paging is initialized but malloc and friends aren't ready yet.
-        Paging = 200,
-
-        /// @brief Memory management is ready.
-        Initialized = 300
-    };
-
-private:
-    Values m_value;
-
-public:
-    constexpr MemManagerState() noexcept : m_value(Uninitialized) { }
-    constexpr MemManagerState(Values value) noexcept : m_value(value) { }
-
-    constexpr MemManagerState(const MemManagerState &rhs) noexcept = default;
-    constexpr MemManagerState(MemManagerState &&rhs) noexcept = default;
-    
-    constexpr MemManagerState &operator = (const MemManagerState &rhs) noexcept = default;
-    constexpr MemManagerState &operator = (MemManagerState &&) noexcept = default;
-
-    constexpr MemManagerState &operator = (Values value) noexcept
-    {
-        m_value = value;
-        return *this;
-    }
-    
-    constexpr operator Values() const { return m_value; }
-
-    /// @brief Check to see if a given operation is safe yet.
-    constexpr bool IsSafe(Values value)
-    {
-        unsigned int v = static_cast<unsigned int>(value);
-        unsigned int val = static_cast<unsigned int>(m_value);
-
-        return (v / 100) >= (val / 100);
-    }
-};
-
-/********************************************************************************************************************/
-
 class KernelArgs
 {
 private:
@@ -100,8 +48,11 @@ private:
 public:
     static const size_t MaxMemoryEntries = 16;
 
-    /// @brief State of the memory management loading.
-    MemManagerState MemManagerState;
+    /// @brief Set if allocating pages is currently safe.
+    bool CanAllocPages;
+
+    /// @brief Set if calling kalloc() and friends is safe.
+    bool CanKalloc;
 
     /// @brief Size of the memory in KBytes
     size_t MemorySizeKByte;
@@ -124,7 +75,8 @@ public:
     MemoryRange MemoryMap[MaxMemoryEntries];
 
     constexpr KernelArgs()
-        : MemManagerState()
+        : CanAllocPages(false)
+        , CanKalloc(false)
         , MemorySizeKByte(0)
         , KernelCode()
         , MemoryMapEntries(0)
