@@ -1,28 +1,239 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
+#include <type_traits>
+#include <concepts>
+
 #include <kassert.h>
+
+#include <kernel/debug.h>
+
+#include <kernel/utils/span.h>
+#include <kernel/utils/list.h>
+#include <kernel/utils/stack.h>
+
+#include <kernel/thread/spinlock.h>
+#include <kernel/thread/lockguard.h>
+
+#include <kernel/vm/page_allocator.h>
 
 #include <kernel/kalloc.h>
 
+//#include "kalloc_config.h"
+#define LG_BUCKET_SIZE 32
+#define EMPTY_MAX 4
+
+#include <kernel/kalloc/hash.h>
+#include <kernel/kalloc/small_slab.h>
+#include <kernel/kalloc/small_bucket.h>
+
+/********************************************************************************************************************/
+
+size_t g_allocatedSlabs = 0;
+
+/********************************************************************************************************************/
+
+struct LargePageMeta
+{
+    /// @brief Pointer to the previous metadata block.
+    LargePageMeta *Prev;
+
+    /// @brief Pointer to next block metadata structure.
+    LargePageMeta *Next;
+
+    /// @brief Pointer to the first page of this block
+    void *PagePtr;
+
+    /// @brief Number of pages allocated for this block
+    size_t PageCount;
+
+    constexpr LargePageMeta() noexcept
+        : Next(nullptr)
+        , PagePtr(nullptr)
+        , PageCount(0)
+    { }
+};
+
+/********************************************************************************************************************/
+
+/// @brief Small item allocation buckets, hashed by size.
+static
+SmallItemBucket *smBuckets[SmallItemHash::MAX_BUCKET_INDEX];
+
+/// @brief Global lock for lgBuckets (TODO: Replace this later.)
+thread::SpinLock lgBucketMutex;
+
+/// @brief Stack of allocated large meta objects, hashed by pointer.
+static
+List<LargePageMeta> *lgBuckets[LG_BUCKET_SIZE];
+
+/// @brief Stack of free large meta objects.
+static
+Stack<LargePageMeta> freeLargeMetas;
+
+/********************************************************************************************************************/
+
+static inline
+uint8_t hash_ptr(void *ptr)
+{
+    constexpr uint8_t HASH_MASK = LG_BUCKET_SIZE - 1;
+
+    uintptr_t p = reinterpret_cast<uintptr_t>(ptr);
+
+    return static_cast<uint8_t>((p >> cpu::PageShift) & HASH_MASK);
+}
+
+static
+void *kalloc_small(size_t sz);
 
 /********************************************************************************************************************/
 
 void memory::init_kalloc()
 {
+    Debug::PrintF("ENTER: memory::init_kalloc()\r\n");
+
+    for (uint8_t bucket = 0; bucket < SmallItemHash::MAX_BUCKET_INDEX; ++bucket)
+    {
+        smBuckets[bucket] = new SmallItemBucket(bucket);
+        smBuckets[bucket]->Prealloc(EMPTY_MAX);
+    }
+
+    // Safe to use kalloc_small for our List<LargePageMeta> objects.
+
+    new (&freeLargeMetas) Stack<LargePageMeta>();
+    new (&lgBucketMutex) thread::SpinLock();
+
+    thread::LockGuard l(lgBucketMutex);
+
+    for (size_t i = 0; i < LG_BUCKET_SIZE; ++i)
+    {
+        void *ptr = kalloc_small(sizeof(List<LargePageMeta>));
+        lgBuckets[i] = new (ptr) List<LargePageMeta>();
+    }
+
+    Debug::PrintF("EXIT: memory::init_kalloc()\r\n");
+}
+
+/********************************************************************************************************************/
+
+static
+void *kalloc_small(size_t sz)
+{
+#if MALLOC_CHECK_LEVEL >= 4
+    if (sz > SmallItemHash::MAX_ITEM_SIZE)
+        kpanic("kalloc() sent bad size to kalloc_small()");
+#endif
+
+    void *result = nullptr;
+
+    for (size_t idx = SmallItemHash::IndexFromSize(sz); idx < SmallItemHash::MAX_BUCKET_INDEX && !result; ++idx)
+    {
+        // Tries for progressively larger buckets if the better fit doesn't have any space available.
+        result = smBuckets[idx]->Allocate();
+    }
+
+    return result;
+}
+
+/********************************************************************************************************************/
+
+static void *kalloc_large(size_t sz)
+{
+#if MALLOC_CHECK_LEVEL >= 4
+    if (sz <= SmallItemHash::MAX_ITEM_SIZE)
+        kpanic("kalloc() sent bad size to kalloc_large()");
+#endif
+
+    //sz = paging::AlignCeiling(sz);
+    size_t alignedSize = util::AlignCeiling<cpu::PageSize>(sz);
+    size_t pageCnt = alignedSize / cpu::PageSize;
+
+    if (pageCnt > 1)
+    {
+        // Need to finish writing the page allocator so we can allocate multiple blocks of pages first.
+        kpanic("Request to kalloc() for more than a single page worth of memory!");
+    }
+    
+    LargePageMeta *meta = freeLargeMetas.Pop();
+
+    if (!meta)
+    {
+        void *ptr = kalloc_small(sizeof(LargePageMeta));
+
+        if (ptr == nullptr)
+            return nullptr; // Out of memory!
+
+        meta = new (ptr) LargePageMeta();
+
+        //meta->PagePtr = page_allocator.AllocatePagesAs<void *>(pageCnt);
+        meta->PagePtr = page_allocator.AllocatePageAs<void *>();
+    }
+
+    if (meta->PagePtr == nullptr)
+    {
+        // Out of memory!
+        freeLargeMetas.Push(meta);
+        return nullptr;
+    }
+
+    meta->PageCount = pageCnt;
+    uint8_t idx = hash_ptr(meta->PagePtr);
+
+    thread::LockGuard l(lgBucketMutex);
+    lgBuckets[idx]->PushFront(meta);
+
+    return meta->PagePtr;
 }
 
 /********************************************************************************************************************/
 
 void *kalloc(size_t size)
 {
-    return nullptr;
+    if (size == 0)
+        return nullptr;
+
+    if (size <= SmallItemHash::MAX_ITEM_SIZE)
+        return kalloc_small(size);
+
+    return kalloc_large(size);
 }
 
 /********************************************************************************************************************/
 
 void kfree(void *ptr)
 {
+    if (ptr == nullptr)
+        return;
+
+    uintptr_t ip = reinterpret_cast<uintptr_t>(ptr);
+
+    if (!(ip & ~cpu::PageMask))
+    {
+        size_t bucket = hash_ptr(ptr);
+
+        thread::LockGuard l(lgBucketMutex);
+
+        for (auto &meta : *lgBuckets[bucket])
+        {
+            if (meta.PagePtr == ptr)
+            {
+                lgBuckets[bucket]->Remove(&meta);
+
+                //ReleasePage(meta.PagePtr);
+                //meta.PagePtr = nullptr;
+
+                freeLargeMetas.Push(&meta);
+                return;
+            }
+        }
+    }
+    else
+    {
+        SmallItemSlab *smSlab = SmallItemSlab::GetSlabFromPtr(ptr);
+
+        if (smSlab != nullptr)
+            smBuckets[smSlab->getBucket()]->Return(smSlab, ptr);
+    }
 }
 
 /********************************************************************************************************************/

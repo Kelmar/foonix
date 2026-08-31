@@ -24,8 +24,7 @@
 
 /********************************************************************************************************************/
 
-//extern size_t g_allocatedSlabs;
-size_t g_allocatedSlabs;
+extern size_t g_allocatedSlabs;
 
 template <typename T>
 static T *AllocatePageObj()
