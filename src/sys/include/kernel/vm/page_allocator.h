@@ -55,6 +55,9 @@ namespace paging
 
         /// @brief Return a page to the allocator for use by other things.
         void ReleasePage(paddr_t page);
+
+        // Temporary
+        void ReleasePage(void *ptr) { ReleasePage(reinterpret_cast<paddr_t>(ptr)); }
     };
 }
 

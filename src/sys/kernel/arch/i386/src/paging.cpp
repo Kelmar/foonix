@@ -11,8 +11,9 @@
 #include <kernel/arch.h>
 
 #include <kernel/vm.h>
-#include <kernel/vm/new.h>
 #include <kernel/vm/page_table.h>
+
+#include <kernel/kalloc.h>
 
 #include "bootinfo.h"
 
@@ -22,7 +23,6 @@
 #include "cpudefs.h"
 #include "arch_vm.h"
 #include "paging.h"
-
 
 /********************************************************************************************************************/
 

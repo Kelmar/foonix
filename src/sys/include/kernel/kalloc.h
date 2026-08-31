@@ -1,22 +1,33 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
-#ifndef __FOONIX_VM_NEW_H__
-#define __FOONIX_VM_NEW_H__
+#ifndef __FOONIX_KALLOC_H__
+#define __FOONIX_KALLOC_H__
+
+#include <stddef.h>
 
 /********************************************************************************************************************/
 
-//void *operator new  (size_t);
-//void *operator new[](size_t);
-//void operator delete  (void *) noexcept;
-//void operator delete[](void *) noexcept;
+namespace memory
+{
+    void init_kalloc();
+}
+
+void *kalloc(size_t size);
+void kfree(void *ptr);
+
+/********************************************************************************************************************/
+
+void *operator new  (size_t);
+void *operator new[](size_t);
+void operator delete  (void *) noexcept;
+void operator delete[](void *) noexcept;
 
 inline void *operator new  (size_t, void *ptr) noexcept { return ptr; }
 inline void *operator new[](size_t, void *ptr) noexcept { return ptr; }
 
 /********************************************************************************************************************/
 
-#endif /* __FOONIX_VM_NEW_H__ */
+#endif /* __FOONIX_KALLOC_H__ */
 
 /********************************************************************************************************************/
-

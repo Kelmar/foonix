@@ -26,9 +26,7 @@ namespace std
     concept same_as = std::is_same_v<T, U> && std::is_same_v<U, T>;
 
     template <class From, class To>
-    concept convertible_to =
-        std::is_convertible_v<From, To> &&
-        requires { static_cast<To>(declval<From>()); };
+    concept convertible_to = std::is_convertible_v<From, To>;
 }
 
 /********************************************************************************************************************/

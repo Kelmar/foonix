@@ -13,6 +13,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <kernel/math.h>
+
 /********************************************************************************************************************/
 
 namespace cpu
@@ -20,6 +22,8 @@ namespace cpu
     /************************************************************************************************************/
 
     constexpr size_t PageSize = PAGE_SIZE;
+    constexpr size_t PageMask = ~(PageSize - 1);
+    constexpr size_t PageShift = math::lsb_index(PageSize);
 
 #undef PAGE_SIZE
 

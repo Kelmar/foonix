@@ -1,23 +1,56 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
-#ifndef __FOONIX_KERNEL_MATH_H__
-#define __FOONIX_KERNEL_MATH_H__
+#include <kassert.h>
+
+#include <kernel/kalloc.h>
 
 /********************************************************************************************************************/
 
-#include <type_traits>
-#include <concepts>
-
-/********************************************************************************************************************/
-
-namespace math
+void* operator new(size_t sz)
 {
-    #include "kernel/math/bit.h"
+    UNUSED(sz);
+    void* rval = kalloc(sz);
+
+    if (rval == nullptr)
+        kpanic("Out of memory");
+
+    return rval;
+}
+
+void* operator new[](size_t sz)
+{
+    UNUSED(sz);
+    void* rval = kalloc(sz);
+
+    if (rval == nullptr)
+        kpanic("Out of memory");
+
+    return rval;
 }
 
 /********************************************************************************************************************/
 
-#endif /* __FOONIX_KERNEL_MATH_H__ */
+void operator delete(void* ptr) throw()
+{
+    kfree(ptr);
+}
+
+void operator delete[](void* ptr) throw()
+{
+    kfree(ptr);
+}
+
+/********************************************************************************************************************/
+
+void operator delete(void* ptr, size_t) throw()
+{
+    kfree(ptr);
+}
+
+void operator delete[](void* ptr, size_t) throw()
+{
+    kfree(ptr);
+}
 
 /********************************************************************************************************************/

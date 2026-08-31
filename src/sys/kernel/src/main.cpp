@@ -15,7 +15,7 @@
 #include <kernel/interrupt.h>
 
 #include <kernel/vm.h>
-#include <kernel/vm/new.h>
+#include <kernel/kalloc.h>
 
 //#include "kernio.h"
 //#include "ktime.h"
@@ -37,25 +37,6 @@ namespace cpu
 }
 
 /********************************************************************************************************************/
-/**
- * Called before VM is setup and we have just basic paging enabled from
- * the bootstrap code.
- * 
- * Initialize the CPU and the VM system so we can begin allocating memory
- * for the rest of the OS.
- */
-void InitGlobals(void)
-{
-    Debug::PrintF("ENTER: InitGlobals()\r\n");
-
-    new (&cpu::interrupt_stack) cpu::InterruptStack();
-    new (&g_kernelArguments) KernelArgs();
-    new (&console) Console();
-
-    Debug::PrintF("EXIT: InitGlobals()\r\n");
-}
-
-/********************************************************************************************************************/
 
 #if 0
 void pmain(void);
@@ -71,11 +52,15 @@ extern "C" void kmain(void)
 {
     Debug::PrintF("ENTER: kmain()\r\n");
 
-    InitGlobals();
+    new (&cpu::interrupt_stack) cpu::InterruptStack();
+    new (&g_kernelArguments) KernelArgs();
+    new (&console) Console();
 
     arch::Init(&g_kernelArguments);
 
     vmm::Init();
+
+    memory::init_kalloc();
 
 #if 0
     init_scheduler();

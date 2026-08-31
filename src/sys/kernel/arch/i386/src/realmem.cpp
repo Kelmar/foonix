@@ -6,8 +6,9 @@
 
 #include <kernel/kernel.h>
 #include <kernel/kernel_args.h>
-#include <kernel/bitmap.h>
 #include <kernel/debug.h>
+
+#include <kernel/utils/bitmap.h>
 
 #include <kernel/vm.h>
 #include <kernel/arch.h>

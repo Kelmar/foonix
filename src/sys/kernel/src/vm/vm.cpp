@@ -13,8 +13,9 @@
 #include <kernel/arch.h>
 
 #include <kernel/vm.h>
-#include <kernel/vm/new.h>
 #include <kernel/vm/page_allocator.h>
+
+#include <kernel/kalloc.h>
 
 #include "cpu.h"
 

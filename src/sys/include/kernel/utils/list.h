@@ -1,13 +1,14 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
-#ifndef __FOONIX_KERNEL_LIST_H__
-#define __FOONIX_KERNEL_LIST_H__
+#ifndef __FOONIX_KERNEL_UTILS_LIST_H__
+#define __FOONIX_KERNEL_UTILS_LIST_H__
 
 /********************************************************************************************************************/
 
-#include <concepts>
 #include <type_traits>
+#include <concepts>
+#include <iterator>
 
 /********************************************************************************************************************/
 
@@ -59,7 +60,7 @@ public: // Iterators
         TNode *m_next; // Save next
 
     public:
-        using itoa = std::random_access_iterator_tag;
+        //using itoa = std::random_access_iterator_tag;
 
         using value_type      = std::remove_cv_t<TNode>;
         using difference_type = size_type;
@@ -316,6 +317,6 @@ public:
 
 /********************************************************************************************************************/
 
-#endif /* __FOONIX_KERNEL_LIST_H__ */
+#endif /* __FOONIX_KERNEL_UTILS_LIST_H__ */
 
 /********************************************************************************************************************/

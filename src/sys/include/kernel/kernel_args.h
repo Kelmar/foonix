@@ -15,7 +15,8 @@
 
 #include <kernel/kernel.h>
 #include <kernel/memory_range.h>
-#include <kernel/span.h>
+
+#include <kernel/utils/span.h>
 
 /********************************************************************************************************************/
 

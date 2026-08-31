@@ -14,7 +14,7 @@
 #include <expected>
 #include <string_view>
 
-#include <kernel/span.h>
+#include <kernel/utils/span.h>
 
 /********************************************************************************************************************/
 
@@ -29,6 +29,8 @@ namespace util
      */ 
     std::expected<int, Kernel::ErrorCode> parseInt(const std::string_view &);
 }
+
+/********************************************************************************************************************/
 
 #include <kernel/utils/align.h>
 #include <kernel/utils/flags.h>

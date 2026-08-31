@@ -11,7 +11,7 @@
 #include <concepts>
 #include <string_view>
 
-#include <kernel/span.h>
+#include <kernel/utils/span.h>
 
 /********************************************************************************************************************/
 

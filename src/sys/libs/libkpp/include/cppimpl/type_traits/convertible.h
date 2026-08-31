@@ -8,11 +8,11 @@
 
 namespace impl__
 {
-    // We need a version fo declval, but utilities depends on type_traits
+    // We need a version of declval, but utilities depends on type_traits
     template <typename T>
     typename std::type_identity_t<T> declval_int() noexcept
     {
-        static_assert(false, "Do not call into declval()");
+        static_assert(false, "Do not call into declval_int()");
     }
 
     template <class T>
@@ -38,7 +38,7 @@ template <class From, class To>
 struct is_convertible : bool_constant<
     (
         decltype(impl__::return_test<To>(0))::value &&
-        decltype(impl__::return_test<From, To>(0))::value
+        decltype(impl__::return_implicit_test<From, To>(0))::value
     ) ||
     (is_void<From>::value && is_void<To>::value)
 > { };

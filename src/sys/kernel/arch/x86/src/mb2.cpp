@@ -11,8 +11,9 @@
 
 #include <kernel/kernel.h>
 #include <kernel/debug.h>
-#include <kernel/span.h>
+
 #include <kernel/utilities.h>
+#include <kernel/utils/span.h>
 
 #include "bootinfo.h"
 #include "multiboot2.h"

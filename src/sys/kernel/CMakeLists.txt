@@ -16,6 +16,8 @@ include("${HOST_DIR}/build.cmake")
 list(APPEND KERN_SOURCES
     src/debug.cpp src/kernel_args.cpp src/main.cpp src/console.cpp src/parse.cpp
     src/vm/page_allocator.cpp src/vm/vm.cpp
+    src/kalloc/kalloc.cpp src/kalloc/new.cpp
+    src/kalloc/small_slab.cpp src/kalloc/small_bucket.cpp
 )
 
 list(TRANSFORM KERN_SOURCES PREPEND "${KERNEL_SOURCE_DIR}")
