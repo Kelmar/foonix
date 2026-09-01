@@ -6,33 +6,11 @@
 
 #include "PageFrameAllocator.h"
 
-/********************************************************************************************************************/
-
-size_t NextPower2(size_t v)
-{
-    size_t i = 1;
-
-    while (i < v)
-        i <<= 1;
-
-    return i;
-}
-
-namespace
-{
-    constexpr size_t SubLog2(size_t v, size_t l, size_t i)
-    {
-        return l >= v ? i : SubLog2(v, l << 1, i + 1);
-    }
-}
-
-constexpr size_t Log2(size_t v) { return SubLog2(v, 1, 0); }
-
-/********************************************************************************************************************/
+/*************************************************************************/
 
 const PageBlock PageBlock::Nil(0, 0);
 
-/********************************************************************************************************************/
+/*************************************************************************/
 
 PageFrameAllocator::PageFrameAllocator(size_t maxSize)
     : m_maxSize(maxSize)
@@ -41,29 +19,48 @@ PageFrameAllocator::PageFrameAllocator(size_t maxSize)
     ASSERT(maxSize > PAGE_SIZE, "Invalid memory size.");
 
     // Add a node for all of memory
-    size_t pow2 = NextPower2(m_maxSize);
+    size_t pow2 = ToPow2(m_maxSize);
     size_t order = GetOrder(pow2);
+    uintptr_t index = 0;
 
-    BuddyNode *root = AllocNode();
+    BuddyNode *root = new BuddyNode();
 
-    root->Start = 0;
-    root->Size = pow2;
+    if (pow2 != m_maxSize)
+        pow2 >>= 1;
 
-    m_buckets[order].Insert(root->Start, root);
+    while (pow2 >= PAGE_SIZE)
+    {
+        if (pow2 < maxSize)
+        {
+            root->Start = index;
+            root->Size = pow2;
+
+            maxSize -= pow2;
+            index += pow2;
+
+            m_buckets[order].Insert(root->Start, root);
+        }
+
+        pow2 >>= 1;
+        --order;
+    }
 }
 
 PageFrameAllocator::~PageFrameAllocator(void)
 {
 }
 
-/********************************************************************************************************************/
+/*************************************************************************/
 
 PageFrameAllocator::BuddyNode *PageFrameAllocator::GetFreeNode(void)
 {
     BuddyNode *node = m_freePool.Next;
 
     if (node == &m_freePool)
-        return nullptr; // Out of frames
+    {
+        //printf("Allocating new node\r\n");
+        return new BuddyNode();
+    }
 
     m_freePool.Next = node->Next;
     node->Next = nullptr;
@@ -71,7 +68,7 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetFreeNode(void)
     return node;
 }
 
-/********************************************************************************************************************/
+/*************************************************************************/
 
 void PageFrameAllocator::ReleaseNode(BuddyNode *node)
 {
@@ -87,19 +84,7 @@ void PageFrameAllocator::ReleaseNode(BuddyNode *node)
     m_freePool.Next = node;
 }
 
-/********************************************************************************************************************/
-
-PageFrameAllocator::BuddyNode *PageFrameAllocator::AllocNode(void)
-{
-    /*
-     * In the kernel we should check the current page if there is space.
-     * We need to make sure we always have space for nodes.
-     */
-    //printf("Allocating new node\r\n");
-    return new BuddyNode();
-}
-
-/********************************************************************************************************************/
+/*************************************************************************/
 
 PageFrameAllocator::BuddyNode *PageFrameAllocator::GetExactFrame(uintptr_t address, size_t order)
 {
@@ -112,10 +97,7 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetExactFrame(uintptr_t addre
     }
 
     if (order >= BucketSize - 1)
-    {
-        // We're at the top of the buddy size order, no more free memory!.
-        return nullptr;
-    }
+        return nullptr; // No more free memory!
 
     size_t size = PAGE_SIZE << order;
 
@@ -130,9 +112,6 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetExactFrame(uintptr_t addre
 
     BuddyNode *remain = GetFreeNode();
 
-    if (remain == nullptr)
-        remain = AllocNode();
-
     remain->Start = split->Start + size;
     remain->Size = size;
     split->Size = size;
@@ -146,7 +125,7 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetExactFrame(uintptr_t addre
     return split;
 }
 
-/********************************************************************************************************************/
+/*************************************************************************/
 
 PageFrameAllocator::BuddyNode *PageFrameAllocator::GetAvailableNode(size_t order)
 {
@@ -171,9 +150,6 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetAvailableNode(size_t order
 
     BuddyNode *remain = GetFreeNode();
 
-    if (remain == nullptr)
-        remain = AllocNode();
-
     remain->Start = split->Start + size;
     remain->Size = size;
     split->Size = size;
@@ -184,7 +160,7 @@ PageFrameAllocator::BuddyNode *PageFrameAllocator::GetAvailableNode(size_t order
     return split;
 }
 
-/********************************************************************************************************************/
+/*************************************************************************/
 
 PageBlock PageFrameAllocator::Acquire(uintptr_t address, size_t size)
 {
@@ -198,44 +174,29 @@ PageBlock PageFrameAllocator::Acquire(uintptr_t address, size_t size)
         size = PAGE_SIZE;
 
     uintptr_t alignedAddr = Align(address);
-    size = SizeToBlock(size + (alignedAddr - address));
+    size += alignedAddr - address;
 
-    size_t pow2 = NextPower2(size);
+    size_t pow2 = ToPow2(size);
     int frameCnt = pow2 / PAGE_SIZE;
+    int order = GetOrder(size);
 
-    /*
-     * Currently we're just effectively allocating lots of small blocks
-     * for the range we want, which isn't a very efficient way of doing
-     * this, but it at least works for now.
-     */
+    BuddyNode *frame = GetExactFrame(alignedAddr, order);
 
-    // Shouldn't use a flat array like this.
-    BuddyNode *frames[1024] = { nullptr };
-    int index = 0;
-
-    while (index < frameCnt)
+    if (!frame)
     {
-        frames[index] = GetExactFrame(alignedAddr, 0);
-
-        if (frames[index] == nullptr)
-        {
-            // Could not allocate all needed frames!
-            return PageBlock::Nil;
-        }
-
-        ++index;
-        alignedAddr += PAGE_SIZE;
+        // Could not allocate all needed frames!
+        return PageBlock::Nil;
     }
 
-    PageBlock rval(frames[0]->Start, pow2);
+    PageBlock rval(frame->Start, frame->Size);
 
     for (int index = 0; index < frameCnt; ++index)
-        ReleaseNode(frames[index]);
+        ReleaseNode(frame);
 
     return rval;
 }
 
-/********************************************************************************************************************/
+/*************************************************************************/
 
 PageBlock PageFrameAllocator::Allocate(size_t requested)
 {
@@ -248,7 +209,7 @@ PageBlock PageFrameAllocator::Allocate(size_t requested)
     if (requested < PAGE_SIZE)
         requested = PAGE_SIZE;
 
-    size_t pow2 = NextPower2(requested);
+    size_t pow2 = ToPow2(requested);
 
     size_t order = GetOrder(pow2);
 
@@ -264,7 +225,7 @@ PageBlock PageFrameAllocator::Allocate(size_t requested)
     return rval;
 }
 
-/********************************************************************************************************************/
+/*************************************************************************/
 
 void PageFrameAllocator::Release(PageBlock &&block)
 {
@@ -274,9 +235,6 @@ void PageFrameAllocator::Release(PageBlock &&block)
     PageBlock b(std::move(block));
 
     BuddyNode *frame = GetFreeNode();
-
-    if (!frame)
-        frame = AllocNode();
 
     // Need to check that start and size inside the block are valid.
 
@@ -322,7 +280,7 @@ void PageFrameAllocator::Release(PageBlock &&block)
     m_buckets[order].Insert(frame->Start, frame);
 }
 
-/********************************************************************************************************************/
+/*************************************************************************/
 
 bool PageFrameAllocator::CheckAllFree(void)
 {
@@ -334,4 +292,4 @@ bool PageFrameAllocator::CheckAllFree(void)
     return cnt == 1;
 }
 
-/********************************************************************************************************************/
+/*************************************************************************/

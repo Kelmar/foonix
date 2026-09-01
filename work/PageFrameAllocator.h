@@ -1,4 +1,11 @@
-#pragma once
+/*************************************************************************/
+
+/*************************************************************************/
+
+#ifndef PFA_OS_H__
+#define PFA_OS_H__
+
+/*************************************************************************/
 
 #include <stdint.h>
 #include <stddef.h>
@@ -8,68 +15,18 @@
 #include "AVLTree.h"
 
 #include "common.h"
+#include "math.h"
+
+/*************************************************************************/
 
 #define PAGE_SIZE 4096
 #define SYSTEM_BITS 32
 
-size_t NextPower2(size_t v);
-constexpr size_t Log2(size_t v);
+/*************************************************************************/
 
-class PageBlock
-{
-public:
-    static const PageBlock Nil;
+#include "PageBlock.h"
 
-    uintptr_t Start;
-    size_t    Size;
-
-    PageBlock()
-        : Start(0)
-        , Size(0)
-    {
-    }
-
-    PageBlock(uintptr_t start, size_t size)
-        : Start(start)
-        , Size(size)
-    {
-    }
-
-    PageBlock(const PageBlock &rhs)
-        : Start(rhs.Start)
-        , Size(rhs.Size)
-    {
-    }
-
-    PageBlock(PageBlock &&rhs) noexcept
-        : Start(0)
-        , Size(0)
-    {
-        std::swap(Start, rhs.Start);
-        std::swap(Size, rhs.Size);
-    }
-
-    PageBlock &operator =(const PageBlock &rhs)
-    {
-        Start = rhs.Start;
-        Size = rhs.Size;
-
-        return *this;
-    }
-
-    operator bool(void) const noexcept
-    {
-        return Size != 0;
-    }
-
-    PageBlock &operator =(PageBlock &&rhs) noexcept
-    {
-        std::swap(Start, rhs.Start);
-        std::swap(Size, rhs.Size);
-
-        return *this;
-    }
-};
+/*************************************************************************/
 
 inline bool
 operator ==(const PageBlock &lhs, const PageBlock &rhs)
@@ -128,7 +85,7 @@ private:
         if (size < PAGE_SIZE)
             size = PAGE_SIZE;
         else
-            size = NextPower2(size);
+            size = ToPow2(size);
 
         return size;
     }
@@ -136,8 +93,6 @@ private:
     BuddyNode *GetFreeNode(void);
     void ReleaseNode(BuddyNode *node);
 
-    BuddyNode *AllocNode(void);
-    
     size_t GetOrder(size_t pow2)
     {
         return Log2(pow2) - MinBucket;
@@ -152,21 +107,17 @@ public:
     /* constructor */ PageFrameAllocator(size_t maxSize);
     virtual          ~PageFrameAllocator(void);
 
-    /**
-     * @brief Allocate pages at specific address.
-     */
     PageBlock Acquire(uintptr_t address, size_t size);
 
-    /**
-     * @brief Allocate pages from any available pool.
-     */
     PageBlock Allocate(size_t requested);
 
-    /**
-     * Return pages back to the allocator.
-     */
     void Release(PageBlock &&pb);
 
     bool CheckAllFree(void);
 };
 
+/*************************************************************************/
+
+#endif /* PFA_OS_H__ */
+
+/*************************************************************************/
