@@ -44,14 +44,16 @@ void read_disk_info(multiboot_t *mbd);
 /*
  * The kernel's main entry point.
  */
-extern "C" void kmain(boot::ArgumentData *data)
+__attribute__((fastcall)) // Avoid passing data pointer on the stack.
+extern "C" 
+void kmain(boot::ArgumentData *data)
 {
+    boot::Arguments::Init(data);
+
     Debug::PrintF("ENTER: kmain()\r\n");
 
     new (&cpu::interrupt_stack) cpu::InterruptStack();
     
-    boot::Arguments::Init(data);
-
     new (&console) Console();
 
     arch::Init();

@@ -68,11 +68,14 @@ _start:
     /* Call preinit to setup all the things needed by a proper call to main(). */
     call preinit
 
+    /* Setup to pass data pointer to kmain() */
+    movl %eax, %ecx
+
     /* Turn on paging and write protection */
 paging_init:
-    movl %cr0, %ecx
-    orl  $0x80010000, %ecx
-    movl %ecx, %cr0
+    movl %cr0, %eax
+    orl  $0x80010000, %eax
+    movl %eax, %cr0
 
     /* Load a GDT that we know the location of. */
     lgdt g_gdtPtr
@@ -99,8 +102,6 @@ _paged_start:
     xorw %ax, %ax
     movw %ax, %fs
     movw %ax, %gs
-
-    movl %edx, %eax
 
     /* Setup temporary stack (using virtual addresses) */
     movl $stack_top, %esp

@@ -150,7 +150,7 @@ void InitHeapInfo(ArgumentData *argData)
  * need on start.
  */
 extern "C"
-void preinit(uint32_t magicNumber, uint32_t eax)
+ArgumentData *preinit(uint32_t magicNumber, uint32_t eax)
 {
     ArgumentData *data = x86::Virt2Phys(&g_kernArgData);
     InitBootInfo(data);
@@ -181,6 +181,8 @@ void preinit(uint32_t magicNumber, uint32_t eax)
 
     // Get paging setup.
     paging::Preinit(data);
+
+    return x86::Phys2Virt(data); // Return pointer for call to kmain() from assembly.
 }
 
 /********************************************************************************************************************/
