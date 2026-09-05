@@ -9,7 +9,6 @@
 #include <stdint.h>
 
 #include <kernel/kernel.h>
-#include <kernel/kernel_args.h>
 
 #include <kernel/arch/dconsole.h>
 
@@ -24,7 +23,7 @@ namespace arch
      * This function should read any information from the bootloader, firmware, or whatever that is needed to get
      * the kernel up and running.  This includes things like memory maps, command line arguments, etc.
      */
-    void Init(KernelArgs *ka);
+    void Init();
 }
 
 namespace cpu

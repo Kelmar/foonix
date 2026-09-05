@@ -1,27 +1,38 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
-#ifndef __FOONIX_ARCH_I386_UART_H__
-#define __FOONIX_ARCH_I386_UART_H__
+#ifndef __FOONIX_KERNEL_UTILS_NOCOPY_H__
+#define __FOONIX_KERNEL_UTILS_NOCOPY_H__
 
 /********************************************************************************************************************/
 
-#include <kernel/kernel.h>
-
-namespace uart
+namespace util
 {
-    /// @brief Initialize serial port.
-    kernel::ErrorCode init();
+    class nocopy
+    {
+    private:
+        nocopy(const nocopy &) = delete;
+        nocopy &operator =(const nocopy &) = delete;
 
-    /// @brief Nonblocking read from serial port.
-    int read_char();
+    protected:
+        constexpr nocopy() noexcept = default;
+        ~nocopy() { }
+    };
 
-    /// @brief Blocking write to serial port.
-    void write_char(char c);
+    class nomove
+    {
+    private:
+        nomove(nomove &&) = delete;
+        nomove &operator =(nomove &&) = delete;
+
+    protected:
+        constexpr nomove() noexcept = default;
+        ~nomove() { }
+    };
 }
 
 /********************************************************************************************************************/
 
-#endif /* __FOONIX_ARCH_I386_UART_H__ */
+#endif /* __FOONIX_KERNEL_UTILS_NOCOPY_H__ */
 
 /********************************************************************************************************************/

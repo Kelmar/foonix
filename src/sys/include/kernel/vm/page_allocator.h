@@ -17,13 +17,43 @@
 
 namespace paging
 {
+    /*
+     * TODO: Split this class.
+     *
+     * This class is really at the moment a hybrid of a physical and a virtual page allocator.  Really these should
+     * be two distinct things:
+     *
+     * 1) A physical allocator: Only one of these needs to ever be created, and would manage all of the system memory.
+     *    It would not worry about what is or isn't in a page table or virtual memory map of whatever, it just would
+     *    make sure available pages are handed out and marked, or unmarked when returned.
+     *
+     * 2) A virtual allocator: Would request pages from the physical allocator as needed, this would part would take
+     *    care of making sure those pages get mapped to the places where they are needed.  E.g. stack, code, heap,
+     *    or whatever else needs to be done.  There would be multiple allocators, one for each process structure.
+     *
+     */
+
     class PageAllocator
     {
     private:
-        struct PageNode { PageNode *next; };
+        struct PageNode
+        {
+            PageNode *Prev;
+            PageNode *Next;
+
+            //PagePointer Pointer;
+            uintptr_t Pointer;
+        };
 
         // Think it's possible to do this lock free, but we'll play it safe for now.
         mutable thread::SpinLock m_allocLock;
+
+        /// @brief Size of the m_pages array.
+        size_t m_pageCount;
+        PageNode *m_pages; // Array of page nodes, one per page on the system.
+
+        /// @brief Number of pages available.
+        size_t m_pagesAvailable;
 
         // List of pages that have been linked to each other.
         PageNode *m_pageCache;
@@ -34,6 +64,7 @@ namespace paging
         paddr_t GetCachedPage();
 
     private:
+        void AllocateNodes();
         void InitBootPages();
 
     public:

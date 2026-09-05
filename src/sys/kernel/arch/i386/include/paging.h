@@ -16,11 +16,18 @@
 
 //#include <kernel/vm.h> // We can't include this here, vm.h needs to reference us.
 
-#include <kernel/kernel_args.h>
-
 #include "cpu.h"
 
+/********************************************************************************************************************/
+
 struct BootInfo;
+
+namespace memory
+{
+    class VPageMapBuilder;
+}
+
+/********************************************************************************************************************/
 
 namespace paging
 {
@@ -52,9 +59,6 @@ namespace paging
 
     class PageTable : public PageTableBase<PageTable>
     {
-    public:
-        static constexpr const size_t PageSize = 4096;
-
     private:
         page_directory_entry_t *m_dir;
 
@@ -66,7 +70,7 @@ namespace paging
         constexpr size_t ToEntryIndex(vaddr_t vaddr) const { return (vaddr >> 12) & 0x03FFF; }
         constexpr size_t ToDirIndex  (vaddr_t vaddr) const { return (vaddr >> 22) & 0x03FFF; }
 
-        Kernel::ErrorCode AddDirectoryEntry(size_t index, paddr_t table, PageFlags flags);
+        kernel::ErrorCode AddDirectoryEntry(size_t index, paddr_t table, PageFlags flags);
 
         page_entry_t *GetPageTable(vaddr_t vaddr, size_t &dirIndex) const;
 
@@ -80,8 +84,8 @@ namespace paging
         
         virtual ~PageTable() { }
 
-        Kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags);
-        Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
+        kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags);
+        kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
 
         paddr_t doGetPhysicalPageFor(vaddr_t vaddr) const;
 
@@ -89,13 +93,10 @@ namespace paging
     };
 
     extern PageTable g_bootPageTable;
-    extern PageTable g_bootPageTableNew;
 
     /************************************************************************************************************/
 
-    void Init(KernelArgs *ka);
-
-    void Preinit(BootInfo *bootInfo);
+    void Init(memory::VPageMapBuilder &);
 
     /************************************************************************************************************/
 }

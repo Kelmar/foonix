@@ -9,11 +9,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <kassert.h>
+
 #include <iterator>
 #include <type_traits>
 #include <utility>
-
-#include <kernel/flow.h>
 
 /********************************************************************************************************************/
 

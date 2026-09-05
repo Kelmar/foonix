@@ -1,11 +1,15 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
+/*
+ * Going to remove this after we get PageAllocator working the way I want it to.
+ */
+
 #include <stdint.h>
 #include <string.h>
 
+#include <kernel/boot_args.h>
 #include <kernel/kernel.h>
-#include <kernel/kernel_args.h>
 #include <kernel/debug.h>
 
 #include <kernel/utils/bitmap.h>
@@ -15,8 +19,6 @@
 
 #include "asm.h"
 #include "cpu.h"
-
-#include "bootinfo.h"
 
 #include "arch_vm.h"
 

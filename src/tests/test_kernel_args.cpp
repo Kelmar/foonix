@@ -8,7 +8,7 @@
  * BUGS.md's "AddMemoryMap / KnockoutUsedMemory / MergeContiguousMappings"
  * entry. All of those are now fixed (each such test says so, and why).
  */
-#include <kernel/kernel_args.h>
+#include <kernel/boot_args.h>
 
 #include "test_io.h"
 

@@ -15,6 +15,9 @@
 
 #include <kernel/math.h>
 
+#include <type_traits>
+#include <concepts>
+
 /********************************************************************************************************************/
 
 namespace cpu
@@ -63,6 +66,34 @@ namespace cpu
 
 namespace x86
 {
+    /************************************************************************************************************/
+
+    /**
+     * @brief Conditionally move a pointer to it's virtual address if it appears to be physical.
+     * @remarks For use during boot before the virtual map is initialized.
+     */
+    template <typename T>
+    requires std::convertible_to<T, uintptr_t> || std::convertible_to<T, void *>
+    static inline FORCE_INLINE
+    constexpr T Virt2Phys(T addr)
+    {
+        uintptr_t ptr = reinterpret_cast<uintptr_t>(addr);
+        return reinterpret_cast<T>((ptr >= KERNEL_OFFSET) ? (ptr - KERNEL_OFFSET) : ptr);
+    }
+
+    /**
+     * @brief Conditionally move a pointer to it's physical address if it appears to be virtual.
+     * @remarks For use during boot before the virtual map is initialized.
+     */
+    template <typename T>
+    requires std::convertible_to<T, uintptr_t> || std::convertible_to<T, void *>
+    static inline FORCE_INLINE
+    constexpr T Phys2Virt(T addr)
+    {
+        uintptr_t ptr = reinterpret_cast<uintptr_t>(addr);
+        return reinterpret_cast<T>((ptr < KERNEL_OFFSET) ? (ptr + KERNEL_OFFSET) : ptr);
+    }
+
     /************************************************************************************************************/
     /*
      * ISA bus read/write

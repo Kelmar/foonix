@@ -5,10 +5,11 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <kassert.h>
+
 #include <kernel/arch.h>
 #include <kernel/console.h>
 #include <kernel/debug.h>
-#include <kernel/flow.h>
 #include <kernel/tty.h>
 
 #include "cpu.h"

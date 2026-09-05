@@ -11,7 +11,7 @@
 #include <kernel/tty.h>
 
 #include <kernel/arch.h>
-#include <kernel/kernel_args.h>
+#include <kernel/boot_args.h>
 #include <kernel/interrupt.h>
 
 #include <kernel/vm.h>
@@ -26,11 +26,6 @@
 //#include "ata.h"
 
 /********************************************************************************************************************/
-
-namespace kernel
-{
-    KernelArgs arguments;
-}
 
 namespace cpu
 {
@@ -49,15 +44,17 @@ void read_disk_info(multiboot_t *mbd);
 /*
  * The kernel's main entry point.
  */
-extern "C" void kmain(void)
+extern "C" void kmain(boot::ArgumentData *data)
 {
     Debug::PrintF("ENTER: kmain()\r\n");
 
     new (&cpu::interrupt_stack) cpu::InterruptStack();
-    new (&kernel::arguments) KernelArgs();
+    
+    boot::Arguments::Init(data);
+
     new (&console) Console();
 
-    arch::Init(&kernel::arguments);
+    arch::Init();
 
     vmm::Init();
 
@@ -76,9 +73,6 @@ extern "C" void kmain(void)
 
     /* After our first context switch, the code below will stop running. */
 #endif
-
-    Debug::PrintF("kernel::arguments = %p\r\n", &kernel::arguments);
-    Debug::PrintF("console = %p\r\n", &console);
 
     Debug::shell();
 }

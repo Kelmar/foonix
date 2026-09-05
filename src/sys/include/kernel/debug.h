@@ -7,7 +7,7 @@
 
 #include <stdarg.h>
 
-#include <kernel/flow.h>
+#include <kassert.h>
 
 namespace Debug
 {

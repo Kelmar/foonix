@@ -11,10 +11,10 @@
 
 /********************************************************************************************************************/
 
-std::expected<int, Kernel::ErrorCode> util::parseInt(const std::string_view &str)
+std::expected<int, kernel::ErrorCode> util::parseInt(const std::string_view &str)
 {
     if (str.empty())
-        return Kernel::ErrorCode::NotFound;
+        return kernel::ErrorCode::NotFound;
 
     size_t max = str.length();
 
@@ -41,7 +41,7 @@ std::expected<int, Kernel::ErrorCode> util::parseInt(const std::string_view &str
         else if (isHex && (a >= 'a') && (a <= 'f'))
             a -= ('a' - 10);
         else
-            return Kernel::ErrorCode::InvalidFormat;
+            return kernel::ErrorCode::InvalidFormat;
 
         acc *= isHex ? 16 : 10;
         acc += a;

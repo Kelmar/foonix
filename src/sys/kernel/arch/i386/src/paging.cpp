@@ -5,17 +5,18 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <kernel/kernel_args.h>
+#include <kernel/boot_args.h>
 #include <kernel/debug.h>
 
 #include <kernel/arch.h>
 
 #include <kernel/vm.h>
 #include <kernel/vm/page_table.h>
+#include <kernel/vm/vpage_map.h>
 
 #include <kernel/kalloc.h>
 
-#include "bootinfo.h"
+#include "x86priv.h"
 
 #include "asm.h"
 #include "atomic.h"
@@ -115,11 +116,11 @@ namespace PageEntryFlags
 class BootPageAllocator
 {
 private:
-    BootInfo *m_bootInfo;
+    boot::ArgumentData *m_argData;
 
 public:
-    constexpr BootPageAllocator(BootInfo *bootInfo) noexcept
-        : m_bootInfo(bootInfo)
+    constexpr BootPageAllocator(boot::ArgumentData *argData) noexcept
+        : m_argData(argData)
     {
     }
 
@@ -127,8 +128,11 @@ public:
 
     paddr_t AllocatePage()
     {
-        paddr_t rval = m_bootInfo->HeapNext;
-        m_bootInfo->HeapNext += cpu::PageSize;
+        paddr_t rval = m_argData->HeapNext;
+
+        m_argData->HeapNext += cpu::PageSize;
+        m_argData->VirtHeapNext += cpu::PageSize;
+
         return rval;
     }
 
@@ -232,7 +236,7 @@ paddr_t PageTable::AllocatePage()
  * @param table The physical address of the page table to add.
  * @param PageFlags Flags for mapping the table into the directory.
  */
-Kernel::ErrorCode PageTable::AddDirectoryEntry(size_t index, paddr_t table, PageFlags flags)
+kernel::ErrorCode PageTable::AddDirectoryEntry(size_t index, paddr_t table, PageFlags flags)
 {
     //DEBUG_ASSERT(index < TableEntries, "Invalid directory index for AddDirectoryEntry() call.");
     //DEBUG_ASSERT((m_dir[index] & DirEntryFlags::Preset) == 0, "Request to map page table to already mapped directory entry.");
@@ -245,7 +249,7 @@ Kernel::ErrorCode PageTable::AddDirectoryEntry(size_t index, paddr_t table, Page
     dirFlags |= PageEntryFlags::Present;
 
     m_dir[index] = (table & PageEntryFlags::AddressMask) | dirFlags;
-    return Kernel::ErrorCode::NoError;
+    return kernel::ErrorCode::NoError;
 }
 
 /********************************************************************************************************************/
@@ -301,10 +305,10 @@ page_entry_t *PageTable::GetOrCreatePageTable(vaddr_t vaddr, PageFlags flags)
  * @param vaddr The virtual address
  * @param flags Flags to be set on the page (The Present flag is added automatically.)
  */
-Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
+kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
     if (!IsAligned(paddr) || !IsAligned(vaddr))
-        return Kernel::ErrorCode::NotAligned;
+        return kernel::ErrorCode::NotAligned;
 
     //Debug::PrintF("Map %p -> %p\r\n", paddr, vaddr);
 
@@ -321,7 +325,7 @@ Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags f
 
     page = entry;
 
-    return Kernel::ErrorCode::NoError;
+    return kernel::ErrorCode::NoError;
 }
 
 /********************************************************************************************************************/
@@ -330,10 +334,10 @@ Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags f
  * @param dir Directory to unmap from.
  * @param vaddr The virtual address to unmap.
  */
-Kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
+kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
 {
     if (!IsAligned(vaddr))
-        return Kernel::ErrorCode::NotAligned;
+        return kernel::ErrorCode::NotAligned;
     
     int pgtIndex = (vaddr >> 12) & 0x03FF;
     int dirIndex = (vaddr >> 22) & 0x03FF;
@@ -342,17 +346,17 @@ Kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
 
     // Assert these entries are correct!
     if ((pde & DirEntryFlags::Present) == 0)
-        return Kernel::ErrorCode::NoError; // Nothing to do
+        return kernel::ErrorCode::NoError; // Nothing to do
 
     page_entry_t *pageTable = GetPageTable(pde);
     page_entry_t &page = pageTable[pgtIndex];
 
     if ((page & PageEntryFlags::Present) == 0)
-        return Kernel::ErrorCode::NoError; // Nothing to do
+        return kernel::ErrorCode::NoError; // Nothing to do
 
     page &= ~PageEntryFlags::Present;
 
-    return Kernel::ErrorCode::NoError;
+    return kernel::ErrorCode::NoError;
 }
 
 /********************************************************************************************************************/
@@ -390,10 +394,10 @@ paddr_t PageTable::doGetPhysicalPageFor(vaddr_t vaddr) const
 /********************************************************************************************************************/
 
 static
-void InitBootPages(BootInfo *bootInfo, PageTable *bootPageTable)
+void InitBootPages(boot::ArgumentData *argData, PageTable *bootPageTable)
 {
-    paddr_t kstart = paging::AlignFloor(bootInfo->KernelStart);
-    paddr_t klast = paging::AlignCeiling(bootInfo->KernelEnd);
+    paddr_t kstart = paging::AlignFloor(argData->KernelStart);
+    paddr_t klast = paging::AlignCeiling(argData->KernelEnd);
 
     // Start at 1, leaving 0 as "not present" for nullptr dereference checks.
 
@@ -407,7 +411,7 @@ void InitBootPages(BootInfo *bootInfo, PageTable *bootPageTable)
         if ((paddr >= kstart) && (paddr <= klast))
         {
             // Set higher half value.
-            vaddr = PHYS_2_VIRT(paddr);
+            vaddr = reinterpret_cast<vaddr_t>(x86::Phys2Virt(paddr));
             bootPageTable->MapPage(paddr, vaddr, PageFlags::Execute | PageFlags::Kernel);
         }
     }
@@ -415,23 +419,23 @@ void InitBootPages(BootInfo *bootInfo, PageTable *bootPageTable)
 
 /********************************************************************************************************************/
 
-void paging::Init(KernelArgs *)
+void paging::Init(memory::VPageMapBuilder &)
 {
     //new (&g_bootPageTable) PageTable(boot_page_directory, DirectoryOptions::NoClear);
     g_useGlobalAlloc = true;
 }
 
-void paging::Preinit(BootInfo *bootInfo)
+void paging::Preinit(boot::ArgumentData *argData)
 {
     Debug::PrintF("ENTER: paging::Preinit()\r\n");
 
     g_bootPageAllocator = reinterpret_cast<BootPageAllocator *>(bpaBuffer);
     PageTable *bootPageTable = &g_bootPageTable;
 
-    new (g_bootPageAllocator) BootPageAllocator(bootInfo);
+    new (g_bootPageAllocator) BootPageAllocator(argData);
     new (bootPageTable) PageTable();
 
-    InitBootPages(bootInfo, bootPageTable);
+    InitBootPages(argData, bootPageTable);
 
     bootPageTable->MakeActive();
 

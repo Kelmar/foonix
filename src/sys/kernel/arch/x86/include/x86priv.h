@@ -1,27 +1,25 @@
 /********************************************************************************************************************/
+/*
+ * Private declarations for X86 things.
+ */
 /********************************************************************************************************************/
 
-#ifndef __FOONIX_ARCH_I386_UART_H__
-#define __FOONIX_ARCH_I386_UART_H__
+#ifndef __FOONIX_KERNEL_X86_PRIV_H__
+#define __FOONIX_KERNEL_X86_PRIV_H__
 
 /********************************************************************************************************************/
 
-#include <kernel/kernel.h>
+#include <kernel/boot_args.h>
 
-namespace uart
+/********************************************************************************************************************/
+
+namespace paging
 {
-    /// @brief Initialize serial port.
-    kernel::ErrorCode init();
-
-    /// @brief Nonblocking read from serial port.
-    int read_char();
-
-    /// @brief Blocking write to serial port.
-    void write_char(char c);
+    void Preinit(boot::ArgumentData *argData);
 }
 
 /********************************************************************************************************************/
 
-#endif /* __FOONIX_ARCH_I386_UART_H__ */
+#endif /* __FOONIX_KERNEL_X86_PRIV_H__  */
 
 /********************************************************************************************************************/

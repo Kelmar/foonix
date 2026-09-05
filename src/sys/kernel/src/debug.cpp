@@ -6,8 +6,8 @@
 
 #include <string_view>
 
+#include <kernel/boot_args.h>
 #include <kernel/arch/dconsole.h>
-#include <kernel/kernel_args.h>
 #include <kernel/console.h>
 #include <kernel/debug.h>
 #include <kernel/utilities.h>
@@ -24,18 +24,21 @@ namespace
 {
     void VarsCommand(size_t, const std::string_view[])
     {
+        boot::Arguments &args = boot::Arguments::Instance();
+
         console
-            << "kernel_start: 0x" << hex(kernel::arguments.KernelCode.Base, -8)
-            << " aligned: " << hex(kernel::arguments.KernelCode.BaseAligned(), -8)
+            << "kernel_start: 0x" << hex(args.KernelRange().Base, -8)
+            << " aligned: " << hex(args.KernelRange().BaseAligned(), -8)
             << "\r\n";
 
         console
-            << "kernel_end: 0x" << hex(kernel::arguments.KernelCode.End(), -8)
-            << " aligned: " << hex(kernel::arguments.KernelCode.EndAligned(), -8)
+            << "kernel_end: 0x" << hex(args.KernelRange().End(), -8)
+            << " aligned: " << hex(args.KernelRange().EndAligned(), -8)
             << "\r\n";
 
         console
-            << "heap_start: 0x" << hex(kernel::arguments.HeapStart, -8) << "\r\n";
+            << "heap_start: 0x" << hex(args.HeapVirtual().BaseAligned(), -8) << "\r\n"
+            << "heap_length: " << args.HeapVirtual().Length << "bytes\r\n";
     }
 
     void DumpCommand(size_t argCount, const std::string_view args[])

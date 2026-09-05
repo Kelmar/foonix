@@ -7,7 +7,7 @@
 #include <kassert.h>
 
 #include <kernel/debug.h>
-#include <kernel/kernel_args.h>
+#include <kernel/boot_args.h>
 
 #include <kernel/utils/span.h>
 #include <kernel/utils/list.h>
@@ -93,7 +93,7 @@ void memory::init_kalloc()
 {
     Debug::PrintF("ENTER: memory::init_kalloc()\r\n");
 
-    if (!kernel::arguments.CanAllocPages)
+    if (!boot::Arguments::Instance().CanAllocPages())
         kpanic("memory::init_kalloc(): Called before ability to allocate memory pages!\r\n");
 
     kallocAllocatedPages = 0;
@@ -125,7 +125,7 @@ void memory::init_kalloc()
         lgBuckets[i] = new (ptr) List<LargePageMeta>();
     }
 
-    kernel::arguments.CanKalloc = true;
+    boot::Arguments::Instance().CanKalloc(true);
 
     Debug::PrintF("EXIT: memory::init_kalloc()\r\n");
 }
@@ -210,7 +210,7 @@ void *kalloc(size_t size)
     if (size == 0)
         return nullptr;
 
-    if (!kernel::arguments.CanKalloc)
+    if (!boot::Arguments::Instance().CanKalloc())
         kpanic("kalloc(): Called before initialized!\r\n");
 
     if (size <= SmallItemHash::MAX_ITEM_SIZE)
@@ -226,7 +226,7 @@ void kfree(void *ptr)
     if (ptr == nullptr)
         return;
 
-    if (!kernel::arguments.CanKalloc)
+    if (!boot::Arguments::Instance().CanKalloc())
         kpanic("kfree(): Called before kalloc() initialized!\r\n");
 
     uintptr_t ip = reinterpret_cast<uintptr_t>(ptr);

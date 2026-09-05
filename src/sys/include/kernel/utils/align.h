@@ -169,6 +169,22 @@ namespace util
     template <uint SZ>
     requires Alignable<SZ>
     const TIsAligned<SZ> IsAligned;
+
+    /// @brief Compute the minium number of pages needed to store the supplied number of bytes.
+    template <uint SZ>
+    requires Alignable<SZ>
+    struct TMinPages
+    {
+        inline constexpr size_t operator ()(size_t sz) const noexcept
+        {
+            return AlignCeiling<SZ>(sz) / SZ;
+        }
+    };
+
+    /// @brief Compute the minium number of pages needed to store the supplied number of bytes.
+    template <uint SZ>
+    requires Alignable<SZ>
+    const TMinPages<SZ> MinPages;
 }
 
 /********************************************************************************************************************/

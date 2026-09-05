@@ -25,9 +25,9 @@ namespace util
      *
      * Supports handling of 0x and $ prefixes for hexidecimal numbers.
      *
-     * Returns a Kernel::ErrorCode if an integer cannot be parsed. Otherwise the value parsed is returned.
+     * Returns a kernel::ErrorCode if an integer cannot be parsed. Otherwise the value parsed is returned.
      */ 
-    std::expected<int, Kernel::ErrorCode> parseInt(const std::string_view &);
+    std::expected<int, kernel::ErrorCode> parseInt(const std::string_view &);
 }
 
 /********************************************************************************************************************/

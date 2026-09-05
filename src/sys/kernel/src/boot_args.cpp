@@ -2,7 +2,7 @@
 /********************************************************************************************************************/
 
 #include <kernel/kernel.h>
-#include <kernel/kernel_args.h>
+#include <kernel/boot_args.h>
 #include <kernel/debug.h>
 
 #include <algorithm>
@@ -10,21 +10,17 @@
 
 #include "paging.h"
 
+using namespace boot;
+
 /********************************************************************************************************************/
 
-void KernelArgs::SetCommandLine(const char *data, size_t sn)
-{
-    size_t len = strnlen(data, sn);
-
-    if (len > 1)
-        Debug::PrintF("Command Line: %s\r\n", data);
-}
+boot::Arguments boot::Arguments::s_instance;
 
 /********************************************************************************************************************/
 /**
  * @brief Sort memory mappings so that they appear in order.
  */
-void KernelArgs::SortMappings()
+void Arguments::SortMappings()
 {
     /*
      * Bubble sort entries to ensure order.
@@ -34,18 +30,19 @@ void KernelArgs::SortMappings()
      *
      *              -- B.Simonds (July 26, 2026)
      */
+
     for (;;)
     {
         bool sorted = true;
 
-        for (size_t i = 1; i < MemoryMapEntries; ++i)
+        for (size_t i = 1; i < m_data->MemoryMapCount; ++i)
         {
-            MemoryRange &lastMapping = MemoryMap[i - 1];
-            MemoryRange &mapping = MemoryMap[i];
+            MemoryMapping &lastMapping = m_data->MemoryMap[i - 1];
+            MemoryMapping &mapping = m_data->MemoryMap[i];
 
-            if (lastMapping.Base > mapping.Base)
+            if (lastMapping.Start > mapping.Start)
             {
-                std::swap(MemoryMap[i - 1], MemoryMap[i]);
+                std::swap(m_data->MemoryMap[i - 1], m_data->MemoryMap[i]);
                 sorted = false;
             }
         }
@@ -59,13 +56,13 @@ void KernelArgs::SortMappings()
 /**
  * @brief Remove empty (zero length) mappings.
  */
-void KernelArgs::RemoveDeadMappings()
+void Arguments::RemoveDeadMappings()
 {
     size_t index = 0;
 
-    while (index < MemoryMapEntries)
+    while (index < m_data->MemoryMapCount)
     {
-        if (MemoryMap[index].Length > 0)
+        if (m_data->MemoryMap[index].Length > 0)
         {
             ++index;
             continue;
@@ -82,7 +79,7 @@ void KernelArgs::RemoveDeadMappings()
  *
  * Attempt to crunch down memory map usage by merging contiguous memory map entries into larger single entries.
  */
-void KernelArgs::MergeContiguousMappings()
+void Arguments::MergeContiguousMappings()
 {
     /*
      * This might be a bit pedantic, but we never know what has done the memory detection on our behalf.
@@ -94,16 +91,16 @@ void KernelArgs::MergeContiguousMappings()
     RemoveDeadMappings();
     
     // Second pass, merge contiguous blocks when found.
-    for (size_t i = 1; i < MemoryMapEntries; ++i)
+    for (size_t i = 1; i < m_data->MemoryMapCount; ++i)
     {
-        MemoryRange &lastMapping = MemoryMap[i - 1];
-        MemoryRange &mapping = MemoryMap[i];
+        MemoryRange lastMapping = m_data->MemoryMap[i - 1].ToRange();
+        MemoryRange mapping = m_data->MemoryMap[i].ToRange();
 
         const auto result = MemoryRange::Merge(lastMapping, mapping);
 
         if (result)
         {
-            MemoryMap[i - 1] = result.value();
+            m_data->MemoryMap[i - 1] = result.value();
 
             // Slide remaining entries down one, and reprocess same index with new values.
             SlideEntries(i);
@@ -115,17 +112,17 @@ void KernelArgs::MergeContiguousMappings()
 
 /********************************************************************************************************************/
 
-void KernelArgs::SlideEntries(int start)
+void Arguments::SlideEntries(int start)
 {
-    for (size_t i = start + 1; i < MemoryMapEntries; ++i)
-        MemoryMap[i - 1] = MemoryMap[i];
+    for (size_t i = start + 1; i < m_data->MemoryMapCount; ++i)
+        m_data->MemoryMap[i - 1] = m_data->MemoryMap[i];
 
-    --MemoryMapEntries;
+    --m_data->MemoryMapCount;
 }
 
 /********************************************************************************************************************/
 
-bool KernelArgs::AddMemoryMap(paddr_t addr, size_t length)
+bool Arguments::AddMemoryMap(paddr_t addr, size_t length, MemoryType type)
 {
     if (length == 0)
     {
@@ -133,29 +130,18 @@ bool KernelArgs::AddMemoryMap(paddr_t addr, size_t length)
         return true; // Do not attempt to add a zero length range.
     }
 
-    MemoryRange newRange(addr, length);
-
-    for (size_t i = 0; i < MemoryMapEntries; ++i)
+    if (m_data->MemoryMapCount + 1 >= ArgumentData::MaxMemoryEntries)
     {
-        auto result = MemoryRange::Merge(MemoryMap[i], newRange);
-
-        if (result)
-        {
-            MemoryMap[i] = result.value();
-            MergeContiguousMappings();
-            return true;
-        }
-    }
-
-    // If we get here, we need a new memory map.
-
-    if (MemoryMapEntries + 1 >= MaxMemoryEntries)
-    {
-        Debug::PrintF("WARN: Attempt to add more entries than available in boot up memory map of %u\r\n", MaxMemoryEntries);
+        Debug::PrintF("WARN: Attempt to add more entries than available in boot up memory map of %u\r\n", ArgumentData::MaxMemoryEntries);
         return false; // Out of space!
     }
 
-    MemoryMap[MemoryMapEntries++] = newRange;
+    int idx = m_data->MemoryMapCount++;
+
+    m_data->MemoryMap[idx].Start = addr;
+    m_data->MemoryMap[idx].Length = length;
+    m_data->MemoryMap[idx].Type = type;
+
     MergeContiguousMappings();
     return true;
 }
@@ -168,26 +154,30 @@ bool KernelArgs::AddMemoryMap(paddr_t addr, size_t length)
  * loaded by multiboot, EFI or other boot loader modules that weren't detected/removed
  * from the call to the AddMemoryMap() function.
  */
-void KernelArgs::KnockoutUsedMemory()
+void Arguments::KnockoutUsedMemory()
 {
     // Get page aligned start/end
-    paddr_t kernelStartAligned = KernelCode.BaseAligned();
-    paddr_t kernelEndAligned = KernelCode.EndAligned();
+    MemoryRange kernelRange = KernelRange();
+
+    paddr_t kernelStartAligned = kernelRange.BaseAligned();
+    paddr_t kernelEndAligned = kernelRange.EndAligned();
 
     SortMappings();
 
-    for (size_t i = 0; i < MemoryMapEntries; ++i)
+    for (size_t i = 0; i < m_data->MemoryMapCount; ++i)
     {
-        MemoryRange &mapping = MemoryMap[i];
-        paddr_t mapEnd = mapping.End();
+        MemoryMapping &mapping = m_data->MemoryMap[i];
+        MemoryRange mapRange { mapping.Start, mapping.Length };
+
+        paddr_t mapEnd = mapRange.End();
 
         if (mapEnd < kernelStartAligned)
             continue; // Haven't reached kernel yet.
 
-        if (mapping.Base > kernelEndAligned)
+        if (mapping.Start > kernelEndAligned)
             break; // We're past the end of the kernel; no need to check other sorted mappings.
 
-        bool hasStartGap = kernelStartAligned > mapping.Base;
+        bool hasStartGap = kernelStartAligned > mapping.Start;
         bool hasEndGap = kernelEndAligned < mapEnd;
 
         if (!hasStartGap && !hasEndGap)
@@ -201,7 +191,7 @@ void KernelArgs::KnockoutUsedMemory()
         if (hasStartGap)
         {
             // Adjust current entry for start gap.
-            mapping.Length = kernelStartAligned - mapping.Base;
+            mapping.Length = kernelStartAligned - mapping.Start;
         }
         
         if (hasEndGap)
@@ -211,18 +201,18 @@ void KernelArgs::KnockoutUsedMemory()
                 // Kernel fits entirely within this mapping; which means it needs to be split.
                 // First check to make sure we can fit the new mapping....
 
-                if ((MemoryMapEntries + 1) >= MaxMemoryEntries)
+                if ((m_data->MemoryMapCount + 1) >= ArgumentData::MaxMemoryEntries)
                 {
                     // I'm sure there's a better way to handle all of this, but for now... -- B.Simonds (July 26, 2026)
                     kpanic("Out of memory mappings for kernel boot, don't know what to do now...");
                 }
 
-                i = MemoryMapEntries++;
+                i = m_data->MemoryMapCount++;
             }
 
             // Next available would be one past end of kernel.
-            MemoryMap[i].Base = kernelEndAligned + 1;
-            MemoryMap[i].Length = mapEnd - kernelEndAligned;
+            m_data->MemoryMap[i].Start = kernelEndAligned + 1;
+            m_data->MemoryMap[i].Length = mapEnd - kernelEndAligned;
 
             if (hasStartGap)
                 break; // No other mappings affected;
@@ -234,14 +224,14 @@ void KernelArgs::KnockoutUsedMemory()
 
 /********************************************************************************************************************/
 
-void KernelArgs::ShowAvailableMemory(void)
+void Arguments::ShowAvailableMemory(void)
 {
     Debug::PrintF("Free Memory\r\n");
     Debug::PrintF("    Start      Length\r\n");
 
-    for (uint32_t i = 0; i < MemoryMapEntries; ++i)
+    for (uint32_t i = 0; i < m_data->MemoryMapCount; ++i)
     {
-        Debug::PrintF("    %p %08X\r\n", MemoryMap[i].Base, MemoryMap[i].Length);
+        Debug::PrintF("    %p %08X\r\n", m_data->MemoryMap[i].Start, m_data->MemoryMap[i].Length);
     }
 }
 

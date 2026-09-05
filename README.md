@@ -74,21 +74,16 @@ ctest --test-dir build/tests --output-on-failure
 - [ ] x64 code
 - [ ] Fix broken paging support
     (somewhat fixed now)
-
-## Build System
-- [x] Replace Makefile with CMake/Ninja
-- [x] Build x64
-- [x] Use docker so we can better control the build environment.
-- [ ] Better unit test system. ([doctest](https://github.com/doctest/doctest) maybe?)
+- [ ] Working memory manager.
+- [ ] Process structure
 
 ## Kernel Proper
 - [x] Get it so we can use a debugger with qemu.
 - [ ] Remove use of GRUB and switch to EFI
-- [ ] Working memory manager.
 - [ ] Need VFS
 - [ ] Make a real driver model.
 - [ ] Finish ATA driver.
-- [ ] Build a file system.
+- [ ] Physical file system.
 - [ ] Add basic POSIX hooks for getting libc to compile/run.
 - [ ] Everything else that isn't done yet.
 

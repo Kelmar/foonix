@@ -9,7 +9,6 @@
 #include <kernel/kernel.h>
 #include <kernel/utilities.h>
 
-#include <kernel/kernel_args.h>
 #include <kernel/vm.h>
 
 #include "cpu.h"
@@ -42,13 +41,13 @@ namespace paging
 
         bool doIsMapped(paddr_t addr) const;
 
-        Kernel::ErrorCode doMapPage(paddr_t padd, vaddr_t vaddr, PageFlags flags);
-        Kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
+        kernel::ErrorCode doMapPage(paddr_t padd, vaddr_t vaddr, PageFlags flags);
+        kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
 
         paddr_t doGetPhysicalPageFor(vaddr_t vaddr) const;
     };
 
-    void Init(KernelArgs *);
+    void Init();
 }
 
 /********************************************************************************************************************/

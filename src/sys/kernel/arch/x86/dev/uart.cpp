@@ -37,7 +37,7 @@
 
 /********************************************************************************************************************/
 
-Kernel::ErrorCode uart::init()
+kernel::ErrorCode uart::init()
 {
     // Setup debugging serial port.
     // We assume that the serial port is compatible with a 16550.
@@ -58,7 +58,7 @@ Kernel::ErrorCode uart::init()
     // Now clear the DLA bit so we can read/write data
     x86::outb(SERIAL_LINE_CTL, SERIAL_CONTROL_FLAGS);
 
-    return Kernel::ErrorCode::NoError;
+    return kernel::ErrorCode::NoError;
 }
 
 /********************************************************************************************************************/

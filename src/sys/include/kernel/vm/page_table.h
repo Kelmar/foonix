@@ -15,6 +15,11 @@
 
 /********************************************************************************************************************/
 
+namespace memory
+{
+    class VPageMapBuilder;
+}
+
 namespace paging
 {
     /************************************************************************************************************/
@@ -45,6 +50,12 @@ namespace paging
 
     /// @brief Checks to see if the supplied pointer is page aligned.
     const util::TIsAligned<cpu::PageSize> IsAligned;
+
+    /// @brief Compute the minium number of pages needed to store the supplied number of bytes.
+    const util::TMinPages<cpu::PageSize> MinPages;
+
+    /// @brief Architecture specific kernel VPageMap overrides.
+     //kernel::ErrorCode init_vmap(VPageMapBuilder &);
 }
 
 /********************************************************************************************************************/
@@ -81,9 +92,8 @@ as_flags(PageFlags);
 template <typename T>
 concept IsPageTable = requires(T pt, paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
-    { T::PageSize } -> std::same_as<const size_t &>;
-    { pt.doMapPage(paddr, vaddr, flags) } -> std::same_as<Kernel::ErrorCode>;
-    { pt.doUnmapPage(vaddr) } -> std::same_as<Kernel::ErrorCode>;
+    { pt.doMapPage(paddr, vaddr, flags) } -> std::same_as<kernel::ErrorCode>;
+    { pt.doUnmapPage(vaddr) } -> std::same_as<kernel::ErrorCode>;
     { pt.doGetPhysicalPageFor(vaddr) } -> std::same_as<paddr_t>;
     { pt.doMakeActive() } -> std::same_as<void>;
 };
@@ -104,9 +114,6 @@ protected:
     constexpr PageTableBase(const PageTableBase &rhs) = delete;
     constexpr PageTableBase(PageTableBase &&rhs) = delete;
 
-    //constexpr PageTableBase(const PageTableBase &rhs) { }
-    //constexpr PageTableBase(PageTableBase &&rhs) { }
-
     inline constexpr T *self() { return static_cast<T *>(this); }
     inline constexpr const T *self() const { return static_cast<const T *>(this); }
 
@@ -114,14 +121,14 @@ public:
     virtual ~PageTableBase() { }
 
     /// @brief Map a aligned physical page to an aligned virtual page.
-    Kernel::ErrorCode MapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags = PageFlags::None)
+    kernel::ErrorCode MapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags = PageFlags::None)
     {
         static_assert(IsPageTable<table_type>);
         return self()->doMapPage(paddr, vaddr, flags);
     }
 
     /// @brief Unmap an aligned page.
-    Kernel::ErrorCode UnmapPage(vaddr_t vaddr)
+    kernel::ErrorCode UnmapPage(vaddr_t vaddr)
     {
         static_assert(IsPageTable<table_type>);
         return self()->doUnmapPage(vaddr);
@@ -138,7 +145,7 @@ public:
     paddr_t GetPhysicalPageFor(vaddr_t vaddr)
     {
         static_assert(IsPageTable<table_type>);
-        vaddr_t vpage = util::AlignFloor<table_type::PageSize>(vaddr);
+        vaddr_t vpage = paging::AlignFloor(vaddr);
         return self()->doGetPhysicalPageFor(vpage);
     }
 
@@ -151,15 +158,15 @@ public:
      *
      * @remarks The function will always map in pages.
      */
-    Kernel::ErrorCode MapUnaligned(paddr_t paddr, vaddr_t vaddr, size_t length, PageFlags flags = PageFlags::None)
+    kernel::ErrorCode MapUnaligned(paddr_t paddr, vaddr_t vaddr, size_t length, PageFlags flags = PageFlags::None)
     {
         static_assert(IsPageTable<table_type>);
 
-        paddr_t p_aligned = util::AlignFloor<table_type::PageSize>(paddr);
-        paddr_t v_aligned = util::AlignFloor<table_type::PageSize>(vaddr);
+        paddr_t p_aligned = paging::AlignFloor(paddr);
+        paddr_t v_aligned = paging::AlignFloor(vaddr);
 
-        size_t pages = (length / table_type::PageSize);
-        size_t extra = (length % table_type::PageSize);
+        size_t pages = (length / cpu::PageSize);
+        size_t extra = (length % cpu::PageSize);
 
         if (extra > 0)
             ++pages;
@@ -170,14 +177,14 @@ public:
         {
             auto result = MapPage(p_aligned, v_aligned, flags);
 
-            if (result != Kernel::ErrorCode::NoError)
+            if (result != kernel::ErrorCode::NoError)
                 return result;
 
-            p_aligned += table_type::PageSize;
-            v_aligned += table_type::PageSize;
+            p_aligned += cpu::PageSize;
+            v_aligned += cpu::PageSize;
         }
         
-        return Kernel::ErrorCode::NoError;
+        return kernel::ErrorCode::NoError;
     }
 
     /**
@@ -195,7 +202,7 @@ public:
      * @return Returns a status code indicating the success or failure of the mapping.
      */
     template <typename TMapped>
-    Kernel::ErrorCode MapStruct(paddr_t paddr, TMapped *mapped, PageFlags flags = PageFlags::None)
+    kernel::ErrorCode MapStruct(paddr_t paddr, TMapped *mapped, PageFlags flags = PageFlags::None)
     {
         flags |= PageFlags::Write;
 
@@ -218,7 +225,7 @@ public:
      * @return Returns a status code indicating the success or failure of the mapping.
      */
     template <typename TMapped>
-    Kernel::ErrorCode MapStruct(paddr_t paddr, const TMapped *mapped, PageFlags flags = PageFlags::None)
+    kernel::ErrorCode MapStruct(paddr_t paddr, const TMapped *mapped, PageFlags flags = PageFlags::None)
     {
         // Do not add write flags
         // (REVIEW: Does it make sense here to CLEAR the write flag?)
@@ -231,6 +238,13 @@ public:
      * @brief Sets the page table as the currently active page table for the MMU.
      */
     void MakeActive() const { self()->doMakeActive(); }
+};
+
+/********************************************************************************************************************/
+
+namespace paging
+{
+    class PageTable; // Defined by architecture.
 };
 
 /********************************************************************************************************************/

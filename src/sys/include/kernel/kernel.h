@@ -12,7 +12,7 @@
 
 /********************************************************************************************************************/
 
-namespace Kernel
+namespace kernel
 {
     /// @brief Direction of memory or streams
     enum class Direction
@@ -42,6 +42,9 @@ namespace Kernel
 
         /// @brief An argument was of an invalid format.
         InvalidFormat = 6,
+
+        /// @brief An invalid address was used.
+        InvalidAddress = 7
     };
 }
 

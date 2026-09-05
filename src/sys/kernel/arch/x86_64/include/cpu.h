@@ -8,8 +8,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "defs.h"
 #include "cpudefs.h"
-
 #include "cpu_base.h"
 
 /********************************************************************************************************************/

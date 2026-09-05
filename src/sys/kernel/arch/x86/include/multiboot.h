@@ -11,11 +11,11 @@
 
 /********************************************************************************************************************/
 
-#include "mb_defs.h"
-
 #include <stdint.h>
 
-#include <kernel/kernel_args.h>
+#include "mb_defs.h"
+
+#include <kernel/boot_args.h>
 
 /********************************************************************************************************************/
 /*
@@ -58,10 +58,10 @@ struct mb_elf_syms_t
 
 struct mb_memory_map_t
 {
-    uint32_t size;      // Size of this structure
-    uint64_t base_addr; // Memory start address
-    uint64_t length;    // Memory end address
-    BiosMemoryType type;      // 1 == usable (everything else unusable)
+    uint32_t size;          // Size of this structure
+    uint64_t base_addr;     // Memory start address
+    uint64_t length;        // Memory end address
+    boot::MemoryType type;
 } __attribute__((packed));
 
 /********************************************************************************************************************/
@@ -115,6 +115,13 @@ struct multiboot_t
     uint32_t vbe_interface_off;
     uint32_t vbe_interface_len;
 } __attribute__((packed));
+
+/********************************************************************************************************************/
+
+namespace Multiboot
+{
+    int ReadInfo(boot::ArgumentData *argData, uint32_t multiboot_ptr);
+}
 
 /********************************************************************************************************************/
 

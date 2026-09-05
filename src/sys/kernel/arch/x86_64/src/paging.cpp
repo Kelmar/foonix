@@ -5,6 +5,10 @@
 
 #include "paging.h"
 
+#include <kernel/kernel.h>
+
+#include <kernel/vm/vpage_map.h>
+
 /********************************************************************************************************************/
 
 //typedef uint64_t page_entry_t;
@@ -19,8 +23,9 @@ extern "C" uintptr_t boot_pt;
 
 /********************************************************************************************************************/
 
-void paging::Init(KernelArgs *)
+kernel::ErrorCode paging::Init(memory::VPageMapBuilder &)
 {
+    return kernel::ErrorCode::NoError;
 }
 
 /********************************************************************************************************************/

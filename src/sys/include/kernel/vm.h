@@ -11,7 +11,6 @@
 
 #include <kernel/kernel.h>
 #include <kernel/utilities.h>
-#include <kernel/kernel_args.h>
 
 #include <kernel/vm/paging.h>
 

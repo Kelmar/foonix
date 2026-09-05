@@ -143,9 +143,9 @@ namespace
      * @param vaddr The virtual address
      * @param flags Flags to be set on the page (The Present flag is added automatically.)
      */
-    Kernel::ErrorCode MapPage(pdpt_t pdpt, paddr_t paddr, vaddr_t vaddr, PageFlags flags)
+    kernel::ErrorCode MapPage(pdpt_t pdpt, paddr_t paddr, vaddr_t vaddr, PageFlags flags)
     {
-        return Kernel::ErrorCode::Unknown;
+        return kernel::ErrorCode::Unknown;
     }
 
     /************************************************************************************************************/
@@ -154,9 +154,9 @@ namespace
      * @param pdpt ???? to unmap from.
      * @param vaddr The virtual address to unmap.
      */
-    Kernel::ErrorCode UnmapPage(pdpt_t pdpt, vaddr_t vaddr)
+    kernel::ErrorCode UnmapPage(pdpt_t pdpt, vaddr_t vaddr)
     {
-        return Kernel::ErrorCode::Unknown;
+        return kernel::ErrorCode::Unknown;
     }
 
     /************************************************************************************************************/
@@ -186,14 +186,14 @@ PageTable::PageTable()
 
 /********************************************************************************************************************/
 
-Kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
+kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
     return ::MapPage(m_pdpt, paddr, vaddr, flags);
 }
 
 /********************************************************************************************************************/
 
-Kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
+kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
 {
     return ::UnmapPage(m_pdpt, vaddr);
 }
