@@ -1,13 +1,18 @@
 /********************************************************************************************************************/
 
 #include <kernel/arch.h>
-#include <kernel/debug.h>
 #include <kernel/arch/dconsole.h>
+#include <kernel/debug.h>
+
+#include <kernel/boot_args.h>
+#include <kernel/kalloc.h>
+
+#include <kassert.h>
+
+#include "x86priv.h"
 
 #include "asm.h"
 #include "cpu.h"
-
-#include "bootinfo.h"
 
 #include "multiboot.h"
 #include "multiboot2.h"
@@ -16,7 +21,9 @@
 
 /********************************************************************************************************************/
 
-static BootInfo g_bootInfo;
+using namespace boot;
+
+static ArgumentData g_kernArgData;
 
 /********************************************************************************************************************/
 /*
@@ -32,65 +39,67 @@ extern "C" uintptr_t _kernel_end;
 /********************************************************************************************************************/
 
 static
-void InitBootInfo(BootInfo *bootInfo)
+void InitBootInfo(ArgumentData *argData)
 {
-    memset(bootInfo, 0, sizeof(BootInfo));
+    memset(argData, 0, sizeof(ArgumentData));
 
     // Figure out where we live in physical memory.
 
     // _kernel_phys_start is already set at physical address
-    bootInfo->KernelStart = reinterpret_cast<paddr_t>(&_kernel_phys_start);
+    argData->KernelStart = reinterpret_cast<paddr_t>(x86::Virt2Phys(&_kernel_phys_start));
 
     // _kernel_end is set at virtual address.
-    bootInfo->KernelEnd = reinterpret_cast<paddr_t>(VIRT_2_PHYS(&_kernel_end));
+    argData->KernelEnd = reinterpret_cast<paddr_t>(x86::Virt2Phys(&_kernel_end));
 
     // Take a stab at what we hope are some sane starting values if we don't know anything.
-    bootInfo->LowMemorySize = 1024; // Assume 1MB low memory
-    bootInfo->HighMemorySize = 1024 * 3; // Assume 3MB high memory
+    argData->LowMemorySizeKByte = 1024; // Assume 1MB low memory
+    argData->HighMemorySizeKByte = 1024 * 3; // Assume 3MB high memory
 
     // Free memory info from 0 to LowMemSize
-    bootInfo->MemoryInfo[0].Start = 0;
-    bootInfo->MemoryInfo[0].Length = bootInfo->LowMemorySize;
-    bootInfo->MemoryInfo[0].Type = BiosMemoryType::Available;
+    argData->MemoryMap[0].Start = 0;
+    argData->MemoryMap[0].Length = argData->LowMemorySizeKByte;
+    argData->MemoryMap[0].Type = MemoryType::Available;
 
     // Free memory info from LowMemSize to HighMemSize
-    bootInfo->MemoryInfo[1].Start = bootInfo->LowMemorySize;
-    bootInfo->MemoryInfo[1].Length = bootInfo->HighMemorySize;
-    bootInfo->MemoryInfo[1].Type = BiosMemoryType::Available;
+    argData->MemoryMap[1].Start = argData->LowMemorySizeKByte;
+    argData->MemoryMap[1].Length = argData->HighMemorySizeKByte;
+    argData->MemoryMap[1].Type = MemoryType::Available;
+
+    argData->MemoryMapCount = 2;
 }
 
 /********************************************************************************************************************/
 
 static
-void InitHeapInfo(BootInfo *bootInfo)
+void InitHeapInfo(ArgumentData *argData)
 {
-    if (bootInfo->HeapStart == 0)
+    if (argData->HeapStart == 0)
     {
         // HeapStart wasn't set, try to guess at one.
 
         // First try for the page after the kernel's BSS
-        paddr_t target = paging::AlignNext(bootInfo->KernelEnd);
+        paddr_t target = paging::AlignNext(argData->KernelEnd);
 
         // AlignNext so we get an extra page for 4MB identity map as well.
-        size_t minNeededBytes = paging::AlignNext(bootInfo->KernelEnd - bootInfo->KernelStart);
+        size_t minNeededBytes = paging::AlignNext(argData->KernelEnd - argData->KernelStart);
 
         // Find any free area after the kernel's BSS
-        for (size_t i = 0; i < bootInfo->MemoryInfoCount; ++i)
+        for (size_t i = 0; i < ArgumentData::MaxMemoryEntries; ++i)
         {
-            if (bootInfo->MemoryInfo[i].Type != BiosMemoryType::Available)
+            if (argData->MemoryMap[i].Type != MemoryType::Available)
                 continue;
 
-            paddr_t alignedStart = paging::AlignCeiling(bootInfo->MemoryInfo[i].Start);
+            paddr_t alignedStart = paging::AlignCeiling(argData->MemoryMap[i].Start);
 
             if (alignedStart < target)
                 continue; // Skip memory before the end of the kernel BSS
 
-            size_t adjust = reinterpret_cast<size_t>(alignedStart - bootInfo->MemoryInfo[i].Start);
+            size_t adjust = reinterpret_cast<size_t>(alignedStart - argData->MemoryMap[i].Start);
 
-            if (adjust > bootInfo->MemoryInfo[i].Length)
+            if (adjust > argData->MemoryMap[i].Length)
                 continue; // Not even a full page!
 
-            size_t length = bootInfo->MemoryInfo[i].Length - adjust;
+            size_t length = argData->MemoryMap[i].Length - adjust;
 
             if (length < minNeededBytes)
                 continue; // Not enough pages needed to map the kernel.
@@ -99,14 +108,27 @@ void InitHeapInfo(BootInfo *bootInfo)
             break; // We found a suitable entry.
         }
 
-        bootInfo->HeapStart = target;
-    }
+        argData->HeapStart = target;
+        argData->HeapNext = argData->HeapStart;
 
-    if (bootInfo->HeapNext == 0)
-        bootInfo->HeapNext = bootInfo->HeapStart;
+        argData->VirtHeapStart = reinterpret_cast<vaddr_t>(x86::Phys2Virt(argData->HeapStart));
+        argData->VirtHeapNext = argData->VirtHeapStart;
+    }
+    else
+    {
+        if (argData->HeapNext == 0)
+            argData->HeapNext = argData->HeapStart;
+
+        if (argData->VirtHeapStart == 0)
+            argData->VirtHeapNext = reinterpret_cast<vaddr_t>(x86::Phys2Virt(argData->HeapNext));
+
+        if (argData->VirtHeapNext == 0)
+            argData->VirtHeapNext = argData->VirtHeapStart;
+    }
 }
 
 /********************************************************************************************************************/
+
 /**
  * @brief Pre-init function called from ASM to get basic page tables setup.
  *
@@ -119,57 +141,52 @@ void InitHeapInfo(BootInfo *bootInfo)
  * need on start.
  */
 extern "C"
-void preinit(uint32_t magicNumber, uint32_t eax)
+ArgumentData *preinit(uint32_t magicNumber, uint32_t eax)
 {
     DebugConsole::Init1();
 
-    BootInfo *bootInfo = &g_bootInfo;
-    InitBootInfo(bootInfo);
+    ArgumentData *data = x86::Virt2Phys(&g_kernArgData);
+    InitBootInfo(data);
     
     // Now try to parse any information from the boot loader if we got it; they will overwrite anything that isn't correct.
     
     switch (magicNumber)
     {
     case MULTIBOOT_MAGIC:
-        bootInfo->BootMagicNumber = magicNumber;
-        Multiboot::ReadInfo(bootInfo, eax);
+        data->BootMagicNumber = magicNumber;
+        Multiboot::ReadInfo(data, eax);
         break;
 
     case MB2_MAGIC:
-        bootInfo->BootMagicNumber = magicNumber;
-        MB2::ReadInfo(bootInfo, eax);
+        data->BootMagicNumber = magicNumber;
+        MB2::ReadInfo(data, eax);
         break;
     }
 
-    InitHeapInfo(bootInfo);
-
-    //Debug::PrintF("Removing kernel usage from memory map.\r\n");
-
-    // Remove any memory used by boot loader (e.g. Kernel code space)
-    //ka->KnockoutUsedMemory();
+    InitHeapInfo(data);
 
     // Get paging setup.
-    //paging::Preinit(bootInfo);
+    //paging::Preinit(data);
+
+    return x86::Phys2Virt(data);
 }
 
 /********************************************************************************************************************/
 
-void arch::Init(KernelArgs *ka)
+// TODO: Put these in proper headers.
+//void init_idt();
+//void init_pics();
+//void init_timer();
+
+// Called from main()
+void arch::Init()
 {
-    BootInfo *bootInfo = &g_bootInfo;
-    ka->SetCommandLine(bootInfo->CommandLine, BootInfo::CmdLineSize);
-    ka->KernelCode = MemoryRange::FromAddresses(bootInfo->KernelStart, bootInfo->KernelEnd);
-    ka->MemorySizeKByte = bootInfo->LowMemorySize + bootInfo->HighMemorySize;
-    ka->HeapStart = bootInfo->HeapStart;
-    ka->HeapNext = bootInfo->HeapNext;
+    //init_idt();
+    //init_pics();
 
-    for (size_t i = 0; i < bootInfo->MemoryInfoCount; ++i)
-    {
-        if (bootInfo->MemoryInfo[i].Type != BiosMemoryType::Available)
-            continue;
+    //init_timer();
 
-        ka->AddMemoryMap(bootInfo->MemoryInfo[i].Start, bootInfo->MemoryInfo[i].Length);
-    }
+    //cpu::start_interrupts();
 }
 
 /********************************************************************************************************************/

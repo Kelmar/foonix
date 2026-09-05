@@ -89,12 +89,12 @@ void *kalloc_small(size_t sz);
 
 /********************************************************************************************************************/
 
-void memory::init_kalloc()
+void memory::InitKalloc()
 {
-    Debug::PrintF("ENTER: memory::init_kalloc()\r\n");
+    Debug::PrintF("ENTER: memory::InitKalloc()\r\n");
 
     if (!boot::Arguments::Instance().CanAllocPages())
-        kpanic("memory::init_kalloc(): Called before ability to allocate memory pages!\r\n");
+        kpanic("memory::InitKalloc(): Called before ability to allocate memory pages!\r\n");
 
     kallocAllocatedPages = 0;
 
@@ -127,7 +127,7 @@ void memory::init_kalloc()
 
     boot::Arguments::Instance().CanKalloc(true);
 
-    Debug::PrintF("EXIT: memory::init_kalloc()\r\n");
+    Debug::PrintF("EXIT: memory::InitKalloc()\r\n");
 }
 
 /********************************************************************************************************************/

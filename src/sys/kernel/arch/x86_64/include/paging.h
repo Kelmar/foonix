@@ -6,12 +6,24 @@
 
 /********************************************************************************************************************/
 
-#include <kernel/kernel.h>
-#include <kernel/utilities.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#include <kernel/vm.h>
+#include <type_traits>
+
+//#include <kernel/kernel.h>
+//#include <kernel/utilities.h>
+
+//#include <kernel/vm.h> // We can't include this here, vm.h needs to reference us.
 
 #include "cpu.h"
+
+/********************************************************************************************************************/
+
+namespace memory
+{
+    class VPageMapBuilder;
+}
 
 /********************************************************************************************************************/
 
@@ -30,24 +42,24 @@ namespace paging
     class PageTable : public PageTableBase<PageTable>
     {
     private:
-        pdpt_t m_pdpt;
+        pdpt_t *m_pdpt;
 
     public:
-        static constexpr const size_t PageSize = 4096;
-
-        PageTable();
+        PageTable() noexcept;
 
         virtual ~PageTable() { }
 
-        bool doIsMapped(paddr_t addr) const;
-
-        kernel::ErrorCode doMapPage(paddr_t padd, vaddr_t vaddr, PageFlags flags);
+        kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags);
         kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
 
         paddr_t doGetPhysicalPageFor(vaddr_t vaddr) const;
+
+        void doMakeActive() const { x86::load_cr3(reinterpret_cast<uintptr_t>(m_pdpt)); }
     };
 
-    void Init();
+    /************************************************************************************************************/
+
+    void Init(memory::VPageMapBuilder &);
 }
 
 /********************************************************************************************************************/

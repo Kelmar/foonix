@@ -38,11 +38,13 @@ static
 void init_vpages()
 {
 #if 0
+    auto &args = boot::Arguments::Instance();
+
     memory::VPageMapBuilder mapConfig {};
 
     mapConfig
-        .CodeStart(kernel::arguments.KernelCode.BaseAligned())
-        .HeapStart(kernel::arguments.HeapNext)
+        .CodeStart(args.KernelRange().BaseAligned())
+        .HeapStart(args.HeapVirtual().BaseAligned())
     ;
 
     // Give architecture specific paging a chance to setup how the kernel::page_map is setup.
@@ -65,17 +67,19 @@ void init_vpages()
 
 void vmm::Init()
 {
-    //Debug::PrintF("Removing kernel usage from memory map.\r\n");
+    auto &args = boot::Arguments::Instance();
 
     // Remove any memory used by boot loader (e.g. Kernel code space)
-    //ka->KnockoutUsedMemory();
+    args.KnockoutUsedMemory();
 
     new (&page_allocator) paging::PageAllocator();
 
     init_vpages();
 
-    boot::Arguments::Instance().CanAllocPages(true);
-    boot::Arguments::Instance().ShowAvailableMemory();
+    args.CanAllocPages(true);
+    args.ShowAvailableMemory();
+
+    //paging::Init(kernVMap);
 }
 
 /********************************************************************************************************************/

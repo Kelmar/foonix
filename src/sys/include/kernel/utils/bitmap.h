@@ -155,9 +155,9 @@ namespace impl__
     };
 
     template <>
-    struct BitBlockTest<32>
+    struct BitBlockTest<cpu::BitSize>
     {
-        typedef BitmapTraits<32> Traits;
+        typedef BitmapTraits<cpu::BitSize> Traits;
 
         using CellType = Traits::CellType;
 
@@ -177,7 +177,7 @@ namespace impl__
     };
 
     template <size_t BITS>
-        requires (BITS > 0 && BITS < 32)
+        requires (BITS > 0 && BITS < cpu::BitSize)
     struct BitBlockTest<BITS>
     {
         typedef BitmapTraits<BITS> Traits;

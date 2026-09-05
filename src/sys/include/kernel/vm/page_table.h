@@ -109,7 +109,10 @@ public:
     typedef T table_type;
 
 protected:
-    constexpr PageTableBase() { }
+    constexpr PageTableBase() noexcept
+    {
+        static_assert(IsPageTable<table_type>);
+    }
 
     constexpr PageTableBase(const PageTableBase &rhs) = delete;
     constexpr PageTableBase(PageTableBase &&rhs) = delete;
@@ -123,14 +126,12 @@ public:
     /// @brief Map a aligned physical page to an aligned virtual page.
     kernel::ErrorCode MapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags = PageFlags::None)
     {
-        static_assert(IsPageTable<table_type>);
         return self()->doMapPage(paddr, vaddr, flags);
     }
 
     /// @brief Unmap an aligned page.
     kernel::ErrorCode UnmapPage(vaddr_t vaddr)
     {
-        static_assert(IsPageTable<table_type>);
         return self()->doUnmapPage(vaddr);
     }
 
@@ -144,94 +145,8 @@ public:
     inline
     paddr_t GetPhysicalPageFor(vaddr_t vaddr)
     {
-        static_assert(IsPageTable<table_type>);
         vaddr_t vpage = paging::AlignFloor(vaddr);
         return self()->doGetPhysicalPageFor(vpage);
-    }
-
-    /**
-     * @brief Map possibly unaligned contiguous physical pages to virtual pages.
-     *
-     * @param paddr - First physical address to align
-     * @param vaddr - First virtual address to align
-     * @param length - Number of bytes to map.
-     *
-     * @remarks The function will always map in pages.
-     */
-    kernel::ErrorCode MapUnaligned(paddr_t paddr, vaddr_t vaddr, size_t length, PageFlags flags = PageFlags::None)
-    {
-        static_assert(IsPageTable<table_type>);
-
-        paddr_t p_aligned = paging::AlignFloor(paddr);
-        paddr_t v_aligned = paging::AlignFloor(vaddr);
-
-        size_t pages = (length / cpu::PageSize);
-        size_t extra = (length % cpu::PageSize);
-
-        if (extra > 0)
-            ++pages;
-
-        //Debug::PrintF("Request to map %d bytes == %d page(s)\r\n", length, pages);
-
-        for (size_t i = 0; i < pages; ++i)
-        {
-            auto result = MapPage(p_aligned, v_aligned, flags);
-
-            if (result != kernel::ErrorCode::NoError)
-                return result;
-
-            p_aligned += cpu::PageSize;
-            v_aligned += cpu::PageSize;
-        }
-        
-        return kernel::ErrorCode::NoError;
-    }
-
-    /**
-     * @brief Maps a structure to a physical page.
-     *
-     * @param paddr  - The physical address of the structure.
-     * @param mapped - The desired virtual address of the structure.
-     * @param flags  - Access and other modifier flags for the structure.
-     *
-     * @remarks This is a convenience function to MapUnaligned() that also does any needed casting
-     * to get pointer into a valid vaddr_t type to the MapUnaligned() call.
-     *
-     * Note that this function will automatically add the PageFlags::Write flag.
-     *
-     * @return Returns a status code indicating the success or failure of the mapping.
-     */
-    template <typename TMapped>
-    kernel::ErrorCode MapStruct(paddr_t paddr, TMapped *mapped, PageFlags flags = PageFlags::None)
-    {
-        flags |= PageFlags::Write;
-
-        vaddr_t vaddr = reinterpret_cast<vaddr_t>(reinterpret_cast<uintptr_t>(mapped));
-        return MapUnaligned(paddr, vaddr, sizeof(TMapped), flags);
-    }
-
-    /**
-     * @brief Maps a structure to a physical page.
-     *
-     * @param paddr  - The physical address of the structure.
-     * @param mapped - The desired virtual address of the structure.
-     * @param flags  - Access and other modifier flags for the structure.
-     *
-     * @remarks This is a convenience function to MapUnaligned() that also does any needed casting
-     * to get pointer into a valid vaddr_t type to the MapUnaligned() call.
-     *
-     * This version of the function will NOT add the PageFlags::Write flag.
-     *
-     * @return Returns a status code indicating the success or failure of the mapping.
-     */
-    template <typename TMapped>
-    kernel::ErrorCode MapStruct(paddr_t paddr, const TMapped *mapped, PageFlags flags = PageFlags::None)
-    {
-        // Do not add write flags
-        // (REVIEW: Does it make sense here to CLEAR the write flag?)
-
-        vaddr_t vaddr = reinterpret_cast<vaddr_t>(reinterpret_cast<uintptr_t>(mapped));
-        return MapUnaligned(paddr, vaddr, sizeof(TMapped), flags);
     }
 
     /**

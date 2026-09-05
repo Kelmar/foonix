@@ -1,7 +1,12 @@
 /********************************************************************************************************************/
 /********************************************************************************************************************/
 
-#include <kernel/kernel.h>
+
+#include <stddef.h>
+#include <stdint.h>
+
+#include <kernel/boot_args.h>
+#include <kernel/vm.h>
 
 #include "paging.h"
 
@@ -180,7 +185,7 @@ namespace
 
 /********************************************************************************************************************/
 
-PageTable::PageTable()
+PageTable::PageTable() noexcept
 {
 }
 
@@ -188,21 +193,21 @@ PageTable::PageTable()
 
 kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
-    return ::MapPage(m_pdpt, paddr, vaddr, flags);
+    return ::MapPage(*m_pdpt, paddr, vaddr, flags);
 }
 
 /********************************************************************************************************************/
 
 kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
 {
-    return ::UnmapPage(m_pdpt, vaddr);
+    return ::UnmapPage(*m_pdpt, vaddr);
 }
 
 /********************************************************************************************************************/
 
 paddr_t PageTable::doGetPhysicalPageFor(vaddr_t vaddr) const
 {
-    return ::GetPhysicalPageFor(m_pdpt, vaddr);
+    return ::GetPhysicalPageFor(*m_pdpt, vaddr);
 }
 
 /********************************************************************************************************************/

@@ -99,7 +99,7 @@ _start:
     popl %eax
 
     xorl %ecx, %eax
-    jz 1f
+    jz .no_x64
 
     /* CPUID found, see what the maximum leaf we can get. */
     movl $CPUID_MAX_LEAF, %eax
@@ -107,14 +107,15 @@ _start:
 
     /* Check to see if it at least supports CPUID_FEATURES */
     cmpl $CPUID_FEATURES, %eax
-    jb 1f
+    jb .no_x64
 
     /* Okay, NOW we actually check for x64 support. */
     movl $CPUID_FEATURES, %eax
     cpuid
     testl $CPUID_FEATURE_X64, %edx
-    jz 1f
+    jz .no_x64
 
+.has_x64:
     /* Congrats!  It looks like x64 is supported, let's get the page tables setup. */
 
     /* Setup a minimal long mode page table for our kernel to boot up with. */
@@ -131,20 +132,23 @@ _start:
     orl $0x3, %eax // Double check flags
     movl %eax, boot_pdt
 
-    /* Identity map first 2MiB of addresses */
+    /* Identity map first 2MB of addresses */
+    xorl %eax, %eax
     movl $0x03, %ebx // Mark page as present and readable.
     movl $512, %ecx  // Number of entries.
 
-1:
+.pt_loop:
     movl %ebx, (%edi)
     addl $0x1000, %ebx // Page size
-    addl $8, %edi      // Size of page table entry
-    loop 1b
+    addl $4, %edi      // Move to upper dword
+    movl %eax, (%edi)  // Ensure top half cleared
+    addl $4, %edi      // Next page table entry
+    loop .pt_loop
 
     /* 
      * Restore multiboot values into edi and esi for call to preinit.
      *
-     * Somewhat conviently we don't need edi or esi for the below instructions
+     * Somewhat conveniently we don't need edi or esi for the below instructions
      * but we do need eax, ebx?, ecx, and edx.  However, Clang is using the SysV ABI
      * which passes the first and second parameters in edi and esi respectively.
      */
@@ -173,14 +177,14 @@ _start:
 
     ljmp $(1 << 3), $_x64_start /* Set long mode and CS value */
 
-1:  /* CPU Not Supported */
+.no_x64:  /* CPU Not Supported */
     movl $VGA_MEMORY, %edi
     movl $cpu_not_supported, %esi
 
-2: /* Write message to VGA memory */
+.write_loop: /* Write message to VGA memory */
     lodsb
     testb %al, %al
-    jz 3f
+    jz .death_loop
 
     stosb
 
@@ -188,12 +192,12 @@ _start:
     movb $0x07, %al
     stosb
 
-    jmp 2b
+    jmp .write_loop
 
-3: /* Not supported death loop */
+.death_loop: /* Not supported death loop */
     pause
     hlt
-    jmp 3b
+    jmp .death_loop
 
 /********************************************************************************************************************/
 

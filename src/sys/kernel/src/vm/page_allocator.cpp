@@ -30,8 +30,8 @@ using namespace paging;
 
 paging::PageAllocator::PageAllocator() noexcept
     : m_allocLock()
-    , m_pageCount(0)
     , m_pages(nullptr)
+    , m_totalPages(0)
     , m_pagesAvailable(0)
     , m_pageCache(nullptr)
     , m_pageCacheCount(0)
@@ -62,78 +62,53 @@ size_t paging::PageAllocator::GetCacheSize() const
 
 void paging::PageAllocator::AllocateNodes()
 {
-    (void)m_pageCount;
     (void)m_pages;
+    (void)m_totalPages;
 
-#if 0
     // Compute the available memory from the memory map minus whatever has already been allocated.
-    size_t availMemSize = 0;
+    size_t totalMemSize = 0;
 
-    for (size_t i = 0; i < kernel::arguments.MemoryMapEntries; ++i)
+    auto &args = boot::Arguments::Instance();
+
+    paddr_t heapStart = args.HeapPhysical().BaseAligned();
+
+    for (auto &mem : args.MemoryMap())
     {
-        MemoryRange &memoryRange = kernel::arguments.MemoryMap[i];
+        MemoryRange memoryRange = mem.ToRange();
 
         uintptr_t end = memoryRange.EndAligned();
 
-        if (end < kernel::arguments.HeapNext)
+        if (end < heapStart)
             continue;
 
-        uintptr_t start = std::max(memoryRange.BaseAligned(), kernel::arguments.HeapNext);
+        uintptr_t start = std::max(memoryRange.BaseAligned(), heapStart);
 
-        availMemSize += (end - start) + 1;
+        totalMemSize += (end - start) + 1;
+        break; // For now we can only handle the one section of memory.
     }
 
-    Debug::PrintF("Staring Memory size: %u\r\n", availMemSize);
+    m_totalPages = totalMemSize >> cpu::PageShift;
 
+    Debug::PrintF("Staring Memory size: %u (%u)\r\n", totalMemSize, m_totalPages);
 
-    // Think the better solution here is to start from the HeapStart and move to the end
-    // and just add them to the tracking.  That simplifies a log of the logic plus gives
-    // us a better view of what memory the kernel is using.
-
-    // Figure out how many nodes we're going to need.
-    constexpr size_t combinedSizes = cpu::PageSize + sizeof(PageNode);
-
-    m_pageCount = availMemSize / combinedSizes;
-    size_t pagesForNodes = paging::MinPages(m_pageCount * sizeof(PageNode));
-    
-    for (;;) // Absolutely despise having to use a loop for this...
-    {
-        size_t newMemSize = availMemSize - pagesForNodes * cpu::PageSize;
-        size_t newPageCount = availMemSize / combinedSizes;
-
-        if (newPageCount == m_pageCount)
-        {
-            availMemSize = newMemSize;
-            break;
-        }
-
-        Debug::PrintF("Adjusting page count %u -> %u\r\n", m_pageCount, newPageCount);
-
-        m_pageCount = newPageCount;
-        pagesForNodes = paging::MinPages(m_pageCount * sizeof(PageNode));
-        m_pageCount -= pagesForNodes;
-    }
-
-    Debug::PrintF("Adjusted Memory size: %u\r\n", availMemSize);
-    Debug::PrintF("Page node count: %u (%u pages)\r\n", m_pageCount, pagesForNodes);
-
-    paddr_t ptr = kernel::arguments.HeapNext;
-    //vaddr_t virtPtr = kernel::arguments.VirtHeapNext;
+#if 0
+    paddr_t ptr = args.HeapPhysical().EndAligned();
+    vaddr_t virtPtr = args.HeapVirtual().EndAligned();
     
     m_pages = reinterpret_cast<PageNode *>(ptr);
     (void)m_pages;
 
     //vaddr_t heapPtr = 
 
-    for (size_t i = 0; i < pagesForNodes; ++i)
+    for (size_t i = 0; i < m_totalPages; ++i)
     {
-        paging::g_bootPageTable.MapPage(ptr, virtPtr, PageFlag::Write | PageFlags::Kernel);
+        paging::g_bootPageTable.MapPage(ptr, virtPtr, PageFlags::Write | PageFlags::Kernel);
         ptr += cpu::PageSize;
         virtPtr += cpu::PageSize;
     }
 
-    kernel::arguments::HeapNext = ptr;
-    kernel::arguments::VirtHeapNext = virtPtr;
+    //kernel::arguments::HeapNext = ptr;
+    //kernel::arguments::VirtHeapNext = virtPtr;
 #endif
 }
 

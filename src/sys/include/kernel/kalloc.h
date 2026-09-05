@@ -10,7 +10,7 @@
 
 namespace memory
 {
-    void init_kalloc();
+    void InitKalloc();
 }
 
 void *kalloc(size_t size);

@@ -36,6 +36,11 @@ namespace paging
     class PageAllocator
     {
     private:
+        /*
+         * We take a bit of the same approach as FreeBSD, and allocate a number of structures that track info about
+         * each structure and how it's been split.  These structures are additionally placed into a free list bucket,
+         * based on their size.
+         */
         struct PageNode
         {
             PageNode *Prev;
@@ -49,8 +54,10 @@ namespace paging
         mutable thread::SpinLock m_allocLock;
 
         /// @brief Size of the m_pages array.
-        size_t m_pageCount;
         PageNode *m_pages; // Array of page nodes, one per page on the system.
+
+        /// @brief Also the size of the m_pages array.
+        size_t m_totalPages;
 
         /// @brief Number of pages available.
         size_t m_pagesAvailable;
@@ -70,6 +77,12 @@ namespace paging
     public:
         PageAllocator() noexcept;
         ~PageAllocator() { }
+
+        size_t TotalPages() const
+        {
+            // No lock needed, this value is initialized on start and shouldn't change afterwards.
+            return m_totalPages;
+        }
 
         /// @brief Get the total number of pages available in the system.
         size_t GetFreePages() const;

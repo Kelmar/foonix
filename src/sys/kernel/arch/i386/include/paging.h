@@ -6,8 +6,8 @@
 
 /********************************************************************************************************************/
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <type_traits>
 
@@ -20,8 +20,6 @@
 
 /********************************************************************************************************************/
 
-struct BootInfo;
-
 namespace memory
 {
     class VPageMapBuilder;
@@ -31,23 +29,13 @@ namespace memory
 
 namespace paging
 {
-    static const int TableEntries = 1024;
-
     /************************************************************************************************************/
 
     /// @brief Single entry in the page table
     typedef uint32_t page_entry_t;
 
-    /// @brief Actual page table
-    typedef page_entry_t page_table_t[TableEntries];
-
-    /************************************************************************************************************/
-
     /// @brief Single entry in the page directory
     typedef uint32_t page_directory_entry_t;
-
-    /// @brief Actual page directory
-    typedef page_directory_entry_t page_directory_t[TableEntries];
 
     /************************************************************************************************************/
 

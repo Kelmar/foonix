@@ -46,6 +46,8 @@ _x64_start:
 
     call preinit /* Initialize CPU & VM first */
 
+    movq %rax, %rdi
+
     call kmain
 
     cli /* Ensure interrupts are disabled if we get here. */

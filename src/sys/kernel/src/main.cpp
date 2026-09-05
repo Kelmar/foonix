@@ -20,7 +20,6 @@
 //#include "kernio.h"
 //#include "ktime.h"
 #include "paging.h"
-//#include "kheap.h"
 //#include "process.h"
 
 //#include "ata.h"
@@ -44,7 +43,7 @@ void read_disk_info(multiboot_t *mbd);
 /*
  * The kernel's main entry point.
  */
-__attribute__((fastcall)) // Avoid passing data pointer on the stack.
+//__attribute__((fastcall)) // Avoid passing data pointer on the stack.
 extern "C" 
 void kmain(boot::ArgumentData *data)
 {
@@ -60,7 +59,7 @@ void kmain(boot::ArgumentData *data)
 
     vmm::Init();
 
-    memory::init_kalloc();
+    memory::InitKalloc();
 
 #if 0
     init_scheduler();
