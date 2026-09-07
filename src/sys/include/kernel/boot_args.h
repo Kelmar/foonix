@@ -16,6 +16,13 @@
 
 /********************************************************************************************************************/
 
+namespace memory
+{
+    class BootPageAllocator;
+}
+
+/********************************************************************************************************************/
+
 namespace boot
 {
     /**
@@ -79,13 +86,24 @@ namespace boot
 
         char CommandLine[MaxCommandLine];
 
+        /// @brief Pointer to a BootPageAllocator object, this value might be null.
+        memory::BootPageAllocator *BootPageAllocator;
+
         /// @brief The magic number from the boot loader.
         uint32_t BootMagicNumber;
 
-        /// @brief Size of the memory below 1MB in KBytes
+        /**
+         * @brief Size of the memory below 1MB in KBytes
+         *
+         * @remarks Effectively this is the reserved special memory area in kbytes.
+         */ 
         size_t LowMemorySizeKByte;
 
-        /// @brief Size of the memory above 1MB in KBytes
+        /**
+         * @brief Size of the memory above 1MB in KBytes
+         *
+         * @remarks The effective normal memory available in kbytes.
+         */
         size_t HighMemorySizeKByte;
 
         /**
@@ -101,9 +119,6 @@ namespace boot
         * @remarks This is the unaligned end of the kernel.
         */
         paddr_t KernelEnd;
-
-        // Number of valid entries in the below array.
-        size_t MemoryMapEntries;
 
         /// @brief Physical address of where the kernel heap starts.
         paddr_t HeapStart;
@@ -140,25 +155,25 @@ namespace boot
         bool m_canKalloc;
 
         /*
-        * @brief Sort memory mappings so they appear in order.
-        */
+         * @brief Sort memory mappings so they appear in order.
+         */
         void SortMappings();
 
         /// @brief Remove empty (zero length) mappings.
         void RemoveDeadMappings();
 
         /*
-        * @brief Merge contiguous memory mappings into single maps.
-        *
-        * Attempt to crunch down memory map usage by merging contiguous memory map entries into larger single entries.
-        */
+         * @brief Merge contiguous memory mappings into single maps.
+         *
+         * Attempt to crunch down memory map usage by merging contiguous memory map entries into larger single entries.
+         */
         void MergeContiguousMappings();
 
         /*
-        * @brief Slide MemoryMap entries down starting from start and continuing to the end.
-        *
-        * Reduces the length of the MemoryMap by exactly one.
-        */ 
+         * @brief Slide MemoryMap entries down starting from start and continuing to the end.
+         *
+         * Reduces the length of the MemoryMap by exactly one.
+         */ 
         void SlideEntries(int start);
 
     private:

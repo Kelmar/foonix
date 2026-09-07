@@ -11,12 +11,58 @@
 #include <type_traits>
 
 #include <kernel/types.h>
+#include <kernel/pageptr.h>
+#include <kernel/boot_args.h>
+
 #include <kernel/thread/spinlock.h>
+
+#include <kernel/utils/nocopy.h>
 
 /********************************************************************************************************************/
 
+namespace memory
+{
+    /**
+     * @brief Abstract base for a page allocator.
+     */
+    class PageAllocator : private util::nocopy, private util::nomove
+    {
+    protected:
+        constexpr PageAllocator() noexcept { }
+
+    public:
+        virtual ~PageAllocator() { }
+
+        /// @brief Get the total number of pages managed by this allocator
+        virtual size_t TotalPages() const = 0;
+
+        /// @brief Get the number of available pages in this allocator.
+        virtual size_t GetFreePages() const = 0;
+
+        /**
+         * @brief Request a range of pages from this allocator.
+         *
+         * @param count Number of pages requested, and size of pointers array.
+         * @param pointers Preallocated array to fill with the requested pointers.
+         *
+         * @return Number of items written to the pointers array.  Or zero if the request was unable to
+         * get the total number of requested phyiscal pages.
+         *
+         * @remarks Note that the returned number may be less than or equal to the requested count.
+         *
+         * A single physical PagePointer may represent a number of pages if they are contiguous in memory; and
+         * can be allocated in a single buddy allocation.
+         */ 
+        virtual size_t AllocatePages(size_t count, PagePointer pointers[]) = 0;
+
+        /// @brief Release pages back to the allocator.
+        virtual void ReleasePages(util::span<PagePointer> ptrs) = 0;
+    };
+}
+
 namespace paging
 {
+    /************************************************************************************************************/
     /*
      * TODO: Split this class.
      *

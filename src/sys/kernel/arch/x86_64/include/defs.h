@@ -12,6 +12,8 @@
 /* TODO: Want to have one spot where we define this for everything. */
 
 #define KERNEL_OFFSET 0x0000000000000000
+/* #define KERNEL_OFFSET 0xFFFFFFFFC0000000 */
+
 #define VIDEO_OFFSET 0x00000000000B8000
 
 /********************************************************************************************************************/

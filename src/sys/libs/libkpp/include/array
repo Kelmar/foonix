@@ -1,0 +1,151 @@
+#ifndef _LIBKPP_ARRAY
+#define _LIBKPP_ARRAY 1
+
+#include <stddef.h>
+#include <kassert.h>
+
+#include <iterator>
+
+namespace std
+{
+    template <typename T, size_t N>
+    struct array
+    {
+    public:
+        typedef T                 element_type;
+        typedef std::remove_cv<T> value_type;
+        typedef size_t            size_type;
+        typedef ptrdiff_t         difference_type;
+        typedef T*                pointer;
+        typedef const T*          const_pointer;
+        typedef T&                reference;
+        typedef const T&          const_reference;
+
+        typedef value_type*       iterator;
+        typedef const value_type* const_iterator;
+
+        typedef std::reverse_iterator<iterator>       reverse_iterator;
+        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
+    private:
+        element_type[SZ] T m_items;
+
+    public:
+        constexpr array() noexcept : m_items() { }
+
+        constexpr bool empty() const noexcept { return false; }
+
+        constexpr size_t     size() const noexcept { return N; }
+        constexpr size_t max_size() const noexcept { return N; }
+
+        pointer       data()       noexcept { return m_items; }
+        const_pointer data() const noexcept { return m_items; }
+
+        reference at(size_t index)
+        {
+            ASSERT(index >= N, "Invalid index for array.");
+            return m_items[index];
+        }
+
+        const_reference at(size_t index) const
+        {
+            ASSERT(index >= N, "Invalid index for array.");
+            return m_items[index];
+        }
+
+        reference       operator [](size_t index)       { return at(index); }
+        const_reference operator [](size_t indeX) const { return at(index); }
+
+        reference        front()         { return at(0); }
+        const_reference  front() const   { return at(0); }
+
+        reference         back()         { return at(N - 1); }
+        const_reference   back() const   { return at(N - 1); }
+
+        iterator         begin()         { return m_items; }
+        const_iterator   begin() const   { return m_items; }
+        const_iterator  cbegin() const   { return m_items; }
+
+        iterator           end()         { return m_items + N; }
+        const_iterator     end() const   { return m_items + N; }
+        const_iterator    cend() const   { return m_items + N; }
+
+        iterator        rbegin()         { return m_items + N; }
+        const_iterator  rbegin() const   { return m_items + N; }
+        const_iterator crbegin() const   { return m_items + N; }
+
+        iterator          rend()         { return m_items; }
+        const_iterator    rend() const   { return m_items; }
+        const_iterator   crend() const   { return m_items; }
+
+        void fill(const value_type &v)
+        {
+            for (size_t i = 0; i < N; ++i)
+                m_items[i] = v;
+        }
+    };
+
+    template <typename T>
+    struct array<T, 0>
+    {
+    public:
+        typedef T                 element_type;
+        typedef std::remove_cv<T> value_type;
+        typedef size_t            size_type;
+        typedef ptrdiff_t         difference_type;
+        typedef T*                pointer;
+        typedef const T*          const_pointer;
+        typedef T&                reference;
+        typedef const T&          const_reference;
+
+        typedef value_type*       iterator;
+        typedef const value_type* const_iterator;
+
+        typedef std::reverse_iterator<iterator>       reverse_iterator;
+        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
+    public:
+        constexpr array() noexcept : m_items() { }
+
+        constexpr bool empty() const noexcept { return true; }
+
+        constexpr size_t     size() const noexcept { return 0; }
+        constexpr size_t max_size() const noexcept { return 0; }
+
+        pointer       data()       noexcept { return nullptr; }
+        const_pointer data() const noexcept { return nullptr; }
+
+        reference       at(size_t index)       { ASSERT(false, "Invalid index for array."); }
+        const_reference at(size_t index) const { ASSERT(false, "Invalid index for array."); }
+
+        reference       operator [](size_t index)       { return at(index); }
+        const_reference operator [](size_t indeX) const { return at(index); }
+
+        reference        front()         { return at(0); }
+        const_reference  front() const   { return at(0); }
+
+        reference         back()         { return at(N - 1); }
+        const_reference   back() const   { return at(N - 1); }
+
+        iterator         begin()         { return nullptr; }
+        const_iterator   begin() const   { return nullptr; }
+        const_iterator  cbegin() const   { return nullptr; }
+
+        iterator           end()         { return nullptr; }
+        const_iterator     end() const   { return nullptr; }
+        const_iterator    cend() const   { return nullptr; }
+
+        iterator        rbegin()         { return nullptr; }
+        const_iterator  rbegin() const   { return nullptr; }
+        const_iterator crbegin() const   { return nullptr; }
+
+        iterator          rend()         { return nullptr; }
+        const_iterator    rend() const   { return nullptr; }
+        const_iterator   crend() const   { return nullptr; }
+
+        void fill(const value_type &) { }
+    };
+}
+
+#endif /* _LIBKPP_ARRAY */
+

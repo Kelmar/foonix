@@ -64,10 +64,10 @@ target_include_directories(k
 )
 
 target_compile_options(k PRIVATE
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -fno-rtti -fno-exceptions> -ggdb
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -fno-rtti -fno-exceptions> -ggdb ${COMPILER_EXTRA}
 )
 
-target_link_options(k PRIVATE -nostdlib)
+target_link_options(k PRIVATE -nostdlib ${LINK_EXTRA})
 #target_link_libraries(k PRIVATE gcc)
 
 # =========================================================================

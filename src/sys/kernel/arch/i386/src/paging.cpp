@@ -423,12 +423,6 @@ void InitBootPages(boot::ArgumentData *argData, PageTable *bootPageTable)
 
 /********************************************************************************************************************/
 
-void paging::Init(memory::VPageMapBuilder &)
-{
-    //new (&g_bootPageTable) PageTable(boot_page_directory, DirectoryOptions::NoClear);
-    g_useGlobalAlloc = true;
-}
-
 void paging::Preinit(boot::ArgumentData *argData)
 {
     Debug::PrintF("ENTER: paging::Preinit()\r\n");
@@ -444,6 +438,14 @@ void paging::Preinit(boot::ArgumentData *argData)
     bootPageTable->MakeActive();
 
     Debug::PrintF("EXIT: paging::Preinit()\r\n");
+}
+
+/********************************************************************************************************************/
+
+void paging::Init(memory::VPageMapBuilder &)
+{
+    //new (&g_bootPageTable) PageTable(boot_page_directory, DirectoryOptions::NoClear);
+    g_useGlobalAlloc = true;
 }
 
 /********************************************************************************************************************/

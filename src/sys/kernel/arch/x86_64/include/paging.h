@@ -49,6 +49,8 @@ namespace paging
 
         virtual ~PageTable() { }
 
+        kernel::ErrorCode doMapPages(paddr_t paddr, vaddr_t vaddr, size_t count, PageFlags flags);
+
         kernel::ErrorCode doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags);
         kernel::ErrorCode doUnmapPage(vaddr_t vaddr);
 

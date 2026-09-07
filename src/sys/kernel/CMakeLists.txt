@@ -15,7 +15,7 @@ include("${HOST_DIR}/build.cmake")
 
 list(APPEND KERN_SOURCES
     src/debug.cpp src/boot_args.cpp src/main.cpp src/console.cpp src/parse.cpp
-    src/vm/page_allocator.cpp src/vm/vm.cpp
+    src/vm/page_allocator.cpp src/vm/boot_allocator.cpp src/vm/vm.cpp
     src/kalloc/kalloc.cpp src/kalloc/new.cpp
     src/kalloc/small_slab.cpp src/kalloc/small_bucket.cpp
 )
@@ -42,11 +42,11 @@ target_compile_options(kernel PRIVATE
     -fno-rtti
     -fno-exceptions
     -ggdb
-    ${COMPILE_EXTRA}
+    ${COMPILER_EXTRA}
     ${ALL_EXTRA}
     -D__is_foo_kernel)
 
-target_link_options(kernel PRIVATE -nostdlib ${ALL_EXTRA} ${LINK_EXTRA})
+target_link_options(kernel PRIVATE -nostdlib -ffreestanding ${ALL_EXTRA} ${LINK_EXTRA})
 
 #target_link_libraries(kernel PRIVATE k kpp gcc)
 target_link_libraries(kernel PRIVATE k kpp ${LINK_LIBS})

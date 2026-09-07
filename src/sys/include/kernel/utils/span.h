@@ -19,10 +19,20 @@
 
 namespace util
 {
-    // Similar to std::span, but not exactly the same...
-
+    // Flag indicating that the size of each item is the same as the sizeof() that item type.
     static constexpr size_t default_stride = (size_t)(-1);
-
+    
+    /**
+     * @brief A std::span like container.
+     *
+     * @details Provides most of the same functionality as std::span, but allows for specifying a different size for
+     * the elements over the reported sizeof value.  Useful for treating pages or nodes as a small linked list
+     * structure when the actual size of each item is greater than the basic node type; or situations where
+     * a fixed sized array might not be known at compile type, and should be skipped for each item in the span's view.
+     *
+     * Note, like a std::span, the size of the items must still all be of the same size; this version just lets you
+     * specify what that size is.
+     */
     template <typename T>
     class span
     {
@@ -143,14 +153,14 @@ namespace util
         }
 
     public:
-        span() noexcept
+        constexpr span() noexcept
             : m_data(nullptr)
             , m_size(0)
             , m_stride(sizeof(T))
         {
         }
 
-        span(pointer first, size_t count, size_t stride = default_stride)
+        constexpr span(pointer first, size_t count, size_t stride = default_stride) noexcept
             : m_data(first)
             , m_size(count)
             , m_stride(stride == default_stride ? sizeof(T) : stride)
@@ -164,9 +174,7 @@ namespace util
 
         constexpr bool empty() const { return m_size == 0; }
 
-        /**
-         * @brief Fetches the number of items in the span.
-         */
+        /// @brief Fetches the number of items in the span.
         constexpr size_type size() const { return m_size; }
 
         /**

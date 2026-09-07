@@ -26,7 +26,7 @@ list(APPEND x64_sources
 list(TRANSFORM x64_sources PREPEND "${HOST_DIR}/src/")
 list(APPEND SOURCES ${x64_sources})
 
-list(APPEND LINK_EXTRA "-T${HOST_DIR}/linker.ld" -no-pie)
-list(APPEND COMPILER_EXTRA "-fno-pie")
+list(APPEND LINK_EXTRA LINKER:-T${HOST_DIR}/linker.ld -no-pie)
+list(APPEND COMPILER_EXTRA -mno-red-zone -fno-pie)
 
 # =========================================================================

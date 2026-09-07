@@ -1,5 +1,7 @@
 /********************************************************************************************************************/
 
+#include <kassert.h>
+
 #include <kernel/arch.h>
 #include <kernel/arch/dconsole.h>
 #include <kernel/debug.h>
@@ -7,7 +9,8 @@
 #include <kernel/boot_args.h>
 #include <kernel/kalloc.h>
 
-#include <kassert.h>
+#include <kernel/vm/page_allocator.h>
+#include <kernel/vm/boot_allocator.h>
 
 #include "x86priv.h"
 
@@ -18,6 +21,7 @@
 #include "multiboot2.h"
 
 #include "paging.h"
+#include "x86priv.h"
 
 /********************************************************************************************************************/
 
@@ -125,6 +129,14 @@ void InitHeapInfo(ArgumentData *argData)
         if (argData->VirtHeapNext == 0)
             argData->VirtHeapNext = argData->VirtHeapStart;
     }
+
+    // A bit inefficient, but we'll grab a page for our boot allocator.
+    vaddr_t addr = argData->VirtHeapNext;
+
+    argData->HeapNext += cpu::PageSize;
+    argData->VirtHeapNext += cpu::PageSize;
+
+    argData->BootPageAllocator = new (reinterpret_cast<void *>(addr)) memory::BootPageAllocator(argData);
 }
 
 /********************************************************************************************************************/
@@ -166,7 +178,7 @@ ArgumentData *preinit(uint32_t magicNumber, uint32_t eax)
     InitHeapInfo(data);
 
     // Get paging setup.
-    //paging::Preinit(data);
+    paging::Preinit(data);
 
     return x86::Phys2Virt(data);
 }

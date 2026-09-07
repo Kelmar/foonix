@@ -9,6 +9,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include <cstddef>
+#include <type_traits>
+#include <concepts>
+
 #include <kernel/types.h>
 
 #include "cpu.h"
@@ -72,6 +76,9 @@ public:
     inline
     constexpr PagePointer& operator =(PagePointer &&rhs) noexcept = default;
 
+    /// @brief Clear the pointer value setting it to nullptr.
+    inline void Clear() { m_ptr = 0; }
+
     /// @brief Get the packed ordering value for physical page pointers.
     inline
     constexpr uint8_t Order() { return static_cast<int>(m_ptr & OrderMask); }
@@ -86,14 +93,14 @@ public:
 
     /// @brief Tests if pointer is null, while ignoring packed bits.
     inline
-    constexpr bool operator ==(const nullptr_t &) const
+    constexpr bool operator ==(const std::nullptr_t &) const
     {
         return (m_ptr & cpu::PageMask) == 0;
     }
 
     /// @brief Tests if pointer is NOT null, while ignoring packed bits.
     inline
-    constexpr bool operator !=(const nullptr_t &) const
+    constexpr bool operator !=(const std::nullptr_t &) const
     {
         return (m_ptr & cpu::PageMask) != 0;
     }
@@ -123,6 +130,14 @@ public:
     /// @brief Implicit conversion of PagePointer to uintptr_t
     inline
     constexpr operator uintptr_t() const { return m_ptr & cpu::PageMask; }
+
+    template <typename T>
+    requires std::is_pointer_v<T>
+    inline
+    constexpr T PointerTo() const
+    {
+        return reinterpret_cast<T>(m_ptr & cpu::PageMask);
+    }
 };
 
 /********************************************************************************************************************/

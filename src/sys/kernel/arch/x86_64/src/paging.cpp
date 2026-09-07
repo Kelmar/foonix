@@ -5,9 +5,11 @@
 #include <stdint.h>
 
 #include <kernel/boot_args.h>
+#include <kernel/debug.h>
 #include <kernel/vm.h>
 
 #include "paging.h"
+#include "x86priv.h"
 
 using namespace paging;
 
@@ -22,6 +24,15 @@ extern "C" uintptr_t boot_pml4t;
 extern "C" uintptr_t boot_pdpt;
 extern "C" uintptr_t boot_pdt;
 extern "C" uintptr_t boot_pt;
+
+/********************************************************************************************************************/
+
+void paging::Preinit(boot::ArgumentData *argData)
+{
+    Debug::PrintF("ENTER: paging::Preinit()\r\n");
+
+    Debug::PrintF("EXIT: paging::Preinit()\r\n");
+}
 
 /********************************************************************************************************************/
 
