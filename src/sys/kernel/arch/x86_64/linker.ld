@@ -20,11 +20,13 @@ SECTIONS
         . = ALIGN(8);
         KEEP(*(.multiboot))
         *(.text)
+        *(.text.*)
     }
 
     .rodata ALIGN(__PAGE_SIZE) : AT (ADDR (.rodata) - __VIRT_START)
     {
         *(.rodata)
+        *(.rodata.*)
     }
 
     .data ALIGN(__PAGE_SIZE) : AT (ADDR (.data) - __VIRT_START)
