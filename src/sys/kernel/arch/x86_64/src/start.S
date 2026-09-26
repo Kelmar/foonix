@@ -20,6 +20,7 @@
 #define CPUID_MAX_LEAF 0x80000000
 #define CPUID_FEATURES 0x80000001
 
+#define CPUID_FEATURE_1GB_PG (1 << 26)
 #define CPUID_FEATURE_X64 (1 << 29)
 
 #define VGA_MEMORY 0x000B8000
@@ -33,12 +34,6 @@
     .skip 4096
 
     LABEL(boot_pdpt)
-    .skip 4096
-
-    LABEL(boot_pdt)
-    .skip 4096
-
-    LABEL(boot_pt)
     .skip 4096
 
 /********************************************************************************************************************/
@@ -119,33 +114,21 @@ _start:
     /* Congrats!  It looks like x64 is supported, let's get the page tables setup. */
 
     /* Setup a minimal long mode page table for our kernel to boot up with. */
+
     movl $boot_pdpt, %eax
-    orl $0x3, %eax // Mark as present and readable.
+    orl $0x00000003, %eax // Mark as present and writable.
     movl %eax, boot_pml4t
 
-    movl $boot_pdt, %eax
-    orl $0x3, %eax // Mark as present and readable.
-    movl %eax, boot_pdpt
+    /* Identity map first 4MB */
+    movl $boot_pdpt, %edi
 
-    movl $boot_pt, %eax
-    movl %eax, %edi
-    orl $0x3, %eax // Mark as present and readable.
-    movl %eax, boot_pdt
+    movl $0x00000083, %eax // Large page, present, and writable.
+    movl %eax, (%edi)
+    addl $8, %edi
+    addl $0x00200000, %eax // 2nd page, large, present, and writable.
+    movl %eax, (%edi)
 
-    /* Identity map first 2MB of addresses */
-    xorl %eax, %eax
-    movl $0x03, %ebx // Mark page as present and readable.
-    movl $512, %ecx  // Number of entries.
-
-.pt_loop:
-    movl %ebx, (%edi)
-    addl $0x1000, %ebx // Page size
-    addl $4, %edi      // Move to upper dword
-    movl %eax, (%edi)  // Ensure top half cleared
-    addl $4, %edi      // Next page table entry
-    loop .pt_loop
-
-    /* 
+    /*
      * Restore multiboot values into edi and esi for call to preinit.
      *
      * Somewhat conveniently we don't need edi or esi for the below instructions
@@ -160,7 +143,7 @@ _start:
 
     // Enable PAE
     movl %cr4, %ecx
-    orl $(1 << 5), %ecx
+    orl $0x00000020, %ecx
     movl %ecx, %cr4
 
     movl $0xC0000080, %ecx

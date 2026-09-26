@@ -36,6 +36,17 @@ void ParseCommandLine(ArgumentData *argData, multiboot_t *multi)
 /********************************************************************************************************************/
 
 static
+void ParseFrameBufferInfo(ArgumentData *argData, multiboot_t *multi)
+{
+    if ((multi->flags & MB_FLAG_VBE) == 0)
+        return;
+
+    
+}
+
+/********************************************************************************************************************/
+
+static
 void ParseBasicMemoryInfo(ArgumentData *argData, multiboot_t *multi)
 {
     if ((multi->flags & MB_FLAG_MEM) == 0)
@@ -107,6 +118,7 @@ int Multiboot::ReadInfo(ArgumentData *argData, uint32_t multiboot_ptr)
     //Debug::PrintF("Multiboot Info: %p\r\n", multi);
 
     ParseCommandLine(argData, multi);
+    ParseFrameBufferInfo(argData, multi);
     ParseBasicMemoryInfo(argData, multi);
 
     return ParseMemoryMap(argData, multi);

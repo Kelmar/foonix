@@ -106,6 +106,36 @@ struct mb2_memory_info : mb2_tag
 
 /********************************************************************************************************************/
 
+enum class MB2FBType : uint8_t
+{
+    Indexed = 0,
+    RGB = 1,
+    Text = 2
+};
+
+// MB2_TAG_FRAMEBUFFER (8)
+struct mb2_framebuffer_tag : mb2_tag
+{
+    uint64_t address;
+    uint32_t pitch;
+    uint32_t width;
+    uint32_t height;
+    uint8_t depth_bpp;
+    MB2FBType type;
+
+    uint16_t __reserved; // Not used
+
+    uint8_t red_start;
+    uint8_t red_size;
+    uint8_t green_start;
+    uint8_t green_size;
+    uint8_t blue_start;
+    uint8_t blue_size;
+
+} __attribute__((packed));
+
+/********************************************************************************************************************/
+
 namespace MB2
 {
     int ReadInfo(boot::ArgumentData *argData, uint32_t multiboot_ptr);

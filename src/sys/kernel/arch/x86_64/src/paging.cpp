@@ -22,8 +22,6 @@ using namespace paging;
 // Defined in start.S
 extern "C" uintptr_t boot_pml4t;
 extern "C" uintptr_t boot_pdpt;
-extern "C" uintptr_t boot_pdt;
-extern "C" uintptr_t boot_pt;
 
 /********************************************************************************************************************/
 

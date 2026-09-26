@@ -75,6 +75,27 @@ namespace boot
     };
 
     /************************************************************************************************************/
+
+    /// @brief Describes details of the frame buffer that was setup by the boot loader.
+    struct FrameBufferInfo
+    {
+        /// @brief Address of the first pixel in the frame buffer.
+        paddr_t Address;
+
+        /// @brief Width of the frame buffer in pixels.
+        uint32_t Width;
+
+        /// @brief Height of the frame buffer in pixels.
+        uint32_t Height;
+
+        /// @brief Pitch of the frame buffer in bytes.
+        uint32_t Pitch;
+
+        /// @brief Color depth of the frame buffer in bits per pixel.
+        uint32_t Depth;
+    };
+
+    /************************************************************************************************************/
     /**
     * @brief Kernel argument data, this is allocated by the architecture in it's preboot phase and passed to the kernel
     * main() as an argument.  main() will then initialize the global KernelArgs object with these data.
@@ -135,10 +156,10 @@ namespace boot
         /// @brief Number of valid entries in the MemoryMap table.
         size_t MemoryMapCount;
 
-        /**
-        * @brief List of available memory.
-        */
+        /// @brief List of available memory.
         MemoryMapping MemoryMap[MaxMemoryEntries];
+
+        FrameBufferInfo FrameBuffer;
     };
 
     /************************************************************************************************************/

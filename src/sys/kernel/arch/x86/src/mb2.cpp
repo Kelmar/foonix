@@ -46,6 +46,23 @@ int ParseCommandLine(ArgumentData *argData, const mb2_tag *tag)
 /********************************************************************************************************************/
 
 static
+int ParseFrameBufferInfo(ArgumentData *argData, const mb2_tag *tag)
+{
+    const mb2_framebuffer_tag *framebuffer = reinterpret_cast<const mb2_framebuffer_tag *>(tag);
+
+    argData->FrameBuffer.Address = reinterpret_cast<paddr_t>(framebuffer->address);
+    
+    argData->FrameBuffer.Width = framebuffer->width;
+    argData->FrameBuffer.Height = framebuffer->height;
+    argData->FrameBuffer.Pitch = framebuffer->pitch;
+    argData->FrameBuffer.Depth = framebuffer->depth_bpp;
+
+    return 0;
+}
+
+/********************************************************************************************************************/
+
+static
 int ParseBasicMemoryInfo(ArgumentData *argData, const mb2_tag *tag)
 {
     const mb2_basic_memory_info *info = reinterpret_cast<const mb2_basic_memory_info *>(tag);
@@ -129,6 +146,10 @@ int MB2::ReadInfo(ArgumentData *argData, uint32_t multiboot_ptr)
         {
         case MB2_TAG_BOOT_CMD:
             err = ParseCommandLine(argData, tag);
+            break;
+
+        case MB2_TAG_FRAMEBUFFER:
+            err = ParseFrameBufferInfo(argData, tag);
             break;
 
         case MB2_TAG_BASIC_MEMINFO:
