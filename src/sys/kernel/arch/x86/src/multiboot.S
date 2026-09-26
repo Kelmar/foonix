@@ -9,6 +9,7 @@
 
 /********************************************************************************************************************/
 
+// #define MB1_FLAGS (MB_REQ_ALIGN | MB_REQ_MEMINFO | MB_REQ_VIDEO)
 #define MB1_FLAGS (MB_REQ_ALIGN | MB_REQ_MEMINFO)
 
 /********************************************************************************************************************/
@@ -21,6 +22,20 @@ mb1_start:
 .long MB1_FLAGS
 .long -(MB_MAGIC + MB1_FLAGS)
 
+# Flags 16 (ignore exe header values)
+.long 0 # Header address
+.long 0 # Load address
+.long 0 # Load end address
+.long 0 # BSS end address
+.long 0 # Entry address
+
+# Video mode requested
+.long 0    # Video mode type (0 = linear, 1 = EGA text)
+.long 1280 # Width
+.long 800  # Height
+.long 24   # Depth (bits per pixel)
+
+# Multiboot 2 Header
 .align 8
 mb2_start:
 .long MB2_HDR_MAGIC
@@ -30,12 +45,12 @@ mb2_start:
 
 /*
 .align 8
-.word MB2_TAG_FRAMEBUFFER
+.word MB2_HDR_TAG_FRAMEBUFFER
 .word MB2_TF_OPTIONAL
 .long 20   // Tag size
-.long 1024 // Width
-.long 768  // Height
-.long 32   // Depth (bits per pixel)
+.long 1280 // Width
+.long 800  // Height
+.long 24   // Depth (bits per pixel)
 */
 
 .align 8

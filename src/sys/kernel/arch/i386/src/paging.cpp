@@ -207,7 +207,7 @@ PageTable::PageTable() noexcept
     , m_dir(0)
 {
     m_dir = reinterpret_cast<page_directory_entry_t *>(AllocatePage());
-    memset(m_dir, 0, sizeof(page_directory_t));
+    memset(m_dir, 0, cpu::PageSize);
 }
 
 PageTable::PageTable(page_directory_entry_t *directory, DirectoryOptions options /* = DirectoryOptions::None */) noexcept
@@ -215,7 +215,7 @@ PageTable::PageTable(page_directory_entry_t *directory, DirectoryOptions options
     , m_dir(directory)
 {
     if (!is_set(options, DirectoryOptions::NoClear))
-        memset(m_dir, 0, sizeof(page_directory_t));
+        memset(m_dir, 0, cpu::PageSize);
 }
 
 /********************************************************************************************************************/
@@ -246,7 +246,7 @@ kernel::ErrorCode PageTable::AddDirectoryEntry(size_t index, paddr_t table, Page
     //DEBUG_ASSERT((m_dir[index] & DirEntryFlags::Preset) == 0, "Request to map page table to already mapped directory entry.");
 
     void *ptr = reinterpret_cast<void *>(table);
-    memset(ptr, 0, sizeof(page_table_t));
+    memset(ptr, 0, cpu::PageSize);
 
     uint32_t dirFlags = MapToDirFlags(flags);
     

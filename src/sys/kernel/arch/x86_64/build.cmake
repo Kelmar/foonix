@@ -29,4 +29,7 @@ list(APPEND SOURCES ${x64_sources})
 list(APPEND LINK_EXTRA LINKER:-T${HOST_DIR}/linker.ld -no-pie)
 list(APPEND COMPILER_EXTRA -mno-red-zone -fno-pie)
 
+# Adding kernel type model puts kernel at 0xffffffff80000000 (upper 2GB of 64bit space)
+#-mcmodel=kernel
+
 # =========================================================================

@@ -120,16 +120,16 @@ _start:
 
     /* Setup a minimal long mode page table for our kernel to boot up with. */
     movl $boot_pdpt, %eax
-    orl $0x3, %eax // Double check flags
+    orl $0x3, %eax // Mark as present and readable.
     movl %eax, boot_pml4t
 
     movl $boot_pdt, %eax
-    orl $0x3, %eax // Double check flags
+    orl $0x3, %eax // Mark as present and readable.
     movl %eax, boot_pdpt
 
     movl $boot_pt, %eax
     movl %eax, %edi
-    orl $0x3, %eax // Double check flags
+    orl $0x3, %eax // Mark as present and readable.
     movl %eax, boot_pdt
 
     /* Identity map first 2MB of addresses */

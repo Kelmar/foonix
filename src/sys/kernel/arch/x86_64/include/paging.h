@@ -33,6 +33,7 @@ namespace paging
 
     constexpr const size_t EntryCount = 512;
     
+    typedef uint64_t pml4t_t;
     typedef uint64_t pdpt_t;
     typedef uint64_t pde_t;
     typedef uint64_t pte_t;
@@ -42,7 +43,16 @@ namespace paging
     class PageTable : public PageTableBase<PageTable>
     {
     private:
-        pdpt_t *m_pdpt;
+        static constexpr size_t MaxLevels = 4;
+
+        uint64_t *m_topLevel;
+
+        paddr_t AllocatePage();
+
+        static
+        uint64_t MapToEntryFlags(PageFlags flags);
+
+        void MapSinglePage(paddr_t paddr, vaddr_t vaddr, uint64_t entryFlags);
 
     public:
         PageTable() noexcept;
@@ -56,7 +66,7 @@ namespace paging
 
         paddr_t doGetPhysicalPageFor(vaddr_t vaddr) const;
 
-        void doMakeActive() const { x86::load_cr3(reinterpret_cast<uintptr_t>(m_pdpt)); }
+        void doMakeActive() const { x86::load_cr3(reinterpret_cast<uintptr_t>(m_topLevel)); }
     };
 
     /************************************************************************************************************/
