@@ -50,7 +50,7 @@ int ParseFrameBufferInfo(ArgumentData *argData, const mb2_tag *tag)
 {
     const mb2_framebuffer_tag *framebuffer = reinterpret_cast<const mb2_framebuffer_tag *>(tag);
 
-    argData->FrameBuffer.Address = reinterpret_cast<paddr_t>(framebuffer->address);
+    argData->FrameBuffer.Address = static_cast<paddr_t>(framebuffer->address);
     
     argData->FrameBuffer.Width = framebuffer->width;
     argData->FrameBuffer.Height = framebuffer->height;
