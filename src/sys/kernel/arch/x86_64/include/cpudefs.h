@@ -10,6 +10,7 @@
 
 #define PAGE_SIZE 4096 /* in bytes */
 #define PAGE_ALIGN_MASK ((~PAGE_SIZE) + 1)
+#define PAGE_SHIFT 12
 
 #define MAX_ADDR 0x00000000FFFFFFFFull
 

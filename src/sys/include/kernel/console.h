@@ -13,6 +13,8 @@
 
 #include <kernel/utils/span.h>
 
+#include "cpu.h"
+
 /********************************************************************************************************************/
 
 class Console
@@ -106,16 +108,33 @@ Console &operator <<(Console &cons, const T &obj)
 
 struct hex
 {
-    unsigned int value;
+    uintmax_t value;
     int width;
 
-    hex(unsigned int v, int w = 0) : value(v), width(w) { }
+    hex(uintmax_t v, int w = 0) : value(v), width(w) { }
 
     Console &to_stream(Console &c) const
     {
         c.putuint(value, 16, width);
         return c;
     }
+};
+
+struct ptrfmt : public hex
+{
+    static constexpr unsigned int DigitCount = (cpu::BitSize) == 64 ? 16 : 8;
+
+    ptrfmt(uintptr_t v) : hex(v, -DigitCount) { }
+    ptrfmt(const void *ptr) : hex(reinterpret_cast<uintptr_t>(ptr), -DigitCount) { }
+};
+
+struct szfmt
+{
+    size_t size;
+
+    szfmt(size_t sz) : size(sz) { }
+
+    Console &to_stream(Console &c) const;
 };
 
 /********************************************************************************************************************/

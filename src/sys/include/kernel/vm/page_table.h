@@ -10,6 +10,7 @@
 
 #include <kernel/kernel.h>
 #include <kernel/utilities.h>
+#include <kernel/pageptr.h>
 
 #include "cpu.h"
 
@@ -123,6 +124,44 @@ protected:
 public:
     virtual ~PageTableBase() { }
 
+    kernel::ErrorCode MapPages(PagePointer pagePtr, vaddr_t vaddr, PageFlags flags = PageFlags::None)
+    {
+        ASSERT(pagePtr, "Cannot map a NULL page.");
+        ASSERT(pagePtr.IsPhysical(), "Cannot map a virtual page to a virtual page.");
+
+        size_t pageCount = pagePtr.Count();
+        paddr_t paddr = reinterpret_cast<paddr_t>(pagePtr.Value());
+
+        /*
+         * TODO: This can be done in a much more optimal way.
+         *
+         * TODO: Ensure can't fail part way through the operation.
+         *
+         * In otherwords this operation should be atomic, it either works or doesn't, and shouldn't
+         * leave part of the pages allocated, and part not.
+         */
+
+        for (size_t i = 0; i < pageCount; ++i, paddr += cpu::PageSize, vaddr += cpu::PageSize)
+        {
+            kernel::ErrorCode err = MapPage(paddr, vaddr, flags);
+
+            if (err != kernel::ErrorCode::NoError)
+            {
+                // Crappy way to ensure we don't partially use the pages.
+                while (i > 0)
+                {
+                    vaddr -= cpu::PageSize;
+                    UnmapPage(vaddr);
+                    --i;
+                }
+
+                return err;
+            }
+        }
+
+        return kernel::ErrorCode::NoError;
+    }
+
     /// @brief Map a aligned physical page to an aligned virtual page.
     kernel::ErrorCode MapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags = PageFlags::None)
     {
@@ -142,7 +181,6 @@ public:
      *
      * @return The physical address found for the virtual page, or nullptr if not found.
      */
-    inline
     paddr_t GetPhysicalPageFor(vaddr_t vaddr)
     {
         vaddr_t vpage = paging::AlignFloor(vaddr);
@@ -153,6 +191,9 @@ public:
      * @brief Sets the page table as the currently active page table for the MMU.
      */
     void MakeActive() const { self()->doMakeActive(); }
+
+    /// @brief Dump the the page table to the console.
+    void Dump() const { self()->doDump(); }
 };
 
 /********************************************************************************************************************/

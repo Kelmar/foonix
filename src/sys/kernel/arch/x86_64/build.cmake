@@ -19,15 +19,14 @@ include_directories("${HOST_DIR}/include")
 #list(APPEND LINK_EXTRA "${RT_PATH}")
 
 list(APPEND x64_sources
-    start.S boot.S cpu.S preinit.cpp
+    start.S cpu.S preinit.cpp
     paging.cpp page_table.cpp
 )
 
 list(TRANSFORM x64_sources PREPEND "${HOST_DIR}/src/")
 list(APPEND SOURCES ${x64_sources})
 
-list(APPEND LINK_EXTRA LINKER:-T${HOST_DIR}/linker.ld -no-pie)
-list(APPEND COMPILER_EXTRA -mno-red-zone -fno-pie)
+list(APPEND LINK_EXTRA LINKER:-T${HOST_DIR}/linker.ld -no-pie -mcmodel=kernel)
 
 # Adding kernel type model puts kernel at 0xffffffff80000000 (upper 2GB of 64bit space)
 #-mcmodel=kernel

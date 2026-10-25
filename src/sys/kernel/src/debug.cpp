@@ -27,18 +27,18 @@ namespace
         boot::Arguments &args = boot::Arguments::Instance();
 
         console
-            << "kernel_start: 0x" << hex(args.KernelRange().Base, -8)
-            << " aligned: " << hex(args.KernelRange().BaseAligned(), -8)
+            << "kernel_start: 0x" << ptrfmt(args.KernelRange().Base)
+            << " aligned: " << ptrfmt(args.KernelRange().BaseAligned())
             << "\r\n";
 
         console
-            << "kernel_end: 0x" << hex(args.KernelRange().End(), -8)
-            << " aligned: " << hex(args.KernelRange().EndAligned(), -8)
+            << "kernel_end: 0x" << ptrfmt(args.KernelRange().End())
+            << " aligned: " << ptrfmt(args.KernelRange().EndAligned())
             << "\r\n";
 
         console
-            << "heap_start: 0x" << hex(args.HeapVirtual().BaseAligned(), -8) << "\r\n"
-            << "heap_length: " << args.HeapVirtual().Length << "bytes\r\n";
+            << "heap_start: 0x" << ptrfmt(args.HeapVirtual().BaseAligned()) << "\r\n"
+            << "heap_length: " << args.HeapVirtual().Length << " bytes\r\n";
     }
 
     void DumpCommand(size_t argCount, const std::string_view args[])
@@ -79,7 +79,7 @@ namespace
         }
 
         console.set_paged(true);
-        console << "Memory Dump 0x" << hex(start, -8) << "-0x" << hex(start + length, -8) << "\r\n";
+        console << "Memory Dump 0x" << ptrfmt(start) << "-0x" << ptrfmt(start + length - 1) << "\r\n";
 
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(start);
 
@@ -97,7 +97,7 @@ namespace
                 if (i > 0)
                     console << "| " << buf << "\r\n";
 
-                console << hex(start + i, -8) << " | ";
+                console << ptrfmt(start + i) << " | ";
             }
             else if (mod == 8)
                 console << "- ";
@@ -154,7 +154,7 @@ namespace
         void *ptr = kalloc(sz);
         uintptr_t p = reinterpret_cast<uintptr_t>(ptr);
 
-        console << "\r\nGot pointer: " << hex(p, -8) << "\r\nFreeing...";
+        console << "\r\nGot pointer: " << ptrfmt(p) << "\r\nFreeing...";
 
         kfree(ptr);
 
@@ -168,6 +168,13 @@ namespace
         char *data = reinterpret_cast<char *>(0x0080'0000);
         char c = *data; // Fault should happen here.
         (void)c;
+    }
+
+    void DumpPTable(size_t, const std::string_view [])
+    {
+        console << "Page Table Dump\r\n";
+
+        paging::g_bootPageTable.Dump();
     }
 }
 
@@ -199,6 +206,7 @@ namespace
         { "vars"   , VarsCommand         },
         { "fault"  , FaultCommand        },
         { "testa"  , TestAllocCommand    },
+        { "ptable" , DumpPTable          },
         { 0        , 0                   } // terminator
     };
 

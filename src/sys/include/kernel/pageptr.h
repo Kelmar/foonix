@@ -25,8 +25,9 @@
  * @details Represents a pointer that points to a page.  It stores additional metadata
  * in the area that is masked off by the paging system to include some useful details.
  *
- * PagePointers can be flagged as physical or virtual, and for physical pages may contain
- * an order value, indicating what order in the buddy list they were split off from.
+ * PagePointers can be flagged as physical or virtual, and may contain an order value,
+ * indicating what order in the buddy list they were split off from.  This effectively
+ * means that a PagePointer can represent several pages.
  *
  * The goal here is to make it so that virtual and physical pointers do not equate to
  * each other, additionally, split/merged physical pointers would also participate in
@@ -39,12 +40,25 @@ class PagePointer
 private:
     static constexpr uintptr_t VirtualFlag = 0x0010;
 
-    // Mask for getting order value.
+    /**
+     * @brief Mask for getting order value.
+     *
+     * @details The order value is the buddy allocation order.  Effectively this gives
+     * the number of pages in powers of 2.
+     *
+     * For instance, an order 0 is 1 page, order 1 = 2 pages, order 2 = 4 pages, and so on.
+     * This means we can represent a range of upto 32K pages in one pointer.
+     */
     static constexpr uintptr_t OrderMask = 0x000F;
 
+private:
     uintptr_t m_ptr;
 
-    constexpr PagePointer(uintptr_t p) noexcept : m_ptr(p & cpu::PageMask) { }
+    constexpr PagePointer(uintptr_t p, uint8_t order) noexcept
+        : m_ptr(p & cpu::PageMask)
+    {
+        m_ptr |= static_cast<uintptr_t>(order & OrderMask);
+    }
 
 public:
     constexpr PagePointer() noexcept : m_ptr(0) { }
@@ -56,16 +70,15 @@ public:
     static inline
     PagePointer FromPhysical(paddr_t addr, uint8_t order = 0) noexcept
     {
-        PagePointer result(addr);
-        result.m_ptr |= static_cast<uintptr_t>(order & OrderMask);
+        PagePointer result(addr, order);
         return result;
     }
 
     /// @brief Construct a PagePointer from a virtual page address.
     static inline
-    PagePointer FromVirtual (vaddr_t addr) noexcept
+    PagePointer FromVirtual(vaddr_t addr, uint8_t order = 0) noexcept
     {
-        PagePointer result(addr);
+        PagePointer result(addr, order);
         result.m_ptr |= VirtualFlag;
         return result;
     }
@@ -79,9 +92,25 @@ public:
     /// @brief Clear the pointer value setting it to nullptr.
     inline void Clear() { m_ptr = 0; }
 
+    /// @brief Check if the pointer is null or not.
+    inline
+    constexpr bool IsNull() const { return (m_ptr & cpu::PageMask) == 0; }
+
+    /// @brief Get the pointer part of the value, stripping off the metadata bits.
+    inline
+    constexpr uintptr_t Value() const { return m_ptr & cpu::PageMask; }
+
     /// @brief Get the packed ordering value for physical page pointers.
     inline
-    constexpr uint8_t Order() { return static_cast<int>(m_ptr & OrderMask); }
+    constexpr uint8_t Order() const { return static_cast<int>(m_ptr & OrderMask); }
+
+    /**
+     * @brief Get the number of pages that this page pointer represents.
+     *
+     * @remarks For null pointers, this value will return 0.
+     */
+    inline
+    constexpr size_t Count() const { return IsNull() ? 0 : (1 << Order()); }
 
     /// @brief Check if a pointer is virtual or not.
     inline
@@ -93,17 +122,11 @@ public:
 
     /// @brief Tests if pointer is null, while ignoring packed bits.
     inline
-    constexpr bool operator ==(const std::nullptr_t &) const
-    {
-        return (m_ptr & cpu::PageMask) == 0;
-    }
+    constexpr bool operator ==(const std::nullptr_t &) const { return IsNull(); }
 
     /// @brief Tests if pointer is NOT null, while ignoring packed bits.
     inline
-    constexpr bool operator !=(const std::nullptr_t &) const
-    {
-        return (m_ptr & cpu::PageMask) != 0;
-    }
+    constexpr bool operator !=(const std::nullptr_t &) const { return !IsNull(); }
 
     /**
      * @brief Tests if two PagePointers are equivalent, taking packed bit rules into account.
@@ -125,18 +148,19 @@ public:
 
     /// @brief Tests if pointer is null, while ignoring packed bits.
     inline
-    operator bool() const { return *this != nullptr; }
+    operator bool() const { return !IsNull(); }
 
     /// @brief Implicit conversion of PagePointer to uintptr_t
     inline
-    constexpr operator uintptr_t() const { return m_ptr & cpu::PageMask; }
+    constexpr operator uintptr_t() const { return Value(); }
 
+    /// @brief Convert to a pointer of the given type.
     template <typename T>
     requires std::is_pointer_v<T>
     inline
     constexpr T PointerTo() const
     {
-        return reinterpret_cast<T>(m_ptr & cpu::PageMask);
+        return reinterpret_cast<T>(Value());
     }
 };
 

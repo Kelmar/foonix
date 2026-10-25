@@ -8,6 +8,8 @@
 #include <kernel/debug.h>
 #include <kernel/vm.h>
 
+#include <kernel/kalloc.h>
+
 #include "paging.h"
 #include "x86priv.h"
 
@@ -15,13 +17,12 @@ using namespace paging;
 
 /********************************************************************************************************************/
 
-//typedef uint64_t page_entry_t;
+// Kernel top level page table, defined and aligned in start.S
+extern "C" uint64_t g_kernelTable[EntryCount];
 
-//typedef page_table_t page_entry_t[512];
+uint32_t g_bootAllocatedPages = 0;
 
-// Defined in start.S
-extern "C" uintptr_t boot_pml4t;
-extern "C" uintptr_t boot_pdpt;
+PageTable paging::g_bootPageTable;
 
 /********************************************************************************************************************/
 
@@ -30,6 +31,8 @@ void paging::Preinit(boot::ArgumentData *argData)
     Debug::PrintF("ENTER: paging::Preinit()\r\n");
 
     Debug::PrintF("EXIT: paging::Preinit()\r\n");
+
+    new (&paging::g_bootPageTable) PageTable(g_kernelTable);
 }
 
 /********************************************************************************************************************/

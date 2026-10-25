@@ -40,6 +40,8 @@ extern "C" uintptr_t _kernel_phys_start;
 /// @brief Physical memory location of the end of the kernel.
 extern "C" uintptr_t _kernel_end;
 
+extern uint32_t g_bootAllocatedPages;
+
 /********************************************************************************************************************/
 
 static
@@ -129,6 +131,11 @@ void InitHeapInfo(ArgumentData *argData)
         if (argData->VirtHeapNext == 0)
             argData->VirtHeapNext = argData->VirtHeapStart;
     }
+
+    // Add in the number of pages allocated by start.S
+    uint32_t offset = g_bootAllocatedPages * cpu::PageSize;
+    argData->HeapNext += offset;
+    argData->VirtHeapNext += offset;
 
     // A bit inefficient, but we'll grab a page for our boot allocator.
     vaddr_t addr = argData->VirtHeapNext;

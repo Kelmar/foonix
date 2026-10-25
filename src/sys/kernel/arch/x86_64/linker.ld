@@ -3,9 +3,8 @@ ENTRY(_start)
 __PAGE_SIZE = 0x1000;
 
 /* TODO: Want to have one spot where we define this for everything. */
-/* __VIRT_START = 0xC0000000; */
-/* __VIRT_START = 0xFFFFFFFF80000000; */
-__VIRT_START = 0;
+__VIRT_START = 0xFFFFFFFF80000000;
+/* __VIRT_START = 0; */
 
 SECTIONS
 {
@@ -20,6 +19,7 @@ SECTIONS
     {
         . = ALIGN(8);
         KEEP(*(.multiboot))
+        *(.note.gnu.build-id)
         *(.text)
         *(.text.*)
     }
@@ -34,6 +34,9 @@ SECTIONS
     {
         *(.data)
     }
+
+    /* Symbol for finding the start of the BSS section */
+    _bss_start = .;
 
     .bss ALIGN(__PAGE_SIZE) : AT (ADDR (.bss) - __VIRT_START)
     {

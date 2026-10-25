@@ -198,3 +198,31 @@ size_t Console::get_line(util::span<char> &buf)
 }
 
 /********************************************************************************************************************/
+/********************************************************************************************************************/
+
+Console &szfmt::to_stream(Console &c) const
+{
+    const char PREFIX[] = "KMGTPEZYRQ";
+
+    int idx = 0;
+    size_t sz = size;
+
+    // Not that I expect anyone to ever get above a quettabyte on anything, but we should always be safe.
+
+    while (sz > 1024 && idx < sizeof(PREFIX))
+    {
+        sz /= 1024;
+        ++idx;
+    }
+
+    c << sz << " ";
+
+    if (idx > 0)
+        c.putchar(PREFIX[idx - 1]);
+
+    c << "byte(s)";
+
+    return c;
+}
+
+/********************************************************************************************************************/

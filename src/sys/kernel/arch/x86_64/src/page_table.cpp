@@ -7,6 +7,7 @@
 #include <kassert.h>
 
 #include <kernel/boot_args.h>
+#include <kernel/console.h>
 #include <kernel/vm.h>
 
 #include "paging.h"
@@ -28,7 +29,7 @@ namespace EntryFlags
         DisableCache   = 0x0000'0000'0000'0010,
         Accessed       = 0x0000'0000'0000'0020, // Set by CPU
         Dirty          = 0x0000'0000'0000'0040, // Set by CPU
-        LargeEntry     = 0x0000'0000'0000'0080,
+        LargeEntry     = 0x0000'0000'0000'0080, // Not always supported above 2MB pages.
         Global         = 0x0000'0000'0000'0100,
 
         SystemBit1     = 0x0000'0000'0000'0200, // OS defined bit 1
@@ -44,41 +45,8 @@ namespace EntryFlags
     ;
 }
 
-/// @brief Number of entries per table.
-constexpr size_t TableEntries = 512; // (4KB / sizeof(uint64_t))
-
-constexpr uint64_t EntityIndexMask = (TableEntries - 1);
-
-/// @brief Mask for stripping off additional address bits for an entry.
-constexpr uint64_t EntryAddressMask = 0x000F'FFFF'FFFF'F000;
-
-/// @brief Base number we start shifting by.
-constexpr size_t ShiftBase = 12;
-
-/// @brief Number of bits we increase our shift by for each level of paging.
-constexpr size_t ShiftInc = 9;
-
 /********************************************************************************************************************/
 #if 0
-
-/**
- * @brief Compute shift based on table level we're at
- *
- * @details Computes the amount of shifting based on what level of table's were computing for.
- * With levels being:
- * 0 - 4K page table entry
- * 1 - 2MB directory table entry
- * 2 - 1GB page directory pointer table entry
- * 3 - Level 4 page map entry
- * 4 - Level 5 page map entry.
- */
-static inline
-constexpr uint64_t EntryShift(size_t level)
-{
-    return (ShiftBase + (ShiftInc * level));
-}
-
-/********************************************************************************************************************/
 
 /// @brief Build an entry for a given physical address, entry flags, and shift level.
 static inline
@@ -93,9 +61,14 @@ constexpr uint64_t MakeEntry(paddr_t paddr, uint64_t flags, size_t shift)
 /********************************************************************************************************************/
 
 PageTable::PageTable() noexcept
-    : m_topLevel(nullptr)
+    : m_root(nullptr)
 {
-    m_topLevel = reinterpret_cast<uint64_t *>(AllocatePage());
+    m_root = reinterpret_cast<uint64_t *>(AllocatePage());
+}
+
+PageTable::PageTable(uint64_t *root) noexcept
+    : m_root(root)
+{
 }
 
 /********************************************************************************************************************/
@@ -124,10 +97,10 @@ uint64_t PageTable::MapToEntryFlags(PageFlags flags)
 
 void PageTable::MapSinglePage(paddr_t paddr, vaddr_t vaddr, uint64_t entityFlags)
 {
-    size_t shift = ShiftBase + (MaxLevels - 2) * ShiftInc;
-    uint64_t *table = m_topLevel;
+    size_t shift = EntryShift(MaxLevels - 1);
+    uint64_t *table = m_root;
 
-    for (size_t i = MaxLevels - 1; i > 1; --i, shift -= ShiftInc)
+    for (size_t i = MaxLevels - 1; i > 0; --i, shift -= ShiftInc)
     {
         size_t index = (vaddr >> shift) & EntityIndexMask;
         uint64_t &entry = table[index];
@@ -152,26 +125,19 @@ void PageTable::MapSinglePage(paddr_t paddr, vaddr_t vaddr, uint64_t entityFlags
 
 /********************************************************************************************************************/
 /**
- * @brief Map a phyiscal memory page to a virtual memory page.
+ * @brief Map a physical memory page to a virtual memory page.
  * @remark Note that addresses and sizes might get aligned to processor page boundaries.
- * @param paddr The phyiscal address to be mapped
+ * @param paddr The physical address to be mapped
  * @param vaddr The virtual address
  * @param flags Flags to be set on the page (The Present flag is added automatically.)
  */
-kernel::ErrorCode PageTable::doMapPages(paddr_t paddr, vaddr_t vaddr, size_t count, PageFlags flags)
+kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
 {
     uint64_t entryFlags = MapToEntryFlags(flags) | EntryFlags::Present;
 
     MapSinglePage(paddr, vaddr, entryFlags);
 
-    return kernel::ErrorCode::Unknown;
-}
-
-/********************************************************************************************************************/
-
-kernel::ErrorCode PageTable::doMapPage(paddr_t paddr, vaddr_t vaddr, PageFlags flags)
-{
-    return kernel::ErrorCode::Unknown;
+    return kernel::ErrorCode::NoError;
 }
 
 /********************************************************************************************************************/
@@ -198,6 +164,75 @@ kernel::ErrorCode PageTable::doUnmapPage(vaddr_t vaddr)
 paddr_t PageTable::doGetPhysicalPageFor(vaddr_t vaddr) const
 {
     return 0;
+}
+
+/********************************************************************************************************************/
+
+void PageTable::PrintState(VisitState *state) const
+{
+    if (!state->inSpan)
+        return;
+
+    console << "0x" << ptrfmt(state->start) << " : " << szfmt(state->size) << " bytes\r\n";
+}
+
+/********************************************************************************************************************/
+
+void PageTable::VisitLevel(VisitState *state, const void *ptr, int depth) const
+{
+    size_t entrySize = cpu::PageSize * util::ipow(EntryCount, depth);
+    const uint64_t *table = reinterpret_cast<const uint64_t *>(ptr);
+    uintptr_t offset = state->offset;
+
+    for (size_t i = 0; i < EntryCount; ++i)
+    {
+        const uint64_t &entry = table[i];
+
+        state->offset = offset + (i * entrySize);
+
+        if (state->offset & 0x0000'8000'0000'000)
+            state->offset |= 0xFFFF'8000'0000'0000; // The 48th bit is sign extended.
+
+        if ((entry & EntryFlags::Present) == 0)
+        {
+            PrintState(state);
+            state->inSpan = false;
+
+            continue;
+        }
+
+        if ((depth == 0) || (entry & EntryFlags::LargeEntry) != 0)
+        {
+            if (state->inSpan)
+                state->size += entrySize;
+            else
+            {
+                state->inSpan = true;
+                state->start = state->offset;
+                state->size = entrySize;
+            }
+
+            continue;
+        }
+
+        // Address points to a sub table.
+        
+        ptr = reinterpret_cast<const void *>(entry & EntryAddressMask);
+        VisitLevel(state, ptr, depth - 1);
+    }
+}
+
+/********************************************************************************************************************/
+
+void PageTable::doDump() const
+{
+    VisitState state;
+
+    memset(&state, 0, sizeof(state));
+
+    VisitLevel(&state, m_root, MaxLevels - 1);
+
+    PrintState(&state);
 }
 
 /********************************************************************************************************************/

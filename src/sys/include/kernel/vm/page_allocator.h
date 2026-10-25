@@ -105,7 +105,7 @@ namespace paging
         /// @brief Also the size of the m_pages array.
         size_t m_totalPages;
 
-        /// @brief Number of pages available.
+        /// @brief Total number of pages available (includes cached)
         size_t m_pagesAvailable;
 
         // List of pages that have been linked to each other.

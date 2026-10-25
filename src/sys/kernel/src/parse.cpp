@@ -11,7 +11,7 @@
 
 /********************************************************************************************************************/
 
-std::expected<int, kernel::ErrorCode> util::parseInt(const std::string_view &str)
+std::expected<uintptr_t, kernel::ErrorCode> util::parseInt(const std::string_view &str)
 {
     if (str.empty())
         return kernel::ErrorCode::NotFound;
@@ -20,7 +20,7 @@ std::expected<int, kernel::ErrorCode> util::parseInt(const std::string_view &str
 
     bool isHex = max > 2 && (str[0] == '0') && ((str[1] == 'x') || (str[1] == 'X'));
     size_t index = 0;
-    int acc = 0;
+    uintptr_t acc = 0;
 
     if (isHex)
         index += 2;
@@ -32,7 +32,7 @@ std::expected<int, kernel::ErrorCode> util::parseInt(const std::string_view &str
 
     for (; index < max; ++index)
     {
-        int a = str[index];
+        uintptr_t a = str[index];
 
         if (isdigit(a))
             a -= '0';
@@ -40,6 +40,8 @@ std::expected<int, kernel::ErrorCode> util::parseInt(const std::string_view &str
             a -= ('A' - 10);
         else if (isHex && (a >= 'a') && (a <= 'f'))
             a -= ('a' - 10);
+        else if ((a == '_') || (a == '\''))
+            continue; // Ignore _ and '
         else
             return kernel::ErrorCode::InvalidFormat;
 

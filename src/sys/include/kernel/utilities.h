@@ -27,7 +27,39 @@ namespace util
      *
      * Returns a kernel::ErrorCode if an integer cannot be parsed. Otherwise the value parsed is returned.
      */ 
-    std::expected<int, kernel::ErrorCode> parseInt(const std::string_view &);
+    std::expected<uintptr_t, kernel::ErrorCode> parseInt(const std::string_view &);
+
+    /**
+     * @brief Return the integer base raised to the power of exponent.
+     */
+    constexpr uint32_t ipow(uint32_t base, unsigned int exponent)
+    {
+        uint32_t result = 1;
+
+        for (;exponent > 0; exponent >>= 1, base *= base)
+        {
+            if (exponent & 1)
+                result *= base;
+        }
+        
+        return result;
+    }
+
+    /**
+     * @brief Return the integer base raised to the power of exponent.
+     */
+    constexpr uint64_t ipow(uint64_t base, unsigned int exponent)
+    {
+        uint64_t result = 1;
+
+        for (;exponent > 0; exponent >>= 1, base *= base)
+        {
+            if (exponent & 1)
+                result *= base;
+        }
+        
+        return result;
+    }
 }
 
 /********************************************************************************************************************/
