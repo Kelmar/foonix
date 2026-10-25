@@ -78,6 +78,8 @@ namespace paging
         paddr_t doGetPhysicalPageFor(vaddr_t vaddr) const;
 
         void doMakeActive() const { x86::load_cr3(reinterpret_cast<uintptr_t>(m_dir)); }
+
+        void doDump() const { } // Stub for now
     };
 
     extern PageTable g_bootPageTable;
