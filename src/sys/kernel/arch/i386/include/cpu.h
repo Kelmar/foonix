@@ -34,7 +34,6 @@ struct regs_t
     register_t useresp, ss;
 } __attribute__((packed));
 
-typedef void* io_port_t;
 typedef void (*isr_handler_t)(struct regs_t* r);
 
 /********************************************************************************************************************/

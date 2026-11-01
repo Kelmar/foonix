@@ -10,12 +10,12 @@ include ("${KERNEL_SRC_DIR}/arch/x86/build.cmake")
 # Add platform specific files
 list(APPEND i386_sources
     boot.S cpu.S memsetw.S preinit.cpp paging.cpp 
-    vectors.s idt.cpp isr.S gdt.cpp bus.cpp 
+    vectors.s idt.cpp isr.S gdt.cpp
     arch_debug.cpp realmem.cpp
 )
 
 list(APPEND i386_devs
-    timer.cpp pic8259.cpp
+    timer.cpp
 )
 
 list(TRANSFORM i386_sources PREPEND "${HOST_DIR}/src/")

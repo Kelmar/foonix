@@ -107,6 +107,9 @@ _paged_start:
     movl $stack_top, %esp
     movl $stack_top, %ebp
 
+    // Push data pointer as first parameter to kmain.  (Map to virtual memory?)
+    pushl %ecx
+
     # Call the kernel proper
     call kmain
 

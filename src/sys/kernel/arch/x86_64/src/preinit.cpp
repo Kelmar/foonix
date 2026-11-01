@@ -17,6 +17,8 @@
 #include "asm.h"
 #include "cpu.h"
 
+#include "apic.h"
+
 #include "multiboot.h"
 #include "multiboot2.h"
 
@@ -194,14 +196,14 @@ ArgumentData *preinit(uint32_t magicNumber, uint32_t eax)
 
 // TODO: Put these in proper headers.
 //void init_idt();
-//void init_pics();
 //void init_timer();
 
 // Called from main()
 void arch::Init()
 {
     //init_idt();
-    //init_pics();
+
+    cpu::InitPIC();
 
     //init_timer();
 

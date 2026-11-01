@@ -7,12 +7,13 @@
 #include "bus.h"
 #include "cpu.h"
 #include "idt.h"
+#include "apic.h"
 
 /********************************************************************************************************************/
 
 namespace
 {
-    const io_port_t TIMER_PORTBASE = (io_port_t)0x0040;
+    const int TIMER_PORTBASE = 0x40;
 
     const int TIMER_COUNTER0 = 0;
     const int TIMER_COUNTER1 = 1;
@@ -86,7 +87,7 @@ namespace
 
         //cpu::stop_interrupts();
 
-        bus pit(TIMER_PORTBASE, 4);
+        ISABus pit(TIMER_PORTBASE, 4);
 
         /* Adjust the clock rate */
         pit.byte(TIMER_MODE, TIMER_SEL0 | TIMER_16BIT | TIMER_SQWAVE);
@@ -107,6 +108,8 @@ void init_timer(void)
     set_timer_freq(TIMER_FREQ);
 
     set_isr_callback(32, tick);
+
+    cpu::s_legacyPIC.Enable(TIMER_IRQ);
 
     Debug::PrintF("Timer initialized.\n");
 }

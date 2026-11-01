@@ -10,15 +10,15 @@
 
 #include "cpu.h"
 
-class bus
+class ISABus
 {
 private:
     uint16_t m_base;
     size_t m_size;
 
 public:
-    /* constructor */ bus(io_port_t base, size_t size);
-    virtual ~bus(void);
+    /* constructor */ ISABus(int base, size_t size);
+    virtual ~ISABus(void);
 
     uint8_t byte(unsigned int offset);
     uint16_t word(unsigned int offset);

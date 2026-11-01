@@ -16,11 +16,12 @@ endif()
 
 list(APPEND x86_sources
     multiboot.S
+    bus.cpp
     dconsole.cpp mb1.cpp mb2.cpp
 )
 
 list(APPEND x86_devs
-    vga.cpp ps2kbd.cpp uart.cpp
+    vga.cpp ps2kbd.cpp uart.cpp pic8259.cpp apic.cpp
 )
 
 list(TRANSFORM x86_sources PREPEND "${KERNEL_SRC_DIR}/arch/x86/src/")

@@ -1,6 +1,6 @@
 /********************************************************************************************************************/
 /*
- * Boot driver for 8259A Programmable Interrupt Controller (PIC)
+ * Driver for legacy 8259A Programmable Interrupt Controller (PIC)
  */
 /********************************************************************************************************************/
 
@@ -9,10 +9,17 @@
 #include "cpu.h"
 #include "bus.h"
 
+#include "apic.h"
+
 /********************************************************************************************************************/
 
 #define PRIMARY_PIC_PORT   0x0020
 #define SECONDARY_PIC_PORT 0x00A0
+
+/********************************************************************************************************************/
+
+#define REG_CTRL 0
+#define REG_MASK 1
 
 /********************************************************************************************************************/
 /*
@@ -72,49 +79,61 @@
 #define ICW4_FULLY_NESTED   0x10
 
 /********************************************************************************************************************/
+/********************************************************************************************************************/
 
-static
-void init_pic_device(int port, bool isPrimary)
+LegacyPIC::LegacyPIC() noexcept
+    : m_primary(PRIMARY_PIC_PORT, 2)
+    , m_secondary(SECONDARY_PIC_PORT, 2)
 {
-    bus pic((void*)port, 2);
+}
 
+/********************************************************************************************************************/
+/**
+ * @brief Initialize a single 8259 PIC
+ * @param isPrimary Indicates if we are initializing the primary or secondary PIC
+ */
+void LegacyPIC::SendInit(ISABus &device, bool isPrimary)
+{
     // Begin initialization of PIC, inform it we need access to command word #4
-    pic.byte(0, ICW1_ICW4_NEEDED | ICW1_ONE);
+    device.byte(REG_CTRL, ICW1_ICW4_NEEDED | ICW1_ONE);
     
     // Write ICW2.  Which are the IRQ vectors
-    pic.byte(1, isPrimary ? 0x20 : 0x28);
+    device.byte(REG_MASK, isPrimary ? 0x20 : 0x28);
 
     // Map IRQ lines for chained PIC controllers
-    pic.byte(1, isPrimary ? 0x04 : 0x02);
+    device.byte(REG_MASK, isPrimary ? 0x04 : 0x02);
 
     // Inform PIC we're running on an x86 based machine.
-    pic.byte(1, ICW4_MODE_86);
+    device.byte(REG_MASK, ICW4_MODE_86);
 
     // Operational Command Word 1 (OCW1)
     // Clear all interrupt masks (I.e. Allow all IRQs)
-    //pic.byte(1, 0);
+    //device.byte(REG_MASK, 0);
 
-    pic.byte(1, isPrimary ? 0xFE : 0xFF); // Disable all but timer interrupt.
+    // We start out with all interrupts disabled.
+    device.byte(REG_MASK, 0xFF);
 }
 
 /********************************************************************************************************************/
-
-void init_pics()
+/**
+ * @brief Initialize the PIC device.
+ */
+void LegacyPIC::Init()
 {
-    init_pic_device(PRIMARY_PIC_PORT, true);
-    init_pic_device(SECONDARY_PIC_PORT, false);
+    SendInit(m_primary, true);
+    SendInit(m_secondary, false);
 }
 
 /********************************************************************************************************************/
-
-void pic_send_eoi(int irq_no)
+/**
+ * @brief Send the End Of Interrupt signal to the legacy PIC devices.
+ */
+void LegacyPIC::SendEOI(int irqNo)
 {
     // Sending the end of interrupt notices to the PIC controllers seems to be bogging the system way down.
 
-    bus primary_pic((void*)PRIMARY_PIC_PORT, 2);
-
     /*
-    if (irq_no == 1)
+    if (irqNo == 1)
     {
         // TODO: This needs to be moved to the ps2kbd driver.
         // Keyboard IRQ
@@ -124,14 +143,47 @@ void pic_send_eoi(int irq_no)
     */
 
     // If IRQ 8-15, we need to send an EOI to the slave controller.
-    if (irq_no >= 8)
-    {
-        bus secondary_pic((void*)SECONDARY_PIC_PORT, 2);
-        secondary_pic.byte(0, 0x20);
-    }
+    if (irqNo >= 8)
+        m_secondary.byte(REG_CTRL, 0x20); // TODO: Lookup what this magic number is.
 
     // In all cases we need to send an EOI to the master controller.
-    primary_pic.byte(0, 0x20);
+    m_primary.byte(REG_CTRL, 0x20);
+}
+
+/********************************************************************************************************************/
+
+void LegacyPIC::Enable(int irqNo)
+{
+    int bit = ~ToMaskBit(irqNo);
+
+    // TODO: We may want to track primary/secondary enable bits so that the chained IRQs automatically get set/cleared as well.
+
+    if (irqNo < 8)
+        m_primary.byte(REG_MASK, bit);
+    else
+        m_secondary.byte(REG_MASK, bit);
+}
+
+/********************************************************************************************************************/
+
+void LegacyPIC::Disable(int irqNo)
+{
+    int bit = ToMaskBit(irqNo);
+
+    if (irqNo < 8)
+        m_primary.byte(REG_MASK, bit);
+    else
+        m_secondary.byte(REG_MASK, bit);
+}
+
+/********************************************************************************************************************/
+/**
+ * @brief Disable all IRQs on the device.
+ */
+void LegacyPIC::DisableAll()
+{
+    m_primary.byte(REG_MASK, 0xFF);
+    m_secondary.byte(REG_MASK, 0xFF);
 }
 
 /********************************************************************************************************************/
