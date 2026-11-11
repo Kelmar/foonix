@@ -196,13 +196,13 @@ void init_timer();
 // Called from main()
 void arch::Init()
 {
-    init_idt();
+    //init_idt();
 
-    cpu::InitPIC();
+    //cpu::InitPIC();
 
-    init_timer();
+    //init_timer();
 
-    cpu::start_interrupts();
+    //cpu::start_interrupts();
 }
 
 /********************************************************************************************************************/

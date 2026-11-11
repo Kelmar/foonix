@@ -9,8 +9,6 @@ include ("${KERNEL_SRC_DIR}/arch/x86/build.cmake")
 
 include_directories("${HOST_DIR}/include")
 
-# compiler-rt Not needed on x86-64?
-
 #execute_process(
 #    COMMAND clang -target x86_64-unknown-none-elf -print-libgcc-file-name --rtlib=compiler-rt
 #    OUTPUT_VARIABLE RT_PATH
@@ -27,8 +25,5 @@ list(TRANSFORM x64_sources PREPEND "${HOST_DIR}/src/")
 list(APPEND SOURCES ${x64_sources})
 
 list(APPEND LINK_EXTRA LINKER:-T${HOST_DIR}/linker.ld -no-pie -mcmodel=kernel)
-
-# Adding kernel type model puts kernel at 0xffffffff80000000 (upper 2GB of 64bit space)
-#-mcmodel=kernel
 
 # =========================================================================

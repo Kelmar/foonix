@@ -39,8 +39,8 @@ public:
     void putchar(char c);
     void putstr(const std::string_view &v);
 
-    void putuint(uint64_t value, int radix = 10, int width = 0);
-    void putint(int64_t value);
+    void putuint(uintmax_t value, int radix = 10, int width = 0);
+    void putint(intmax_t value);
     
     // Input
     int getchar();
@@ -122,7 +122,7 @@ struct hex
 
 struct ptrfmt : public hex
 {
-    static constexpr unsigned int DigitCount = (cpu::BitSize) == 64 ? 16 : 8;
+    static constexpr int DigitCount = (cpu::BitSize == 64) ? 16 : 8;
 
     ptrfmt(uintptr_t v) : hex(v, -DigitCount) { }
     ptrfmt(const void *ptr) : hex(reinterpret_cast<uintptr_t>(ptr), -DigitCount) { }

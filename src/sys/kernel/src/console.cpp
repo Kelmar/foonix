@@ -75,12 +75,15 @@ void Console::putstr(const std::string_view &v)
 
 /********************************************************************************************************************/
 
-void Console::putuint(uint64_t value, int radix /* = 10 */, int width /* = 0 */)
+void Console::putuint(uintmax_t value, int radix /* = 10 */, int width /* = 0 */)
 {
-    char buf[32];
-    buf[31] = '\0';
-    int i = 31;
+    const int SIZE = sizeof(uintmax_t) * __CHAR_BIT__ + 1;
 
+    char buf[SIZE];
+    int i = SIZE;
+
+    buf[--i] = '\0';
+    
     char pad = ' ';
 
     if (width < 0)
@@ -93,7 +96,7 @@ void Console::putuint(uint64_t value, int radix /* = 10 */, int width /* = 0 */)
         buf[--i] = '0';
     else
     {
-        while ((value > 0) && (i >= 0))
+        while ((value > 0) && (i > 0))
         {
             int r = value % radix;
             value /= radix;
@@ -101,7 +104,7 @@ void Console::putuint(uint64_t value, int radix /* = 10 */, int width /* = 0 */)
         }
     }
 
-    while ((width > (31 - i)) && (i >= 0))
+    while ((width > (SIZE - i)) && (i > 0))
         buf[--i] = pad;
 
     putstr(buf + i);
@@ -109,7 +112,7 @@ void Console::putuint(uint64_t value, int radix /* = 10 */, int width /* = 0 */)
 
 /********************************************************************************************************************/
 
-void Console::putint(int64_t value)
+void Console::putint(intmax_t value)
 {
     if (value < 0)
     {
@@ -117,7 +120,7 @@ void Console::putint(int64_t value)
         value = -value;
     }
 
-    putuint(static_cast<uint64_t>(value));
+    putuint(value);
 }
 
 /********************************************************************************************************************/
